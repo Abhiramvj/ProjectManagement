@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Actions\Profile;
 
 use Illuminate\Http\Request;

@@ -20,23 +20,22 @@ class GetTimeLogs
                 ->latest('id')
                 ->paginate(15);
         } else {
-    $timeLogs = TimeLog::where('user_id', $user->id)
-        ->with('project:id,name')
-        ->latest('work_date')
-        ->latest('id')
-        ->paginate(15);
+            $timeLogs = TimeLog::where('user_id', $user->id)
+                ->with('project:id,name')
+                ->latest('work_date')
+                ->latest('id')
+                ->paginate(15);
 
-    $teamIds = $user->teams()->pluck('teams.id');
+            $teamIds = $user->teams()->pluck('teams.id');
 
-    $assignableProjects = Project::query()
-        ->when($teamIds->isNotEmpty(), function ($query) use ($teamIds) {
-            $query->orWhereIn('team_id', $teamIds);
-        })
-        ->orWhere('project_manager_id', $user->id) 
-        ->where('status', '!=', 'completed')
-        ->get(['id', 'name']);
-}
-
+            $assignableProjects = Project::query()
+                ->when($teamIds->isNotEmpty(), function ($query) use ($teamIds) {
+                    $query->orWhereIn('team_id', $teamIds);
+                })
+                ->orWhere('project_manager_id', $user->id)
+                ->where('status', '!=', 'completed')
+                ->get(['id', 'name']);
+        }
 
         return [
             'timeLogs' => $timeLogs,

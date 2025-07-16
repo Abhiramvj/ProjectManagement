@@ -1,25 +1,24 @@
 <?php
 
+use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TaskController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProjectController; 
-use App\Http\Controllers\LeaveApplicationController;
-use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\TeamController;
-use App\Http\Controllers\PerformanceReportController; // Import
+use App\Http\Controllers\TimeLogController;
+use App\Http\Controllers\UserController;
+use App\Models\LeaveApplication;
+// Import
 
-use Illuminate\Support\Facades\Auth;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\Team;
-
-use App\Http\Controllers\UserController; // Import at the top
-use App\Models\Task; // <-- IMPORT TASK MODEL
-use App\Models\LeaveApplication; // <-- IMPORT LEAVE APPLICATION MODEL
-use App\Models\User;
-use App\Models\TimeLog; // <-- IMPORT TIME LOG MODEL
+use App\Models\User; // Import at the top
+use Illuminate\Foundation\Application; // <-- IMPORT TASK MODEL
+use Illuminate\Support\Facades\Auth; // <-- IMPORT LEAVE APPLICATION MODEL
+use Illuminate\Support\Facades\Route;
+// <-- IMPORT TIME LOG MODEL
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -31,8 +30,8 @@ Route::get('/', function () {
     ]);
 });
 
-    Route::get('/dashboard', function () {
-    $user =Auth::user();
+Route::get('/dashboard', function () {
+    $user = Auth::user();
     $projects = collect();
     $myTasks = collect();
     $pendingLeaveRequests = collect();
@@ -40,7 +39,10 @@ Route::get('/', function () {
 
     // HR & Admin Logic
     if ($user->hasRole('admin') || $user->hasRole('hr')) {
-        $pendingLeaveRequests = LeaveApplication::where('status', 'pending')->with('user:id,name')->latest()->get();
+        $pendingLeaveRequests = LeaveApplication::with('user:id,name')
+            ->where('status', 'pending')
+            ->latest()
+            ->get(['id', 'user_id', 'start_date', 'end_date', 'reason', 'leave_type']);
         $stats['employee_count'] = User::count();
     }
 
@@ -49,13 +51,13 @@ Route::get('/', function () {
         $projectQuery = $user->hasRole('admin') ? Project::query() : Project::where('project_manager_id', $user->id);
         $projects = $projectQuery->get();
         $stats['project_count'] = $projects->count();
-    } 
+    }
     // Team Lead Logic
     elseif ($user->hasRole('team-lead')) {
         $teamIds = Team::where('team_lead_id', $user->id)->pluck('id');
         $projects = Project::whereIn('team_id', $teamIds)->get();
     }
-    
+
     // Task Logic for Employee, Team Lead, Admin
     if ($user->hasRole('employee') || $user->hasRole('team-lead') || $user->hasRole('admin')) {
         $myTasks = Task::where('assigned_to_id', $user->id)->with('project:id,name')->latest()->get();
@@ -69,12 +71,11 @@ Route::get('/', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // All other application routes
     Route::resource('users', UserController::class)->only(['index', 'create', 'store'])->middleware(['can:manage employees']);
     Route::get('/performance/{user}', [\App\Http\Controllers\PerformanceReportController::class, 'show'])->name('performance.show')->middleware(['can:manage employees']);
@@ -85,12 +86,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::resource('leave', LeaveApplicationController::class)->only(['index', 'store'])->middleware(['can:apply for leave']);
     Route::patch('/leave/{leave_application}', [LeaveApplicationController::class, 'update'])->name('leave.update')->middleware(['can:manage leave applications']);
+    Route::delete('/leave/{leave_application}/cancel', [LeaveApplicationController::class, 'cancel'])->name('leave.cancel')->middleware(['auth', 'can:apply for leave']);
     Route::resource('hours', TimeLogController::class)->only(['index', 'store']);
 
     Route::resource('teams', TeamController::class)
-    ->only(['index', 'store'])
-    ->middleware(['can:manage employees']);
+        ->only(['index', 'store'])
+        ->middleware(['can:manage employees']);
 });
-
 
 require __DIR__.'/auth.php';

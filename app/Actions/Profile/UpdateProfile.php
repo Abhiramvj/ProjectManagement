@@ -1,4 +1,4 @@
-<?Php
+<?php
 
 namespace App\Actions\Profile;
 

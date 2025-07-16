@@ -22,7 +22,7 @@ class UpdateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-             'status' => 'required|string|in:todo,in-progress,done',
+            'status' => 'required|string|in:todo,in-progress,done',
         ];
     }
 }

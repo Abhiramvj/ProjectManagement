@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Actions\Performance;
 
+use App\Models\LeaveApplication;
 use App\Models\Task;
 use App\Models\TimeLog;
 use App\Models\User;
-use App\Models\LeaveApplication;
 use Carbon\Carbon;
 
 class ShowPerformance
@@ -20,10 +21,9 @@ class ShowPerformance
         $totalHours = TimeLog::where('user_id', $user->id)->sum('hours_worked');
 
         $approvedLeave = LeaveApplication::where('user_id', $user->id)
-                            ->where('status', 'approved')->get();
+            ->where('status', 'approved')->get();
 
-        $leaveDays = $approvedLeave->sum(fn($leave) =>
-            Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1
+        $leaveDays = $approvedLeave->sum(fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1
         );
 
         return [

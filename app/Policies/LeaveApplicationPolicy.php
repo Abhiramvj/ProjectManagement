@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Policies;
 
 use App\Models\LeaveApplication;
@@ -10,12 +11,13 @@ class LeaveApplicationPolicy
      * Grant all actions to HR or Admin users.
      * This runs before any other authorization methods.
      */
-    public function before(User $user, string $ability): bool|null
+    public function before(User $user, string $ability): ?bool
     {
         // Check for the ROLE directly to avoid an infinite loop.
         if ($user->hasRole(['hr', 'admin'])) {
             return true;
         }
+
         return null; // Let other methods decide for other roles
     }
 

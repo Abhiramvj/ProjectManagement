@@ -25,6 +25,7 @@ const updateTaskStatus = (task, newStatus) => {
 
 <template>
     <Head title="Dashboard" />
+    
 
     <AuthenticatedLayout>
         <template #header>
@@ -64,11 +65,18 @@ const updateTaskStatus = (task, newStatus) => {
                         <div class="mt-4 space-y-4">
                             <div v-for="request in pendingLeaveRequests" :key="request.id" class="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
                                 <p class="font-semibold text-gray-800">{{ request.user.name }}</p>
+                                <p class="text-sm text-indigo-600" v-if="request.leave_type">
+                                    <span class="font-semibold">Type:</span>
+                                        {{ request.leave_type.charAt(0).toUpperCase() + request.leave_type.slice(1) }} Leave
+                                </p>
+                                <p v-else class="text-sm text-gray-400 italic">No leave type</p>
+
                                 <p class="text-sm text-gray-600">
                                     <span class="font-semibold">From:</span> {{ request.start_date }}
                                     <span class="font-semibold">To:</span> {{ request.end_date }}
                                 </p>
                                 <p class="mt-1 text-sm text-gray-500 truncate">{{ request.reason }}</p>
+                                
                             </div>
                         </div>
                     </div>
@@ -124,6 +132,7 @@ const updateTaskStatus = (task, newStatus) => {
                 </div>
 
             </div>
-        </div>
+        </div><pre>{{ JSON.stringify(pendingLeaveRequests, null, 2) }}</pre>
+
     </AuthenticatedLayout>
 </template>
