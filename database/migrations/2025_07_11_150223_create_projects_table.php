@@ -12,8 +12,6 @@ return new class extends Migration {
             $table->foreignId('project_manager_id')->constrained('users');
             $table->foreignId('team_id')->constrained('teams');
             $table->string('status')->default('pending');
-            
-            
             $table->date('end_date')->nullable();
             $table->unsignedInteger('total_hours_required')->default(0);
 

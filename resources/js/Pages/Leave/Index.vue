@@ -93,7 +93,7 @@ const statusClass = (status) => {
                                     <div>
                                         <p v-if="canManage" class="font-bold text-gray-800">{{ request.user.name }}</p>
                                         <p class="text-sm text-gray-600">
-                                            <span class="font-semibold">From:</span> {{ request.start_date }} 
+                                            <span class="font-semibold">From:</span> {{ request.start_date }}
                                             <span class="font-semibold">To:</span> {{ request.end_date }}
                                         </p>
                                         <p class="mt-2 text-sm text-gray-800">{{ request.reason }}</p>

@@ -32,7 +32,7 @@ class GetTimeLogs
         ->when($teamIds->isNotEmpty(), function ($query) use ($teamIds) {
             $query->orWhereIn('team_id', $teamIds);
         })
-        ->orWhere('project_manager_id', $user->id) 
+        ->orWhere('project_manager_id', $user->id)
         ->where('status', '!=', 'completed')
         ->get(['id', 'name']);
 }

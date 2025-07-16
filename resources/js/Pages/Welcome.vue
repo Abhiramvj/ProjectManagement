@@ -38,14 +38,7 @@ defineProps({
                             class="text-blue-600 hover:underline font-semibold"
                         >
                             Log in
-                        </Link>
-                        <Link
-                            v-if="canRegister"
-                            :href="route('register')"
-                            class="text-pink-500 hover:underline font-semibold"
-                        >
-                            Register
-                        </Link>
+                    </Link>
                     </template>
                 </div>
             </div>
@@ -72,13 +65,6 @@ defineProps({
                         class="px-8 py-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-500 text-white font-bold shadow-lg hover:scale-105 hover:shadow-xl transition"
                     >
                         Log In
-                    </Link>
-                    <Link
-                        v-if="canRegister"
-                        :href="route('register')"
-                        class="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-400 text-white font-bold shadow-lg hover:scale-105 hover:shadow-xl transition"
-                    >
-                        Register
                     </Link>
                 </div>
                 <!-- Trendy Cards Section -->

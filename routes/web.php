@@ -3,9 +3,10 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\UserHierarchyController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProjectController; 
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\TeamController;
@@ -49,13 +50,13 @@ Route::get('/', function () {
         $projectQuery = $user->hasRole('admin') ? Project::query() : Project::where('project_manager_id', $user->id);
         $projects = $projectQuery->get();
         $stats['project_count'] = $projects->count();
-    } 
+    }
     // Team Lead Logic
     elseif ($user->hasRole('team-lead')) {
         $teamIds = Team::where('team_lead_id', $user->id)->pluck('id');
         $projects = Project::whereIn('team_id', $teamIds)->get();
     }
-    
+
     // Task Logic for Employee, Team Lead, Admin
     if ($user->hasRole('employee') || $user->hasRole('team-lead') || $user->hasRole('admin')) {
         $myTasks = Task::where('assigned_to_id', $user->id)->with('project:id,name')->latest()->get();
@@ -74,10 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // All other application routes
     Route::resource('users', UserController::class)->only(['index', 'create', 'store'])->middleware(['can:manage employees']);
-    Route::get('/performance/{user}', [\App\Http\Controllers\PerformanceReportController::class, 'show'])->name('performance.show')->middleware(['can:manage employees']);
+    Route::get('/performance/{user}', [PerformanceReportController::class, 'show'])->name('performance.show')->middleware(['can:manage employees']);
     Route::resource('roles', RoleController::class)->only(['index', 'store', 'edit', 'update'])->middleware(['can:manage roles']);
     Route::resource('projects', ProjectController::class)->only(['create', 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
@@ -90,7 +91,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('teams', TeamController::class)
     ->only(['index', 'store'])
     ->middleware(['can:manage employees']);
+
+       Route::get('/company-hierarchy', [UserHierarchyController::class, 'index'])
+        ->name('company.hierarchy');
 });
+
+
 
 
 require __DIR__.'/auth.php';

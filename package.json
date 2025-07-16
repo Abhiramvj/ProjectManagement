@@ -21,6 +21,12 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@he-tree/vue": "^2.9.4",
+        "vue3-blocks-tree": "^0.6.2",
+        "vue3-json-tree-view": "^3.0.4",
+        "vue3-tree": "^0.11.5",
+        "vue3-tree-org": "^4.2.2",
+        "vue3-treeview": "^0.4.2",
         "ziggy-js": "^2.5.3"
     }
 }

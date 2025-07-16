@@ -60,6 +60,10 @@ const showingNavigationDropdown = ref(false);
                                     <NavLink v-if="$page.props.auth.user.permissions.includes('manage employees')" :href="route('teams.index')" :active="route().current('teams.index')">
                                         Manage Teams
                                     </NavLink>
+                                    <NavLink :href="route('company.hierarchy')" :active="route().current('hierarchy')">
+                                        Company Hierarchy
+                                    </NavLink>
+
                             </div>
                         </div>
 

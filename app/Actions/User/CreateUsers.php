@@ -9,9 +9,19 @@ use Spatie\Permission\Models\Role;
 class CreateUsers
 {
     public function handle() {
-        return [
+
+            $theAdmin = User::role('admin')->first();
+            $potential_managers = [
+            'project_managers' => User::role('project-manager')->get(['id', 'name']),
+            'team_leads' => User::role('team-lead')->get(['id', 'name']),
+        ];
+
+
+         return [
             'roles' => Role::all()->pluck('name'),
             'teams' => Team::select('id', 'name')->get(),
+            'potential_managers' => $potential_managers,
+            'theAdmin' => $theAdmin ? ['id' => $theAdmin->id, 'name' => $theAdmin->name] : null,
         ];
     }
 }
