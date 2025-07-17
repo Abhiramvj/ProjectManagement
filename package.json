@@ -22,6 +22,7 @@
     },
     "dependencies": {
         "@vuepic/vue-datepicker": "^11.0.2",
+        "vue-cal": "^4.10.2",
         "ziggy-js": "^2.5.3"
     }
 }

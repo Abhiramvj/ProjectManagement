@@ -132,7 +132,7 @@ const updateTaskStatus = (task, newStatus) => {
                 </div>
 
             </div>
-        </div><pre>{{ JSON.stringify(pendingLeaveRequests, null, 2) }}</pre>
+        </div>
 
     </AuthenticatedLayout>
 </template>

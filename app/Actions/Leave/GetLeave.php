@@ -4,7 +4,6 @@ namespace App\Actions\Leave;
 
 use App\Models\LeaveApplication;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Carbon;
 
 class GetLeave
 {
@@ -25,22 +24,20 @@ class GetLeave
         $highlighted = [];
 
         foreach ($requests as $request) {
-            if (in_array($request->status, ['approved', 'pending'])) {
-                $start = Carbon::parse($request->start_date);
-                $end = Carbon::parse($request->end_date);
-
-                while ($start->lte($end)) {
-                    $highlighted[] = $start->toDateString(); // 'YYYY-MM-DD'
-                    $start->addDay();
-                }
+            if (in_array($request->status, ['pending', 'approved'])) {
+                $highlighted[] = [
+                    'start' => $request->start_date,
+                    'end' => $request->end_date,
+                    'title' => ucfirst($request->status).' Leave',
+                    'class' => $request->status,
+                ];
             }
         }
 
         return [
             'leaveRequests' => $requests,
             'canManage' => $user->can('manage leave applications'),
-            'highlightedDates' => array_values(array_unique($highlighted)), // ✅ remove duplicates
+            'highlightedDates' => $highlighted,
         ];
     }
 }
-    

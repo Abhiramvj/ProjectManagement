@@ -14,30 +14,29 @@ class StoreLeaveRequest extends FormRequest
     }
 
     public function rules(): array
-{
-    return [
-        'start_date' => ['required', 'date', 'after_or_equal:today', function($attribute, $value, $fail) {
-            $leaveType = $this->input('leave_type');
-            $startDate = \Carbon\Carbon::parse($value);
-            $today = \Carbon\Carbon::today();
+    {
+        return [
+            'start_date' => ['required', 'date', 'after_or_equal:today', function ($attribute, $value, $fail) {
+                $leaveType = $this->input('leave_type');
+                $startDate = \Carbon\Carbon::parse($value);
+                $today = \Carbon\Carbon::today();
 
-            if ($leaveType === 'casual') {
-                if ($startDate->lt($today->addDays(7))) {
-                    $fail('Casual leave must be applied at least 7 days in advance.');
+                if ($leaveType === 'casual') {
+                    if ($startDate->lt($today->addDays(7))) {
+                        $fail('Casual leave must be applied at least 7 days in advance.');
+                    }
+                } elseif ($leaveType === 'paid') {
+                    if ($startDate->lt($today->addDays(3))) {
+                        $fail('Paid leave must be applied at least 3 days in advance.');
+                    }
                 }
-            } elseif ($leaveType === 'paid') {
-                if ($startDate->lt($today->addDays(3))) {
-                    $fail('Paid leave must be applied at least 3 days in advance.');
-                }
-            }
-            // Sick leave has no restriction here
-        }],
-        'end_date' => 'required|date|after_or_equal:start_date',
-        'reason' => 'required|string|min:10',
-        'leave_type' => ['required', 'in:casual,sick,paid'],
-    ];
-}
-
+                // Sick leave has no restriction here
+            }],
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'required|string|min:10',
+            'leave_type' => ['required', 'in:casual,sick,paid'],
+        ];
+    }
 
     public function withValidator(Validator $validator): void
     {
