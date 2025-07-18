@@ -29,7 +29,7 @@ class StoreLeaveRequest extends FormRequest
                     if ($startDate->lt($today->addDays(1))) {
                         $fail('Paid leave must be applied at least 3 days in advance.');
                     }
-                }   
+                }
             }],
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string|min:10',
