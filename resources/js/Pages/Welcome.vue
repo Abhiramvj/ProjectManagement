@@ -16,107 +16,121 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Welcome" />
+    <Head title="Welcome to WorkSphere" />
 
-    <div class="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
-        <!-- Stylish Header -->
-        <header class="border-b bg-white/80 backdrop-blur shadow-sm sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow">
-                    Employee Project Tracker
-                </h1>
-                <div class="space-x-4 text-base">
+    <div class="min-h-screen antialiased bg-gray-50 dark:bg-gray-900 flex">
+        <!-- Left Panel: Branding & Visuals with Auth Links -->
+        <div class="w-full lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-800 relative flex items-center justify-center overflow-hidden">
+            
+            <!-- Animated Shapes -->
+            <div class="absolute inset-0 z-0">
+                <div class="absolute w-32 h-32 bg-white/10 rounded-full -top-10 -left-10 animate-float" style="animation-duration: 15s;"></div>
+                <div class="absolute w-48 h-48 bg-white/5 rounded-full -bottom-20 -right-10 animate-float" style="animation-duration: 12s; animation-delay: 3s;"></div>
+                <div class="absolute w-24 h-24 bg-white/10 rounded-full top-1/2 -right-12 animate-float" style="animation-duration: 18s; animation-delay: 5s;"></div>
+                <div class="absolute w-20 h-20 bg-white/10 rounded-lg bottom-1/4 -left-16 animate-float" style="animation-duration: 20s; animation-delay: 1s;"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="relative z-10 text-center text-white px-8 sm:px-12 py-12">
+                <svg class="h-24 w-24 mx-auto mb-6 opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h1 class="text-4xl font-bold tracking-tight">WorkSphere</h1>
+                <p class="mt-4 text-lg max-w-md opacity-80 mb-10">
+                    The effortless way for your team to track time, manage projects, and boost productivity.
+                </p>
+                
+                <!-- Auth Links -->
+                <div class="space-y-4 max-w-xs mx-auto">
                     <template v-if="$page.props.auth.user">
-                        <Link :href="route('dashboard')" class="text-blue-600 hover:underline font-semibold">
-                            Dashboard
+                        <Link
+                            :href="route('dashboard')"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-blue-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition"
+                        >
+                            Go to Dashboard
                         </Link>
                     </template>
                     <template v-else>
                         <Link
                             v-if="canLogin"
                             :href="route('login')"
-                            class="text-blue-600 hover:underline font-semibold"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-500 hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-300 transition"
                         >
-                            Log in
+                            Log In
                         </Link>
                         <Link
                             v-if="canRegister"
                             :href="route('register')"
-                            class="text-pink-500 hover:underline font-semibold"
+                            class="w-full flex justify-center py-3 px-4 border border-white rounded-md shadow-sm text-base font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition"
                         >
                             Register
                         </Link>
                     </template>
                 </div>
+                 <!-- <p class="text-xs text-white/50 mt-12">
+                    Laravel v{{ laravelVersion }} · PHP v{{ phpVersion }}
+                 </p> -->
             </div>
-        </header>
+        </div>
 
-        <!-- Trendy Main Section -->
-        <main class="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-            <div class="absolute inset-0 pointer-events-none">
-                <!-- Decorative Gradient Circles -->
-                <div class="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 rounded-full blur-3xl opacity-60"></div>
-                <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-gradient-to-tr from-pink-100 via-blue-100 to-purple-100 rounded-full blur-3xl opacity-60"></div>
-            </div>
-            <div class="relative z-10 w-full h-full flex flex-col items-center justify-center px-0 py-0 bg-white/90 rounded-none shadow-none border-0 text-center min-h-[calc(100vh-80px)]">
-                <h2 class="text-5xl font-extrabold mb-6 tracking-tight bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                    Track Employee Hours with Ease
-                </h2>
-                <p class="text-lg text-gray-600 mb-10">
-                    Manage and visualize how your team is contributing to projects in real-time.
-                </p>
-                <div class="flex justify-center gap-4 mb-10">
-                    <Link
-                        v-if="canLogin"
-                        :href="route('login')"
-                        class="px-8 py-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-500 text-white font-bold shadow-lg hover:scale-105 hover:shadow-xl transition"
-                    >
-                        Log In
-                    </Link>
-                    <Link
-                        v-if="canRegister"
-                        :href="route('register')"
-                        class="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-400 text-white font-bold shadow-lg hover:scale-105 hover:shadow-xl transition"
-                    >
-                        Register
-                    </Link>
-                </div>
-                <!-- Trendy Cards Section -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8 max-w-4xl w-full px-8">
-                    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 flex flex-col items-center hover:shadow-xl transition">
-                        <div class="bg-gradient-to-br from-blue-500 to-purple-400 text-white rounded-full p-3 mb-4">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2a4 4 0 014-4h4m0 0V7a4 4 0 00-4-4H7a4 4 0 00-4 4v10a4 4 0 004 4h4"></path>
-                            </svg>
-                        </div>
-                        <h3 class="font-bold text-lg mb-2">Project Overview</h3>
-                        <p class="text-gray-500 text-sm">Get a clear summary of all ongoing projects and their statuses.</p>
+        <!-- Right Panel: UI Mockup -->
+        <div class="hidden lg:flex w-1/2 items-center justify-center p-12">
+            <div class="w-full max-w-lg transform transition-transform duration-300 hover:scale-105">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-red-400 rounded-full"></span>
+                        <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+                        <span class="w-3 h-3 bg-green-400 rounded-full"></span>
                     </div>
-                    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 flex flex-col items-center hover:shadow-xl transition">
-                        <div class="bg-gradient-to-br from-pink-500 to-purple-400 text-white rounded-full p-3 mb-4">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white">Dashboard Overview</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Weekly Progress</p>
+                        <div class="flex items-end space-x-2 h-32">
+                            <div class="w-full bg-blue-200 dark:bg-blue-800/50 rounded-t-lg" style="height: 40%;"></div>
+                            <div class="w-full bg-blue-300 dark:bg-blue-700/50 rounded-t-lg" style="height: 60%;"></div>
+                            <div class="w-full bg-blue-200 dark:bg-blue-800/50 rounded-t-lg" style="height: 50%;"></div>
+                            <div class="w-full bg-blue-400 dark:bg-blue-600/50 rounded-t-lg" style="height: 80%;"></div>
+                            <div class="w-full bg-blue-300 dark:bg-blue-700/50 rounded-t-lg" style="height: 70%;"></div>
+                            <div class="w-full bg-blue-200 dark:bg-blue-800/50 rounded-t-lg" style="height: 55%;"></div>
+                            <div class="w-full bg-blue-400 dark:bg-blue-600/50 rounded-t-lg" style="height: 75%;"></div>
                         </div>
-                        <h3 class="font-bold text-lg mb-2">Time Tracking</h3>
-                        <p class="text-gray-500 text-sm">Easily log and monitor employee hours for each project.</p>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 flex flex-col items-center hover:shadow-xl transition">
-                        <div class="bg-gradient-to-br from-blue-500 to-pink-400 text-white rounded-full p-3 mb-4">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
+                        <div class="mt-8 space-y-4">
+                            <div class="flex items-center">
+                                <span class="w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs">✓</span>
+                                <p class="ml-3 text-gray-600 dark:text-gray-300 ">Design new dashboard layout</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-5 h-5 rounded-full border-2 border-purple-500"></span>
+                                <p class="ml-3 text-gray-800 dark:text-gray-100 font-medium">Develop API endpoints</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></span>
+                                <p class="ml-3 text-gray-600 dark:text-gray-300">User testing & feedback</p>
+                            </div>
                         </div>
-                        <h3 class="font-bold text-lg mb-2">Team Collaboration</h3>
-                        <p class="text-gray-500 text-sm">Collaborate with your team and assign tasks effortlessly.</p>
                     </div>
                 </div>
             </div>
-        </main>
-
-        <!-- Minimal Footer -->
-        <footer class="border-t text-center py-4 text-sm text-gray-400 bg-white/80">
-            Laravel v{{ laravelVersion }} · PHP v{{ phpVersion }}
-        </footer>
+        </div>
     </div>
 </template>
+
+<style>
+@keyframes float {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.1;
+    }
+    50% {
+        opacity: 0.2;
+    }
+    100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.animate-float {
+    animation: float linear infinite;
+}
+</style>

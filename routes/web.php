@@ -22,7 +22,20 @@ use App\Models\User;
 use App\Models\TimeLog; // <-- IMPORT TIME LOG MODEL
 use Inertia\Inertia;
 
+//Make login page the landing page for guests
 Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return Inertia::render('Auth/Login', [
+        'canResetPassword' => Route::has('password.request'),
+        'canRegister' => Route::has('register'),
+        'status' => session('status'),
+    ]);
+})->middleware('guest')->name('login');
+
+// Keep the original welcome page accessible at /welcome (optional)
+Route::get('/welcome', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
