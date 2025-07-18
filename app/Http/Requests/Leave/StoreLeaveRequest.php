@@ -26,11 +26,10 @@ class StoreLeaveRequest extends FormRequest
                         $fail('Casual leave must be applied at least 7 days in advance.');
                     }
                 } elseif ($leaveType === 'paid') {
-                    if ($startDate->lt($today->addDays(3))) {
+                    if ($startDate->lt($today->addDays(1))) {
                         $fail('Paid leave must be applied at least 3 days in advance.');
                     }
-                }
-                // Sick leave has no restriction here
+                }   
             }],
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string|min:10',

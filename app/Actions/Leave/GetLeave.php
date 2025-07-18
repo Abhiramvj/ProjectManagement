@@ -20,7 +20,6 @@ class GetLeave
                 ->latest()
                 ->get();
 
-        // ✅ Highlighted dates for calendar (pending or approved)
         $highlighted = [];
 
         foreach ($requests as $request) {
