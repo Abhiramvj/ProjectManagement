@@ -26,7 +26,9 @@
         "@fullcalendar/interaction": "^6.1.18",
         "@fullcalendar/vue3": "^6.1.18",
         "@vuepic/vue-datepicker": "^11.0.2",
+        "chart.js": "^4.5.0",
         "vue-cal": "^4.10.2",
+        "vue-chartjs": "^5.3.2",
         "ziggy-js": "^2.5.3"
     }
 }
