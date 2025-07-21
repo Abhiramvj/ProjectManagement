@@ -15,12 +15,12 @@ class UserController extends Controller
         return Inertia::render('Users/Index', $getUsers->handle());
     }
 
-    public function create(CreateUsers $createUsers)
-    {
-        $data = $createUsers->handle();
+    // public function create(CreateUsers $createUsers)
+    // {
+    //     $data = $createUsers->handle();
 
-        return Inertia::render('Users/Create', $data);
-    }
+    //     return Inertia::render('Users/Create', $data);
+    // }
 
     public function store(StoreUserRequest $request, StoreUsers $storeUsers)
     {

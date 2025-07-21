@@ -1,88 +1,97 @@
 <script setup>
-import TreeNode from './TreeNode.vue';
-import { ref, computed } from 'vue';
-
-const props = defineProps({
-  node: Object,
-});
-
-const isOpen = ref(true);
-
-const hasChildren = computed(() => {
-  return props.node?.children?.length > 0;
-});
+import { ref, computed } from 'vue'
+const props = defineProps({ node: Object })
+const isOpen = ref(true)
+const hasChildren = computed(() => props.node?.children?.length > 0)
 </script>
 
 <template>
-  <div class="custom-tree-node">
-    <div
-      class="node-content"
-      :class="{ clickable: hasChildren }"
-      @click="hasChildren && (isOpen = !isOpen)"
-    >
-      <span v-if="hasChildren" class="toggle-icon">
-        {{ isOpen ? '▼' : '►' }}
-      </span>
+  <div class="org-tree-node">
+    <!-- Node block -->
+    <div class="node-block" @click="hasChildren && (isOpen = !isOpen)" :class="{ clickable: hasChildren }">
+      <span v-if="hasChildren" class="toggle-icon">{{ isOpen ? '▼' : '►' }}</span>
       <span class="node-title">{{ node.name }}</span>
       <span class="node-email" v-if="node.email">({{ node.email }})</span>
     </div>
-
-    <div v-if="isOpen && hasChildren" class="children-container">
-      <TreeNode
-        v-for="child in node.children"
-        :key="child.id"
-        :node="child"
-      />
+    <!-- Connector lines -->
+    <div v-if="isOpen && hasChildren" class="children-wrap">
+      <div class="connectors">
+        <div class="vline"></div>
+        <div class="hline" :style="{width: `${node.children.length * 120}px`}"></div>
+      </div>
+      <div class="children">
+        <TreeNode
+          v-for="child in node.children"
+          :key="child.id"
+          :node="child"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.custom-tree-node {
-  margin-left: 24px;
-  padding-top: 6px;
-}
-
-.node-content {
+.org-tree-node {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(90deg, #f8fafc, #f1f5f9);
-  border: 1px solid #cbd5e1;
+  position: relative;
+  margin-bottom: 1.6rem;
+}
+.node-block {
+  background: #e0e7ff;
+  border: 1.6px solid #6366f1;
   border-radius: 8px;
-  padding: 7px 18px;
-  margin-bottom: 6px;
-  cursor: default;
-  box-shadow: 0 2px 8px #0001;
-  transition: all 0.2s ease;
-}
-
-.node-content.clickable {
-  cursor: pointer;
-}
-
-.node-content:hover {
-  background: #e2e8f0;
-  box-shadow: 0 4px 14px #67e8f950;
-}
-
-.toggle-icon {
-  color: #64748b;
-}
-
-.node-title {
-  color: #2563eb;
+  box-shadow: 0 2px 12px #6366f13c;
+  padding: 6px 20px;
   font-weight: 600;
+  color: #2e1065;
+  text-align: center;
+  cursor: default;
+  position: relative;
 }
-
-.node-email {
-  color: #64748b;
-  font-size: 0.93em;
+.node-block.clickable { cursor: pointer; transition: box-shadow 0.2s;}
+.node-block.clickable:hover { box-shadow: 0 4px 16px #818cf87c; }
+.toggle-icon { margin-right: 4px; color: #6366f1; }
+.node-title { color: #2d3a8c; }
+.node-email { color: #334155; font-size: 0.92em; margin-left:6px; }
+.children-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
 }
-
-.children-container {
-  border-left: 2px dashed #e0e7ef;
-  margin-left: 12px;
-  padding-left: 18px;
+.connectors {
+  height: 20px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.vline {
+  width: 0;
+  border-left: 2px solid #6366f1;
+  height: 12px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+}
+.hline {
+  height: 0;
+  border-top: 2px solid #6366f1;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.children {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: max-content;
+  gap: 32px;
+  margin-top: 8px;
 }
 </style>
