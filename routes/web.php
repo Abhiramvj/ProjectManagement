@@ -65,7 +65,7 @@ Route::get('/dashboard', function () {
         $projects = $projectQuery->get();
         $stats['project_count'] = $projects->count();
     }
-    
+
     // Team Lead Logic
     elseif ($user->hasRole('team-lead')) {
         $teamIds = Team::where('team_lead_id', $user->id)->pluck('id');
@@ -103,10 +103,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/leave/{leave_application}/cancel', [LeaveApplicationController::class, 'cancel'])->name('leave.cancel')->middleware(['auth', 'can:apply for leave']);
     Route::resource('hours', TimeLogController::class)->only(['index', 'store']);
     Route::resource('teams', TeamController::class)->only(['index', 'store'])->middleware(['can:manage employees']);
-    
+
     Route::get('/company-hierarchy', [UserHierarchyController::class, 'index'])
-        ->name('company.hierarchy')
-        ->middleware(['can:manage employees']);
+        ->name('company.hierarchy');
+
+         Route::get('/leave-calendar', [LeaveApplicationController::class, 'calendar'])
+    ->middleware(['auth', 'verified'])
+    ->name('leaves.calendar');
 });
 
 require __DIR__.'/auth.php';

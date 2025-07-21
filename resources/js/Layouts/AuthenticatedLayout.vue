@@ -24,6 +24,10 @@ import { Link } from '@inertiajs/vue3';
           Manage Roles
         </NavLink>
 
+        <NavLink v-if="$page.props.auth.user.permissions.includes('manage leave applications')" :href="route('leaves.calendar')" :active="route().current('leaves.calendar')">
+                        Leave Calendar
+                    </NavLink>
+
         <NavLink v-if="$page.props.auth.user.permissions.includes('assign projects')" :href="route('projects.create')" :active="route().current('projects.create')">
           New Project
         </NavLink>
@@ -42,9 +46,9 @@ import { Link } from '@inertiajs/vue3';
           Manage Teams
         </NavLink>
 
-        <NavLink v-if="$page.props.auth.user.permissions.includes('manage employees')" :href="route('company.hierarchy')" :active="route().current('company.hierarchy')">
-          Company Hierarchy
-        </NavLink>
+         <NavLink :href="route('company.hierarchy')" :active="route().current('hierarchy')">
+                                        Company Hierarchy
+                                    </NavLink>
       </nav>
     </aside>
 
@@ -73,7 +77,7 @@ import { Link } from '@inertiajs/vue3';
             </template>
           </Dropdown>
         </div>
-      </header \
+    </header>
 
       <!-- Page Content -->
       <main class="flex-1 p-4">
