@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Actions\Leave;
 
 use App\Models\LeaveApplication;
@@ -10,4 +11,3 @@ class UpdateLeave
         $leaveApplication->update(['status' => $status]);
     }
 }
-

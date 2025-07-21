@@ -16,21 +16,21 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     public function edit(Request $request, EditProfile $getProfileData): Response
-{
-    return Inertia::render('Profile/Edit', $getProfileData->handle($request));
-}
+    {
+        return Inertia::render('Profile/Edit', $getProfileData->handle($request));
+    }
 
-   public function update(ProfileUpdateRequest $request, UpdateProfile $updateProfile): RedirectResponse
-{
-    $updateProfile->handle($request);
+    public function update(ProfileUpdateRequest $request, UpdateProfile $updateProfile): RedirectResponse
+    {
+        $updateProfile->handle($request);
 
-    return redirect()->route('profile.edit');
-}
+        return redirect()->route('profile.edit');
+    }
 
-  public function destroy(DeleteAccountRequest $request, DeleteAccount $deleteAccount): RedirectResponse
-{
-    $deleteAccount->handle($request);
+    public function destroy(DeleteAccountRequest $request, DeleteAccount $deleteAccount): RedirectResponse
+    {
+        $deleteAccount->handle($request);
 
-    return Redirect::to('/');
-}
+        return Redirect::to('/');
+    }
 }

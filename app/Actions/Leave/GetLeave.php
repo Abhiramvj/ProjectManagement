@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Actions\Leave;
 
 use App\Models\LeaveApplication;
@@ -10,19 +11,32 @@ class GetLeave
     {
         $user = Auth::user();
 
-        if ($user->can('manage leave applications')) {
-            $requests = LeaveApplication::with('user:id,name')
+        $requests = $user->can('manage leave applications')
+            ? LeaveApplication::with('user:id,name')
                 ->orderByRaw("FIELD(status, 'pending', 'approved', 'rejected')")
-                ->latest()->get();
-        } else {
-            $requests = LeaveApplication::where('user_id', $user->id)
-                ->latest()->get();
+                ->latest()
+                ->get()
+            : LeaveApplication::where('user_id', $user->id)
+                ->latest()
+                ->get();
+
+        $highlighted = [];
+
+        foreach ($requests as $request) {
+            if (in_array($request->status, ['pending', 'approved'])) {
+                $highlighted[] = [
+                    'start' => $request->start_date,
+                    'end' => $request->end_date,
+                    'title' => ucfirst($request->status).' Leave',
+                    'class' => $request->status,
+                ];
+            }
         }
 
         return [
             'leaveRequests' => $requests,
             'canManage' => $user->can('manage leave applications'),
+            'highlightedDates' => $highlighted,
         ];
     }
 }
-

@@ -1,11 +1,12 @@
 <?php
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use App\Models\User;
 use App\Models\Team;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -47,7 +48,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $hrRole = Role::create(['name' => 'hr']);
         $hrRole->givePermissionTo([
             'view all working hours', 'manage leave applications', 'manage employees',
-            'manage roles', 'apply for leave'
+            'manage roles', 'apply for leave',
         ]);
 
         // Admin Role
@@ -55,13 +56,13 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminRole->givePermissionTo(Permission::all());
 
         // Create Demo Users and Team
-        $leadUser = User::factory()->create([ 'name' => 'Team Lead User', 'email' => 'lead@example.com', ]);
+        $leadUser = User::factory()->create(['name' => 'Team Lead User', 'email' => 'lead@example.com']);
         $leadUser->assignRole($teamLeadRole);
 
-        $employeeUser = User::factory()->create([ 'name' => 'Employee User', 'email' => 'employee@example.com', ]);
+        $employeeUser = User::factory()->create(['name' => 'Employee User', 'email' => 'employee@example.com']);
         $employeeUser->assignRole($employeeRole);
-        
-        $devTeam = Team::create([ 'name' => 'Core Development Team', 'team_lead_id' => $leadUser->id ]);
+
+        $devTeam = Team::create(['name' => 'Core Development Team', 'team_lead_id' => $leadUser->id]);
         $devTeam->members()->attach([$leadUser->id, $employeeUser->id]);
 
         User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com'])->assignRole($adminRole);

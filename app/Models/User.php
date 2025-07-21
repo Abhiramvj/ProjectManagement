@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -50,11 +51,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(LeaveApplication::class);
     }
+
     public function timeLogs()
     {
         return $this->hasMany(TimeLog::class);
     }
-    public function teams() 
+
+    public function teams()
     {
         return $this->belongsToMany(Team::class, 'team_user');
     }

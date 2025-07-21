@@ -6,7 +6,8 @@ use App\Models\Team;
 
 class CreateProject
 {
-    public function handle() {
+    public function handle()
+    {
         return [
             'teams' => Team::with('teamLead:id,name')->get(),
         ];

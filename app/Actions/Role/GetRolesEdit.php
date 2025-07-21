@@ -7,8 +7,9 @@ use Spatie\Permission\Models\Role;
 
 class GetRolesEdit
 {
-    public function handle(Role $role) {
-         return [
+    public function handle(Role $role)
+    {
+        return [
             'role' => [
                 'id' => $role->id,
                 'name' => $role->name,

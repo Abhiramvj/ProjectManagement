@@ -3,8 +3,8 @@
 namespace App\Actions\Project;
 
 use App\Models\Project;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Auth;
 
 class ShowProject
 {
@@ -28,4 +28,3 @@ class ShowProject
         ];
     }
 }
-

@@ -21,6 +21,12 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.18",
+        "@fullcalendar/daygrid": "^6.1.18",
+        "@fullcalendar/interaction": "^6.1.18",
+        "@fullcalendar/vue3": "^6.1.18",
+        "@vuepic/vue-datepicker": "^11.0.2",
+        "vue-cal": "^4.10.2",
         "ziggy-js": "^2.5.3"
     }
 }
