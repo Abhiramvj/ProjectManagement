@@ -8,12 +8,15 @@ use Illuminate\Support\Facades\Hash;
 
 class StoreUsers
 {
-    public function handle(array $data)
-    {
+    public function handle(array $data) {
+
+        $hrApprover = User::role('hr')->first();
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'parent_id' => $data['parent_id'] ?? null,
+             'leave_approver_id' => $hrApprover ? $hrApprover->id : null,
         ]);
 
         $user->assignRole($data['role']);

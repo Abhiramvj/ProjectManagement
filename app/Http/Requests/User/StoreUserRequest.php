@@ -23,16 +23,25 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => ['required', Password::defaults()],
-            'role' => 'required|string|exists:roles,name',
-            'team_id' => 'nullable|exists:teams,id',
+
+
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users,email',
+        'password' => ['required', Password::defaults()],
+        'role' => 'required|string|exists:roles,name',
+        'team_id' => 'nullable|exists:teams,id',
+        'parent_id' => 'nullable|exists:users,id',
+        
         ];
     }
 
     public function withValidator($validator)
     {
+
+          $validator->sometimes('parent_id', 'required|integer|exists:users,id', function ($input) {
+            return in_array($input->role, ['project-manager', 'team-lead', 'employee']);
+        });
+
         $validator->sometimes('team_id', 'required|exists:teams,id', function ($input) {
             return $input->role === 'employee';
         });

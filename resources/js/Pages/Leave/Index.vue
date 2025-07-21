@@ -72,8 +72,7 @@ function getSelectionBackground() {
 function updateFormDates() {
   const [start, end] = selectedDates.value
   form.start_date = start ? start.toLocaleDateString('en-CA') : ''
-form.end_date = end ? end.toLocaleDateString('en-CA') : ''
-
+  form.end_date = end ? end.toLocaleDateString('en-CA') : ''
 }
 
 // --- HANDLE CALENDAR CELL CLICK ---
@@ -394,10 +393,10 @@ onMounted(() => {
 
       <!-- Leave Requests Section -->
       <div class="p-4 sm:p-6 bg-white shadow rounded-xl">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Leave Requests</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ props.canManage ? 'All Employee Leave Requests' : 'Your Leave Requests' }}</h3>
         
         <div v-if="props.leaveRequests.length === 0" class="text-sm text-gray-500">
-          You haven't submitted any leave requests yet.
+          {{ props.canManage ? 'No employee leave requests found.' : 'You haven\'t submitted any leave requests yet.' }}
         </div>
 
         <table v-else class="w-full table-auto text-sm text-left">
@@ -409,6 +408,7 @@ onMounted(() => {
               <th class="px-4 py-2">Reason</th>
               <th class="px-4 py-2">Status</th>
               <th v-if="props.canManage" class="px-4 py-2">Actions</th>
+              <th v-else class="px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -453,10 +453,12 @@ onMounted(() => {
               </td>
               <td v-if="props.canManage" class="px-4 py-2 space-x-2">
                 <button 
+                  v-if="request.status === 'pending'"
                   class="text-green-600 hover:underline text-xs"
                   @click="updateStatus(request, 'approved')"
                 >Approve</button>
                 <button 
+                  v-if="request.status === 'pending'"
                   class="text-red-600 hover:underline text-xs"
                   @click="updateStatus(request, 'rejected')"
                 >Reject</button>

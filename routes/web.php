@@ -1,27 +1,27 @@
 <?php
 
 use App\Http\Controllers\LeaveApplicationController;
+use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\UserHierarchyController;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\UserController;
 use App\Models\LeaveApplication;
-// Import
-
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
-use App\Models\User; // Import at the top
-use Illuminate\Foundation\Application; // <-- IMPORT TASK MODEL
-use Illuminate\Support\Facades\Auth; // <-- IMPORT LEAVE APPLICATION MODEL
-use Illuminate\Support\Facades\Route;
-// <-- IMPORT TIME LOG MODEL
+use App\Models\User;
+use App\Models\TimeLog; // Added TimeLog model import
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
-//Make login page the landing page for guests
+// Make login page the landing page for guests
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
@@ -65,6 +65,7 @@ Route::get('/dashboard', function () {
         $projects = $projectQuery->get();
         $stats['project_count'] = $projects->count();
     }
+    
     // Team Lead Logic
     elseif ($user->hasRole('team-lead')) {
         $teamIds = Team::where('team_lead_id', $user->id)->pluck('id');
@@ -91,7 +92,7 @@ Route::middleware('auth')->group(function () {
 
     // All other application routes
     Route::resource('users', UserController::class)->only(['index', 'create', 'store'])->middleware(['can:manage employees']);
-    Route::get('/performance/{user}', [\App\Http\Controllers\PerformanceReportController::class, 'show'])->name('performance.show')->middleware(['can:manage employees']);
+    Route::get('/performance/{user}', [PerformanceReportController::class, 'show'])->name('performance.show')->middleware(['can:manage employees']);
     Route::resource('roles', RoleController::class)->only(['index', 'store', 'edit', 'update'])->middleware(['can:manage roles']);
     Route::resource('projects', ProjectController::class)->only(['create', 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
@@ -101,9 +102,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/leave/{leave_application}', [LeaveApplicationController::class, 'update'])->name('leave.update')->middleware(['can:manage leave applications']);
     Route::delete('/leave/{leave_application}/cancel', [LeaveApplicationController::class, 'cancel'])->name('leave.cancel')->middleware(['auth', 'can:apply for leave']);
     Route::resource('hours', TimeLogController::class)->only(['index', 'store']);
-
-    Route::resource('teams', TeamController::class)
-        ->only(['index', 'store'])
+    Route::resource('teams', TeamController::class)->only(['index', 'store'])->middleware(['can:manage employees']);
+    
+    Route::get('/company-hierarchy', [UserHierarchyController::class, 'index'])
+        ->name('company.hierarchy')
         ->middleware(['can:manage employees']);
 });
 

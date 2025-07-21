@@ -41,6 +41,10 @@ import { Link } from '@inertiajs/vue3';
         <NavLink v-if="$page.props.auth.user.permissions.includes('manage employees')" :href="route('teams.index')" :active="route().current('teams.index')">
           Manage Teams
         </NavLink>
+
+        <NavLink v-if="$page.props.auth.user.permissions.includes('manage employees')" :href="route('company.hierarchy')" :active="route().current('company.hierarchy')">
+          Company Hierarchy
+        </NavLink>
       </nav>
     </aside>
 
@@ -52,22 +56,24 @@ import { Link } from '@inertiajs/vue3';
           <slot name="header" />
         </div>
 
-        <!-- User Dropdown -->
-        <Dropdown align="right" width="48">
-          <template #trigger>
-            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:text-gray-900 focus:outline-none">
-              {{ $page.props.auth.user.name }}
-              <svg class="ml-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l5 5 5-5" />
-              </svg>
-            </button>
-          </template>
-          <template #content>
-            <DropdownLink :href="route('profile.edit')">Profile</DropdownLink>
-            <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
-          </template>
-        </Dropdown>
-      </header>
+        <div class="flex items-center space-x-4">
+          <!-- User Dropdown -->
+          <Dropdown align="right" width="48">
+            <template #trigger>
+              <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:text-gray-900 focus:outline-none">
+                {{ $page.props.auth.user.name }}
+                <svg class="ml-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l5 5 5-5" />
+                </svg>
+              </button>
+            </template>
+            <template #content>
+              <DropdownLink :href="route('profile.edit')">Profile</DropdownLink>
+              <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
+            </template>
+          </Dropdown>
+        </div>
+      </header \
 
       <!-- Page Content -->
       <main class="flex-1 p-4">
