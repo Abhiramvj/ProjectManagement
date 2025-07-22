@@ -27,9 +27,13 @@ class LeaveApplicationController extends Controller
 
     public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
     {
-        $storeLeave->handle($request->validated());
+        try {
+            $storeLeave->handle($request->validated());
 
-        return Redirect::route('leave.index')->with('success', 'Leave application submitted.');
+            return Redirect::route('leave.index')->with('success', 'Leave application submitted.');
+        } catch (\Exception $e) {
+            return Redirect::back()->withErrors(['leave' => $e->getMessage()])->withInput();
+        }
     }
 
     public function update(UpdateLeaveRequest $request, LeaveApplication $leave_application, UpdateLeave $updateLeaveStatus)

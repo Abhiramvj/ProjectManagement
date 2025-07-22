@@ -111,5 +111,16 @@ Route::middleware('auth')->group(function () {
     ->middleware(['auth', 'verified'])
     ->name('leaves.calendar');
 });
+Route::get('/dev-login/{role}', function ($role) {
+    abort_unless(app()->isLocal(), 403); // Restrict to local/dev ONLY
+
+    $user = User::role($role)->first();
+    if (! $user) {
+        abort(404);
+    }
+    Auth::login($user); // Log in as user of given role
+
+    return redirect('/dashboard'); // Redirect to dashboard or wherever you want
+})->name('dev.login');
 
 require __DIR__.'/auth.php';

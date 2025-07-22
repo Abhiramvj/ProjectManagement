@@ -29,6 +29,14 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
+const isLocalDev = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.test') ||
+    window.location.hostname.endsWith('.herd.run')
+);
+
 </script>
 
 <template>
@@ -181,6 +189,18 @@ const submit = () => {
                         />
                         <InputError class="mt-1" :message="form.errors.password" />
                     </div>
+<!-- Only visible in local/dev -->
+<div v-if="isLocalDev" class="mt-8">
+  <p class="text-xs text-white/70 mb-2">Dev quick login:</p>
+  <div class="flex flex-wrap gap-2 justify-center">
+    <a v-for="role in ['admin','hr','project-manager','team-lead','employee']"
+       :key="role"
+       :href="`/dev-login/${role}`"
+       class="py-1 px-3 rounded bg-gray-800 text-white text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 transition">
+      Login as {{ role.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
+    </a>
+  </div>
+</div>
 
                     <div class="flex items-center justify-between">
                         <label class="flex items-center">
