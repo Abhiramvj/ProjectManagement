@@ -1,5 +1,4 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -10,9 +9,6 @@ defineProps({
     canResetPassword: {
         type: Boolean,
     },
-    canRegister: {
-        type: Boolean,
-    },
     status: {
         type: String,
     },
@@ -21,7 +17,6 @@ defineProps({
 const form = useForm({
     email: '',
     password: '',
-    remember: false,
 });
 
 const submit = () => {
@@ -36,258 +31,140 @@ const isLocalDev = (
     window.location.hostname.endsWith('.test') ||
     window.location.hostname.endsWith('.herd.run')
 );
-
 </script>
 
 <template>
     <Head title="Log in" />
 
-    <div class="min-h-screen antialiased bg-stone-100 flex">
-        <!-- Left Panel: Branding & Visual -->
-        <div class="hidden lg:flex w-1/2 bg-gradient-to-br from-amber-100 to-orange-100 relative items-center justify-center p-12">
-            <!-- Subtle animated background pattern -->
-            <div class="absolute inset-0 opacity-20">
-                <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path
-                        d="M0,50 L100,50 M50,0 L50,100"
-                        stroke="#d97706"
-                        stroke-width="0.5"
-                        stroke-dasharray="5 5"
-                        class="animate-move-dash"
-                    />
+    
+    <div class="min-h-screen antialiased flex flex-col items-center justify-center p-6 relative login-background">
+
+        <!-- Logo -->
+        <div class="absolute top-0 mt-8 sm:mt-12">
+            <div class="flex items-center space-x-2">
+                <!-- A simple SVG representation of the logo in the image -->
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 28C22.6274 28 28 22.6274 28 16C28 9.37258 22.6274 4 16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28Z" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21.5 16C21.5 18.4853 19.4853 20.5 17 20.5C14.5147 20.5 12.5 18.4853 12.5 16C12.5 13.5147 14.5147 11.5 17 11.5" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-            </div>
-
-            <!-- Animated work illustration -->
-            <div class="relative z-10 text-center text-stone-700">
-                <div class="w-40 h-40 mx-auto mb-8">
-                    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Office building with subtle pulse -->
-                        <path
-                            d="M50 50V150H150V50H50Z"
-                            stroke="#92400e"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="animate-pulse-opacity"
-                        />
-                        <path
-                            d="M70 70V100H90V70H70Z"
-                            stroke="#b45309"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="animate-pulse-opacity"
-                            style="animation-delay: 0.3s;"
-                        />
-                        <path
-                            d="M110 70V100H130V70H110Z"
-                            stroke="#b45309"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="animate-pulse-opacity"
-                            style="animation-delay: 0.6s;"
-                        />
-
-                        <!-- Progress bars with continuous growing/shrinking animation -->
-                        <rect
-                            x="30" y="30" width="10" height="20"
-                            fill="#f59e0b" fill-opacity="0.7"
-                            class="animate-graph-pulse"
-                            style="transform-origin: bottom; animation-delay: 0.4s;"
-                        />
-                        <rect
-                            x="45" y="40" width="10" height="10"
-                            fill="#fbbf24" fill-opacity="0.5"
-                            class="animate-graph-pulse"
-                            style="transform-origin: bottom; animation-delay: 0.6s;"
-                        />
-                        <rect
-                            x="60" y="20" width="10" height="30"
-                            fill="#fcd34d" fill-opacity="0.9"
-                            class="animate-graph-pulse"
-                            style="transform-origin: bottom; animation-delay: 0.8s;"
-                        />
-
-                        <!-- Clock with ticking animation -->
-                        <circle
-                            cx="170"
-                            cy="40"
-                            r="15"
-                            stroke="#92400e"
-                            stroke-width="1.5"
-                            class="animate-rotate"
-                            style="transform-origin: 170px 40px; animation-delay: 1s;"
-                        />
-                        <path
-                            d="M170 40V30"
-                            stroke="#92400e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            class="animate-rotate"
-                            style="transform-origin: 170px 40px;"
-                        />
-                        <path
-                            d="M170 40H175"
-                            stroke="#b45309"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            class="animate-rotate-fast"
-                            style="transform-origin: 170px 40px; animation-delay: 0.5s;"
-                        />
-                    </svg>
-                </div>
-
-                <h1 class="text-4xl font-bold mb-3 animate-fade-in text-amber-800">WorkSphere</h1>
-                <p class="text-lg opacity-90 max-w-md mx-auto animate-fade-in text-stone-600" style="animation-delay: 0.3s;">
-                    The modern way to manage your team's productivity
-                </p>
+                <span class="text-2xl font-semibold text-gray-800">WorkSphere</span>
             </div>
         </div>
 
-        <!-- Right Panel: Login Form -->
-        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-stone-50">
-            <div class="w-full max-w-md animate-fade-in" style="animation-delay: 0.2s;">
-                <div class="text-center lg:text-left mb-8">
-                    <h2 class="text-2xl font-bold text-stone-800">Welcome back</h2>
-                    <p class="mt-2 text-stone-600">
-                        Sign in to continue to your dashboard
-                    </p>
+        <!-- Login Card -->
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 sm:p-10 mt-20">
+            <div class="text-left mb-8">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Log in to your account</h1>
+                <p class="mt-2 text-sm text-gray-500">
+                    Enter your credentials to access your account.
+                </p>
+            </div>
+
+            <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
+                {{ status }}
+            </div>
+
+            <form @submit.prevent="submit" class="space-y-6">
+                <div>
+                    <InputLabel for="email" value="Email" class="text-sm font-medium text-gray-700"/>
+                    <TextInput
+                        id="email"
+                        type="email"
+                        class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                        v-model="form.email"
+                        required
+                        autofocus
+                        autocomplete="username"
+                        placeholder="name@iocod.com"
+                    />
+                    <InputError class="mt-2" :message="form.errors.email" />
                 </div>
 
-                <div v-if="status" class="mb-4 font-medium text-sm text-amber-600">
-                    {{ status }}
-                </div>
-
-                <form @submit.prevent="submit" class="space-y-5">
-                    <div>
-                        <InputLabel for="email" value="Email" class="mb-1 text-stone-700"/>
-                        <TextInput
-                            id="email"
-                            type="email"
-                            class="mt-1 block w-full border-stone-300 focus:border-amber-400 focus:ring focus:ring-amber-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                            v-model="form.email"
-                            required
-                            autofocus
-                            autocomplete="username"
-                            placeholder="you@company.com"
-                        />
-                        <InputError class="mt-1" :message="form.errors.email" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="password" value="Password" class="mb-1 text-stone-700"/>
+                <div>
+                    <InputLabel for="password" value="Password" class="text-sm font-medium text-gray-700"/>
+                    <div class="relative mt-1">
                         <TextInput
                             id="password"
                             type="password"
-                            class="mt-1 block w-full border-stone-300 focus:border-amber-400 focus:ring focus:ring-amber-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                            class="block w-full border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm"
                             v-model="form.password"
                             required
                             autocomplete="current-password"
-                            placeholder="••••••••"
+                            placeholder="••••••••••"
                         />
-                        <InputError class="mt-1" :message="form.errors.password" />
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
                     </div>
-<!-- Only visible in local/dev -->
-<div v-if="isLocalDev" class="mt-8">
-  <p class="text-xs text-white/70 mb-2">Dev quick login:</p>
-  <div class="flex flex-wrap gap-2 justify-center">
-    <a v-for="role in ['admin','hr','project-manager','team-lead','employee']"
-       :key="role"
-       :href="`/dev-login/${role}`"
-       class="py-1 px-3 rounded bg-gray-800 text-white text-xs hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 transition">
-      Login as {{ role.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
-    </a>
-  </div>
-</div>
+                     <InputError class="mt-2" :message="form.errors.password" />
+                </div>
 
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center">
-                            <Checkbox name="remember" v-model:checked="form.remember" class="rounded border-gray-300 text-amber-600 shadow-sm focus:ring-amber-500" />
-                            <span class="ml-2 text-sm text-stone-600">Remember me</span>
-                        </label>
+                <div class="text-right">
+                     <Link
+                        v-if="canResetPassword"
+                        :href="route('password.request')"
+                        class="text-sm text-blue-600 hover:text-blue-500 font-medium transition-colors"
+                    >
+                        Forgot Password?
+                    </Link>
+                </div>
 
-                        <Link
-                            v-if="canResetPassword"
-                            :href="route('password.request')"
-                            class="text-sm text-amber-600 hover:text-amber-500 font-medium"
-                        >
-                            Forgot password?
-                        </Link>
+                <div>
+                    <PrimaryButton class="w-full justify-center py-3 px-4 bg-gray-800 hover:bg-gray-900 focus:bg-gray-900 active:bg-gray-900 focus:ring-indigo-500 text-white font-semibold rounded-lg" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                        Login
+                    </PrimaryButton>
+                </div>
+
+                <!-- "or" separator -->
+                <div class="flex items-center my-4">
+                    <hr class="flex-grow border-gray-200">
+                    <span class="mx-4 text-sm font-medium text-gray-400">or</span>
+                    <hr class="flex-grow border-gray-200">
+                </div>
+
+                <!-- Login with Microsoft Button -->
+                <div>
+                    <a href="#" class="w-full flex items-center justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <img class="w-5 h-5 mr-2" src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo">
+                        Login with Microsoft
+                    </a>
+                </div>
+
+                <!-- Dev quick login (preserved from original code) -->
+                <div v-if="isLocalDev" class="mt-6 pt-4 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 mb-2 text-center">Dev quick login:</p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <a v-for="role in ['admin','hr','project-manager','team-lead','employee']"
+                           :key="role"
+                           :href="`/dev-login/${role}`"
+                           class="py-1 px-3 rounded bg-gray-200 text-gray-700 text-xs hover:bg-blue-500 hover:text-white focus:ring-2 focus:ring-blue-300 transition-colors">
+                            Login as {{ role.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
+                        </a>
                     </div>
+                </div>
 
-                    <div>
-                        <PrimaryButton class="w-full justify-center py-2.5 bg-amber-600 hover:bg-amber-700 focus:bg-amber-700 active:bg-amber-800 focus:ring-amber-500 text-white font-semibold" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                            Sign In
-                        </PrimaryButton>
-                    </div>
-                </form>
+            </form>
+        </div>
 
-                <p class="mt-8 text-center text-xs text-stone-500">
-                    © {{ new Date().getFullYear() }} WorkSphere. All rights reserved.
-                </p>
-            </div>
+         <!-- Footer -->
+        <div class="w-full max-w-md text-center mt-8 pb-4">
+            <p class="text-xs text-gray-500">
+                ©{{ new Date().getFullYear() }} WorkSphere. All right reserved
+            </p>
         </div>
     </div>
 </template>
 
 <style>
-/* Keyframes remain the same as they're animation definitions */
-@keyframes move-dash {
-    to {
-        stroke-dashoffset: 10;
-    }
-}
-
-@keyframes pulse-opacity {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-}
-
-@keyframes graph-pulse {
-    0%, 100% { transform: scaleY(1); }
-    25% { transform: scaleY(0.98); }
-    50% { transform: scaleY(1.05); }
-    75% { transform: scaleY(0.97); }
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes rotate-fast {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(3600deg); }
-}
-
-@keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-move-dash {
-    animation: move-dash 3s linear infinite;
-}
-
-.animate-pulse-opacity {
-    animation: pulse-opacity 4s ease-in-out infinite;
-}
-
-.animate-graph-pulse {
-    animation: graph-pulse 6s ease-in-out infinite;
-}
-
-.animate-rotate {
-    animation: rotate 60s linear infinite;
-}
-
-.animate-rotate-fast {
-    animation: rotate-fast 10s linear infinite;
-}
-
-.animate-fade-in {
-    animation: fade-in 0.8s ease-out forwards;
+.login-background {
+  
+  background-image: url('/images/loginbg.png');
+  background-color: #f3f4f6; 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 </style>
