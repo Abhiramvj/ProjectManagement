@@ -20,13 +20,14 @@ const leaveFormSection = ref(null);
 // Refs for centered modals
 const isPolicyModalVisible = ref(false);
 const isHolidaysModalVisible = ref(false);
-// --- NEW: Refs for the leave detail modal ---
 const isLeaveDetailModalVisible = ref(false);
 const viewingRequest = ref(null);
-// --- NEW: Refs for the Success Modal ---
 const isSuccessModalVisible = ref(false);
 const lastSuccessfulRequest = ref(null);
 
+// --- NEW: Refs for the Document Upload Modal ---
+const isUploadModalVisible = ref(false);
+const requestForUpload = ref(null);
 
 const statusConfig = {
   approved: { class: 'bg-green-100 text-green-800', icon: '✅' },
@@ -87,8 +88,13 @@ const form = useForm({
   day_type: 'full',
   start_half_session: '',
   end_half_session: '',
-  document: null, // Added for file upload
+  document: null,
 })
+
+// --- NEW: Form specifically for the document upload modal ---
+const uploadForm = useForm({
+    document: null,
+});
 
 // Function to smoothly scroll to the leave form
 const scrollToLeaveForm = () => {
@@ -98,34 +104,32 @@ const scrollToLeaveForm = () => {
 };
 
 // Functions to control the centered modals
-const openPolicyModal = () => {
-  isPolicyModalVisible.value = true;
-};
-const closePolicyModal = () => {
-  isPolicyModalVisible.value = false;
-};
-
-const openHolidaysModal = () => {
-  isHolidaysModalVisible.value = true;
-};
-const closeHolidaysModal = () => {
-  isHolidaysModalVisible.value = false;
-};
-
-// --- NEW: Functions to control the leave detail modal ---
+const openPolicyModal = () => { isPolicyModalVisible.value = true; };
+const closePolicyModal = () => { isPolicyModalVisible.value = false; };
+const openHolidaysModal = () => { isHolidaysModalVisible.value = true; };
+const closeHolidaysModal = () => { isHolidaysModalVisible.value = false; };
 const openLeaveDetailModal = (request) => {
     viewingRequest.value = request;
     isLeaveDetailModalVisible.value = true;
 };
 const closeLeaveDetailModal = () => {
     isLeaveDetailModalVisible.value = false;
-    viewingRequest.value = null; // Clear the data when closing
+    viewingRequest.value = null;
 };
-
-// --- NEW: Function to close the success modal ---
 const closeSuccessModal = () => {
     isSuccessModalVisible.value = false;
     lastSuccessfulRequest.value = null;
+};
+
+// --- NEW: Functions to control the document upload modal ---
+const openUploadModal = (request) => {
+    requestForUpload.value = request;
+    isUploadModalVisible.value = true;
+};
+const closeUploadModal = () => {
+    isUploadModalVisible.value = false;
+    requestForUpload.value = null;
+    uploadForm.reset(); // Clear form and errors
 };
 
 const selectedDateRange = computed(() => {
@@ -196,47 +200,37 @@ const calendarGrid = computed(() => {
     const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const [startSelection, endSelection] = selectedDates.value;
-
     const days = [];
-
-    // Adjust for week starting on Monday (0=Mon, 6=Sun)
     const startDay = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1;
-
-    // Add padding for days before the start of the month
     for (let i = 0; i < startDay; i++) {
         days.push({ key: `pad-start-${i}`, isPadding: true });
     }
-
-    // Add the actual days of the month
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         date.setHours(0,0,0,0);
-
-        const isSelected = (startSelection && date.getTime() === startSelection.getTime()) ||
-                           (endSelection && date.getTime() === endSelection.getTime());
-
+        const isSelected = (startSelection && date.getTime() === startSelection.getTime()) || (endSelection && date.getTime() === endSelection.getTime());
         const isInRange = startSelection && endSelection && date > startSelection && date < endSelection;
-
         days.push({
-            key: `day-${day}`,
-            day,
-            date,
-            isPadding: false,
+            key: `day-${day}`, day, date, isPadding: false,
             isToday: date.getTime() === today.getTime(),
-            isPast: date < today,
-            isSelected,
-            isInRange,
+            isPast: date < today, isSelected, isInRange,
         });
     }
-
-    // Add padding for days after the end of the month to complete the grid
     const remainingSlots = (7 - (days.length % 7)) % 7;
     for (let i = 0; i < remainingSlots; i++) {
         days.push({ key: `pad-end-${i}`, isPadding: true });
     }
-
     return days;
 });
+
+const getTagClass = (leaveType) => {
+  const classes = {
+    annual: 'bg-blue-100 text-blue-800', sick: 'bg-green-100 text-green-800',
+    personal: 'bg-yellow-100 text-yellow-800', emergency: 'bg-red-100 text-red-800',
+    maternity: 'bg-pink-100 text-pink-800', paternity: 'bg-purple-100 text-purple-800',
+  };
+  return classes[leaveType] || 'bg-gray-100 text-gray-800';
+};
 
 const handleDateClick = (day) => {
   if (day.isPast) {
@@ -245,7 +239,6 @@ const handleDateClick = (day) => {
   }
   const clickedDate = day.date;
   const [start, end] = selectedDates.value;
-
   if (!start || end) {
     selectedDates.value = [clickedDate, null];
   } else {
@@ -262,24 +255,25 @@ const changeMonth = (offset) => {
     displayDate.value = new Date(displayDate.value.setMonth(displayDate.value.getMonth() + offset));
 };
 
-// Handle file selection for document upload
 const handleFileChange = (event) => {
     form.document = event.target.files[0];
 }
+
+// --- NEW: Handle file change for the upload modal ---
+const handleUploadModalFileChange = (event) => {
+    uploadForm.document = event.target.files[0];
+};
 
 const validateForm = () => {
   if (!form.start_date) {
     alert('Please select at least a start date.')
     return false
   }
-  
-  // Validate document for sick leave
   if (form.leave_type === 'sick' && form.document === null) {
     if (!confirm('You haven\'t attached a medical document. Sick leave typically requires documentation. Continue without attaching?')) {
       return false
     }
   }
-  
   if (form.day_type === 'half') {
     if (!form.start_half_session) {
       alert('Please select morning or afternoon session for start date.')
@@ -308,30 +302,23 @@ const checkAdvanceNotice = () => {
 
 const submitApplication = () => {
     if (!validateForm()) return;
-
-    // Set end_date if not set for single-day leaves
     if (!form.end_date) {
         form.end_date = form.start_date;
         const startDate = new Date(form.start_date + 'T00:00:00');
         selectedDates.value = [startDate, startDate];
         if (form.day_type === 'half') { form.end_half_session = form.start_half_session; }
     }
-
     if (form.day_type === 'full') {
         form.start_half_session = null;
         form.end_half_session = null;
     }
-
     if (!checkAdvanceNotice()) return;
-
     const start = new Date(form.start_date);
     const end = new Date(form.end_date);
     let calculatedDays;
-
     if (form.day_type === 'half') {
         const diffInMs = Math.abs(end.getTime() - start.getTime());
         const diffInDays = diffInMs / (1000 * 3600 * 24);
-
         if (diffInDays === 0) {
             calculatedDays = 0.5;
         } else {
@@ -343,18 +330,12 @@ const submitApplication = () => {
         const diffInMs = Math.abs(end.getTime() - start.getTime());
         calculatedDays = diffInMs / (1000 * 3600 * 24) + 1;
     }
-
     const submissionData = {
-        days: formatLeaveDays(calculatedDays),
-        reason: form.reason,
-        start_date: form.start_date,
-        end_date: form.end_date,
-        leave_type: form.leave_type,
-        day_type: form.day_type,
-        start_half_session: form.start_half_session,
-        end_half_session: form.end_half_session
+        days: formatLeaveDays(calculatedDays), reason: form.reason,
+        start_date: form.start_date, end_date: form.end_date,
+        leave_type: form.leave_type, day_type: form.day_type,
+        start_half_session: form.start_half_session, end_half_session: form.end_half_session
     };
-
     form.post(route('leave.store'), {
         preserveScroll: true,
         onSuccess: () => {
@@ -371,6 +352,32 @@ const submitApplication = () => {
         }
     });
 }
+
+// --- NEW: Function to submit the document from the modal ---
+const submitDocument = () => {
+    if (!requestForUpload.value || !uploadForm.document) {
+        alert("Please select a file to upload.");
+        return;
+    }
+    // Using router.post for multipart form data, which is needed for file uploads.
+    router.post(route('leave.upload.document', { leave_application: requestForUpload.value.id }), {
+        _method: 'PATCH', // Method spoofing for Laravel
+        document: uploadForm.document
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeUploadModal();
+            alert('Document uploaded successfully!');
+        },
+        onError: (errors) => {
+            // Error handling is automatic with Inertia's form helper, but you can add more here.
+            console.error("Document upload failed:", errors);
+        },
+        onFinish: () => {
+            uploadForm.processing = false;
+        }
+    });
+};
 
 const updateStatus = (request, newStatus) => {
   router.patch(route('leave.update', { leave_application: request.id }), { status: newStatus }, { preserveScroll: true })
@@ -733,149 +740,179 @@ const cancelLeave = (request) => {
                                         <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
                                         <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Duration</th>
                                         <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Reason</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Document</th>
                                         <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                                         <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
-                                        <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">View</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="request in leaveRequests" :key="request.id" class="hover:bg-gray-50 text-gray-800">
-                                        <td v-if="canManage" class="px-3 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                    <span class="text-base font-medium text-gray-700">{{ request.user?.name?.charAt(0)?.toUpperCase() }}</span>
+                                  <tbody class="bg-white divide-y divide-gray-200">
+                                      <tr v-for="request in leaveRequests" :key="request.id" class="hover:bg-gray-50 text-gray-800">
+                                          <td v-if="canManage" class="px-3 py-4 whitespace-nowrap">
+                                              <div class="flex items-center">
+                                                  <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                      <span class="text-base font-medium text-gray-700">{{ request.user?.name?.charAt(0)?.toUpperCase() }}</span>
+                                                  </div>
+                                                  <div class="ml-3 min-w-0 flex-1">
+                                                      <div class="text-sm font-medium text-gray-900 truncate">{{ request.user?.name }}</div>
+                                                      <div class="text-xs text-gray-600 truncate">{{ request.user?.email }}</div>
+                                                  </div>
+                                              </div>
+                                          </td>
+                                          <td class="px-3 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">
+                                                  {{ formatDate(request.start_date) }}
+                                                  <span v-if="request.start_date !== request.end_date"> - {{ formatDate(request.end_date) }}</span>
+                                              </div>
+                                          </td>
+                                          <td class="px-3 py-4 whitespace-nowrap">
+                                              <span :class="getTagClass(request.leave_type)" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize">
+                                                  {{ request.leave_type }}
+                                              </span>
+                                          </td>
+                                          <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                              {{ formatLeaveDays(request.leave_days) }} day{{ request.leave_days !== 1 ? 's' : '' }}
+                                          </td>
+                                          <td class="px-3 py-4 text-sm text-gray-700">
+                                              <div class="max-w-[150px] truncate" :title="request.reason">{{ request.reason }}</div>
+                                          </td>
+                                          <td class="px-3 py-4 whitespace-nowrap text-center space-y-1">
+                                               <div>
+                                                  <a v-if="request.supporting_document_path" :href="`/storage/${request.supporting_document_path}`" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center justify-center gap-1 text-xs" title="View supporting document">View</a>
+                                                  <span v-else class="text-gray-400 text-xs italic">—</span>
                                                 </div>
-                                                <div class="ml-3 min-w-0 flex-1">
-                                                    <div class="text-sm font-medium text-gray-900 truncate">{{ request.user?.name }}</div>
-                                                    <div class="text-xs text-gray-600 truncate">{{ request.user?.email }}</div>
+                                                <div v-if="request.leave_type === 'sick' && ['pending', 'approved'].includes(request.status)">
+                                                  <button @click="openUploadModal(request)" class="text-blue-600 hover:underline text-xs mt-1">
+                                                    {{ request.supporting_document_path ? 'Replace' : 'Upload' }}
+                                                  </button>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-3 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
-                                                {{ formatDate(request.start_date) }}
-                                                <span v-if="request.start_date !== request.end_date"> - {{ formatDate(request.end_date) }}</span>
-                                            </div>
-                                            <div v-if="request.day_type === 'half'" class="text-xs text-gray-600 mt-1">
-                                                {{ request.start_half_session || 'full' }} session
-                                                <span v-if="request.start_date !== request.end_date"> to {{ request.end_half_session || 'full' }} session</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-3 py-4 whitespace-nowrap">
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize" :class="{ 'bg-blue-100 text-blue-800': request.leave_type === 'annual', 'bg-green-100 text-green-800': request.leave_type === 'sick', 'bg-yellow-100 text-yellow-800': request.leave_type === 'personal', 'bg-red-100 text-red-800': request.leave_type === 'emergency', 'bg-pink-100 text-pink-800': request.leave_type === 'maternity', 'bg-purple-100 text-purple-800': request.leave_type === 'paternity' }">
-                                                {{ request.leave_type }}
-                                            </span>
-                                        </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                            {{ formatLeaveDays(request.leave_days) }} day{{ request.leave_days !== 1 ? 's' : '' }}
-                                        </td>
-                                        <td class="px-3 py-4 text-sm text-gray-700">
-                                            <div class="max-w-[200px] truncate" :title="request.reason">{{ request.reason }}</div>
-                                        </td>
-                                        <td class="px-3 py-4 whitespace-nowrap">
-                                            <span :class="statusConfig[request.status].class" class="px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
-                                                <span class="mr-1.5">{{ statusConfig[request.status].icon }}</span>
-                                                <span class="capitalize">{{ request.status }}</span>
-                                            </span>
-                                        </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-center">
-                                            <!-- Manager management actions -->
-                                            <div v-if="canManage && request.status === 'pending'" class="flex justify-center gap-2">
-                                                <button @click="updateStatus(request, 'approved')" class="font-semibold text-green-600 hover:text-green-800">Approve</button>
-                                                <button @click="updateStatus(request, 'rejected')" class="font-semibold text-red-600 hover:text-red-800">Reject</button>
-                                            </div>
-                                            <!-- Employee cancel action -->
-                                            <button v-else-if="!canManage && request.status === 'pending'" @click="cancelLeave(request)" class="font-semibold text-red-600 hover:text-red-800">Cancel</button>
-                                            <!-- No primary action available -->
-                                            <span v-else>-</span>
-                                        </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-center">
-                                            <!-- The view button should NOT show if manager actions are present -->
-                                            <button v-if="!(canManage && request.status === 'pending')" @click="openLeaveDetailModal(request)" class="text-gray-500 hover:text-blue-600 p-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                          </td>
+                                          <td class="px-3 py-4 whitespace-nowrap">
+                                              <span :class="statusConfig[request.status].class" class="px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                                                  <span class="mr-1.5">{{ statusConfig[request.status].icon }}</span>
+                                                  <span class="capitalize">{{ request.status }}</span>
+                                              </span>
+                                          </td>
+                                          <td class="px-3 py-4 whitespace-nowrap text-center">
+                                              <div v-if="canManage && request.status === 'pending'" class="flex justify-center gap-2">
+                                                  <button @click="updateStatus(request, 'approved')" class="font-semibold text-green-600 hover:text-green-800">Approve</button>
+                                                  <button @click="updateStatus(request, 'rejected')" class="font-semibold text-red-600 hover:text-red-800">Reject</button>
+                                              </div>
+                                              <button v-else-if="!canManage && request.status === 'pending'" @click="cancelLeave(request)" class="font-semibold text-red-600 hover:text-red-800">Cancel</button>
+                                              <button @click="openLeaveDetailModal(request)" class="text-gray-500 hover:text-blue-600 p-1" title="View Details">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                                              </button>
+                                          </td>
+                                      </tr>
+                                  </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Mobile Card View -->
-                    <div class="lg:hidden space-y-4" v-if="leaveRequests.length > 0">
-                        <div v-for="request in leaveRequests" :key="request.id" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                            <!-- Employee Info (for managers) -->
-                            <div v-if="canManage" class="flex items-center mb-3 pb-3 border-b border-gray-200">
-                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                    <span class="text-base font-medium text-gray-800">{{ request.user?.name?.charAt(0)?.toUpperCase() }}</span>
-                                </div>
-                                <div class="ml-3 min-w-0 flex-1">
-                                    <div class="text-base font-medium text-gray-900">{{ request.user?.name }}</div>
-                                    <div class="text-sm text-gray-700">{{ request.user?.email }}</div>
-                                </div>
-                            </div>
-
-                            <!-- Leave Details -->
-                            <div class="grid grid-cols-2 gap-4 mb-4">
+                    <!-- Mobile Table View (Replaced) -->
+                    <div class="lg:hidden" v-if="leaveRequests.length > 0">
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead class="bg-gray-50">
+                              <tr>
+                                  <th class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase">Date</th>
+                                  <th class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase">Type</th>
+                                  <th class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase">Submitted</th>
+                                  <th class="py-3 px-3 text-center text-xs font-semibold text-gray-700 uppercase">Document</th>
+                                  <th class="py-3 px-3 text-right text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-200">
+                            <tr v-for="request in props.leaveRequests" :key="request.id" class="text-gray-700 hover:bg-gray-50">
+                              <td class="py-3 px-3">
+                                <p class="font-semibold">{{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</p>
+                              </td>
+                              <td class="py-3 px-3">
+                                <span :class="getTagClass(request.leave_type)" class="px-2 py-1 text-xs font-medium rounded-full capitalize">{{ request.leave_type }}</span>
+                              </td>
+                              <td class="py-3 px-3">
+                                <p>{{ new Date(request.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</p>
+                                <p class="text-xs text-gray-500">{{ new Date(request.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) }}</p>
+                              </td>
+            
+                              <td class="py-3 px-3 text-center whitespace-nowrap space-y-1">
                                 <div>
-                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Dates</div>
-                                    <div class="text-sm text-gray-900">
-                                        {{ formatDate(request.start_date) }}
-                                        <span v-if="request.start_date !== request.end_date"> - {{ formatDate(request.end_date) }}</span>
-                                    </div>
+                                  <a v-if="request.supporting_document_path" :href="`/storage/${request.supporting_document_path}`" target="_blank"
+                                     class="text-indigo-600 hover:underline inline-flex items-center justify-center gap-1" title="View supporting document">
+                                    View
+                                  </a>
+                                  <span v-else class="text-gray-400 text-xs italic">—</span>
                                 </div>
-                                <div>
-                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Duration</div>
-                                    <div class="text-sm text-gray-900 font-medium">
-                                        {{ formatLeaveDays(request.leave_days) }} day{{ request.leave_days !== 1 ? 's' : '' }}
-                                    </div>
+                                <div v-if="request.leave_type === 'sick' && ['pending', 'approved'].includes(request.status)">
+                                  <button @click="openUploadModal(request)" class="text-blue-600 hover:underline text-xs mt-1">
+                                    {{ request.supporting_document_path ? 'Replace' : 'Upload' }}
+                                  </button>
                                 </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Type</div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize" :class="{ 'bg-blue-100 text-blue-800': request.leave_type === 'annual', 'bg-green-100 text-green-800': request.leave_type === 'sick', 'bg-yellow-100 text-yellow-800': request.leave_type === 'personal', 'bg-red-100 text-red-800': request.leave_type === 'emergency', 'bg-pink-100 text-pink-800': request.leave_type === 'maternity', 'bg-purple-100 text-purple-800': request.leave_type === 'paternity' }">
-                                                {{ request.leave_type }}
-                                            </span>
+                              </td>
+            
+                              <td class="py-3 px-3 text-right">
+                                <div class="flex flex-col items-end gap-1">
+                                  <div v-if="canManage && request.status === 'pending'" class="space-x-2">
+                                    <button @click="updateStatus(request, 'approved')" class="text-green-600 hover:text-green-900 font-semibold">Approve</button>
+                                    <button @click="updateStatus(request, 'rejected')" class="text-red-600 hover:text-red-900 font-semibold">Reject</button>
+                                  </div>
+                                  <button v-else-if="!canManage && request.status === 'pending'" @click="cancelLeave(request)" class="text-red-600 hover:text-red-900 font-semibold">Cancel</button>
+                                  <button @click="openLeaveDetailModal(request)" class="text-gray-400 hover:text-gray-600">Details</button>
                                 </div>
-                                <div>
-                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Status</div>
-                                    <span :class="statusConfig[request.status].class" class="px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
-                                        <span class="mr-1">{{ statusConfig[request.status].icon }}</span>
-                                        <span class="capitalize">{{ request.status }}</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Reason</div>
-                                <div class="text-sm text-gray-800">{{ request.reason }}</div>
-                            </div>
-
-                            <!-- Action Buttons - Always Visible -->
-                            <div v-if="canManage && request.status === 'pending'" class="flex flex-col sm:flex-row gap-3 pt-3 border-t border-gray-200">
-                                <button @click="updateStatus(request, 'approved')" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                                    ✓ Approve Request
-                                </button>
-                                <button @click="updateStatus(request, 'rejected')" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                                    ✗ Reject Request
-                                </button>
-                            </div>
-                             <div v-else class="pt-3 border-t border-gray-200 flex justify-end gap-3">
-                                <button v-if="!canManage && request.status === 'pending'" @click="cancelLeave(request)" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                    Cancel
-                                </button>
-                                <button @click="openLeaveDetailModal(request)" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    View Details
-                                </button>
-                            </div>
-                        </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                 </div>
             </div>
 
             <!-- Modals -->
+
+            <!-- NEW: Document Upload Modal -->
+            <div v-if="isUploadModalVisible" @click.self="closeUploadModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 transition-opacity duration-300">
+                <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full transform transition-all duration-300 scale-95" :class="{ 'scale-100': isUploadModalVisible }">
+                    <form @submit.prevent="submitDocument">
+                        <!-- Modal Header -->
+                        <div class="p-5 border-b flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">Upload Supporting Document</h3>
+                            <button @click="closeUploadModal" type="button" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">×</button>
+                        </div>
+                        <!-- Modal Body -->
+                        <div class="p-6 space-y-4">
+                            <p class="text-sm text-gray-700">
+                                You are uploading a document for your sick leave request on
+                                <strong class="font-medium text-gray-900">{{ formatDate(requestForUpload.start_date) }}</strong>.
+                            </p>
+                            <div>
+                                <InputLabel for="modal_document" value="Select Document" class="font-semibold" />
+                                <input
+                                    id="modal_document"
+                                    type="file"
+                                    @change="handleUploadModalFileChange"
+                                    required
+                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    class="mt-2 block w-full text-sm text-gray-500
+                                        file:mr-4 file:py-2.5 file:px-4
+                                        file:rounded-lg file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-blue-50 file:text-blue-700
+                                        hover:file:bg-blue-100"
+                                >
+                                <InputError class="mt-2" :message="uploadForm.errors.document" />
+                                <p v-if="uploadForm.document" class="mt-2 text-sm text-gray-600">Selected: {{ uploadForm.document.name }}</p>
+                            </div>
+                        </div>
+                         <!-- Modal Footer -->
+                        <div class="p-4 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                            <button @click="closeUploadModal" type="button" class="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm">Cancel</button>
+                            <PrimaryButton :disabled="uploadForm.processing" type="submit" class="px-5 py-2 text-sm">
+                                {{ uploadForm.processing ? 'Submitting...' : 'Upload Document' }}
+                            </PrimaryButton>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Upcoming Holidays Modal -->
             <div v-if="isHolidaysModalVisible" @click.self="closeHolidaysModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 transition-opacity duration-300">
