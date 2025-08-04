@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\AddMonthlyLeave::class,
+        \App\Console\Commands\ImportUsersFromExcel::class,
     ];
 
     /**

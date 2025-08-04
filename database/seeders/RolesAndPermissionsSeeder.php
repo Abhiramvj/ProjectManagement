@@ -22,8 +22,10 @@ class RolesAndPermissionsSeeder extends Seeder
         $permissions = [
             'log working hours', 'apply for leave', 'assign tasks', 'view team progress',
             'assign projects', 'view all projects progress', 'view all working hours',
-            'manage leave applications', 'manage employees', 'manage roles', 'view leaves'
+            'manage leave applications', 'manage employees', 'manage roles', 'view leaves',
+            'manage announcements', // NEW: Add the permission for announcements
         ];
+
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
@@ -44,9 +46,11 @@ class RolesAndPermissionsSeeder extends Seeder
         $hrRole->givePermissionTo([
             'view all working hours', 'manage leave applications', 'manage employees',
             'manage roles', 'apply for leave', 'view leaves',
+            'manage announcements', // NEW: Give HR the ability to manage announcements
         ]);
 
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        // The admin role automatically gets the new permission because it uses Permission::all()
         $adminRole->givePermissionTo(Permission::all());
     }
 }

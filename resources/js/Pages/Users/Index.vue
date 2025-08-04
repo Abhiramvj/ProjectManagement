@@ -5,6 +5,8 @@ import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { debounce } from 'lodash';
+import axios from 'axios';  // Added axios import for API calls
+
 
 // =========== PROPS ===========
 // Data passed from the UserController@index method in Laravel
@@ -17,11 +19,18 @@ const props = defineProps({
     filters: Object,
 });
 
+
 // =========== STATE MANAGEMENT ===========
 const isModalVisible = ref(false);
 const modalMode = ref('create'); // Can be 'create' or 'edit'
 const editingUser = ref(null); // Stores the user object being edited
 const search = ref(props.filters?.search || ''); // Search input state
+
+// =========== AI Evaluation State ===========
+const aiResult = ref('');
+const aiUserName = ref('');
+const evaluationLoading = ref({});
+
 
 // =========== FORM HANDLING ===========
 // A single reactive form for both creating and editing users
@@ -37,6 +46,7 @@ const form = useForm({
     image: null, // Holds the file object for new avatar uploads
     imagePreview: null, // Holds the URL for the image preview
 });
+
 
 
 // =========== DYNAMIC FORM LOGIC ===========
@@ -56,6 +66,7 @@ watch(() => form.role, (newRole, oldRole) => {
 });
 
 
+
 // =========== MODAL CONTROLS ===========
 const openCreateModal = () => {
     form.reset(); // Clear form fields and errors
@@ -65,11 +76,13 @@ const openCreateModal = () => {
     isModalVisible.value = true;
 };
 
+
 const openEditModal = (user) => {
     form.reset();
     modalMode.value = 'edit';
     editingUser.value = user;
     form._method = 'put'; // Set method for editing/updating
+
 
     // Populate form with the user's existing data
     form.name = user.name;
@@ -79,8 +92,10 @@ const openEditModal = (user) => {
     form.parent_id = user.parent_id || '';
     form.imagePreview = user.image ? `/storage/${user.image}` : null;
 
+
     isModalVisible.value = true;
 };
+
 
 const closeModal = () => {
     isModalVisible.value = false;
@@ -89,11 +104,13 @@ const closeModal = () => {
 };
 
 
+
 // =========== CRUD OPERATIONS ===========
 const submit = () => {
     const routeName = modalMode.value === 'create'
         ? route('users.store')
         : route('users.update', editingUser.value.id);
+
 
     // Always use form.post() because it correctly handles multipart/form-data for file uploads.
     // The `form._method` property ('post' or 'put') tells Laravel how to handle the request.
@@ -102,6 +119,7 @@ const submit = () => {
         preserveScroll: true, // Keep the user's scroll position on the page
     });
 };
+
 
 const deleteUser = (userId) => {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
@@ -112,14 +130,17 @@ const deleteUser = (userId) => {
 };
 
 
+
 // =========== FEATURES ===========
 // Debounced search function to filter users without overwhelming the server
 const searchUsers = debounce(() => {
     router.get(route('users.index'), { search: search.value }, { preserveState: true, replace: true });
 }, 300);
 
+
 // Computed property for easy access to pagination links
 const paginationLinks = computed(() => props.users.links);
+
 
 // Handles new image selection and creates a local preview URL
 function handleImageUpload(e) {
@@ -129,6 +150,28 @@ function handleImageUpload(e) {
         form.imagePreview = URL.createObjectURL(file);
     }
 }
+
+
+// ====== AI Evaluation Method =======
+const getAIEvaluation = async (user) => {
+    aiResult.value = '';
+    aiUserName.value = user.name;
+    evaluationLoading.value = { ...evaluationLoading.value, [user.id]: true };
+
+    let prompt = `Provide a brief professional evaluation of the following employee:
+- Name: ${user.name}
+- Role: ${user.roles[0]?.name || 'N/A'}
+- Joined: ${new Date(user.created_at).toLocaleDateString()}`;
+
+    try {
+        const { data } = await axios.post('/api/employee-evaluate', { prompt });
+        aiResult.value = data.summary;
+    } catch (e) {
+        aiResult.value = 'Unable to fetch AI evaluation. Please try again.';
+    } finally {
+        evaluationLoading.value = { ...evaluationLoading.value, [user.id]: false };
+    }
+};
 </script>
 
 <template>
@@ -137,6 +180,7 @@ function handleImageUpload(e) {
     <AuthenticatedLayout>
         <div class="p-4 sm:p-6 lg:p-8 font-sans">
             <div class="max-w-7xl mx-auto space-y-6">
+
 
                 <!-- Page Header -->
                 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -149,9 +193,10 @@ function handleImageUpload(e) {
                     </button>
                 </div>
 
+
                 <!-- Users List Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-                     <div class="p-4 sm:px-6 border-b border-slate-200">
+                    <div class="p-4 sm:px-6 border-b border-slate-200">
                         <input v-model="search" @input="searchUsers" type="text" placeholder="Search by name or email..."
                                class="block w-full max-w-xs rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                     </div>
@@ -167,7 +212,7 @@ function handleImageUpload(e) {
                             </thead>
                             <tbody class="divide-y divide-slate-100 bg-white">
                                 <tr v-if="!users.data.length">
-                                    <td colspan="4" class="px-6 py-8 text-center text-slate-500">No users found.</td>
+                                    <td colspan="5" class="px-6 py-8 text-center text-slate-500">No users found.</td>
                                 </tr>
                                 <tr v-for="user in users.data" :key="user.id" class="hover:bg-slate-50 transition-colors">
                                     <td class="whitespace-nowrap py-4 px-6 text-sm">
@@ -185,14 +230,21 @@ function handleImageUpload(e) {
                                         <Link :href="route('performance.show', user.id)" class="text-indigo-600 hover:text-indigo-900">
                                             View Performance
                                         </Link>
-                                        </td>
+                                        <button
+                                            @click="getAIEvaluation(user)"
+                                            class="ml-2 text-violet-600 hover:text-violet-900"
+                                            :disabled="evaluationLoading[user.id]"
+                                        >
+                                            <span v-if="!evaluationLoading[user.id]">Get AI Evaluation</span>
+                                            <span v-else>Loading...</span>
+                                        </button>
+                                    </td>
                                     <td class="whitespace-nowrap py-4 px-6 text-right text-sm font-medium">
                                         <div class="flex items-center justify-end space-x-4">
                                             <button @click="openEditModal(user)" class="text-indigo-600 hover:text-indigo-900">Edit</button>
                                             <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-900">Delete</button>
                                         </div>
                                     </td>
-                                    
                                 </tr>
                             </tbody>
                         </table>
@@ -202,14 +254,20 @@ function handleImageUpload(e) {
                         <div class="text-sm text-slate-600">Showing {{ users.from }} to {{ users.to }} of {{ users.total }} results</div>
                         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
                              <Link v-for="(link, index) in paginationLinks" :key="index"
-                                  :href="link.url"
-                                  v-html="link.label"
-                                  :class="{ 'bg-slate-900 text-white': link.active, 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"
-                                  class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20"
-                                  :disabled="!link.url"
-                                  preserve-scroll />
+                               :href="link.url"
+                               v-html="link.label"
+                               :class="{ 'bg-slate-900 text-white': link.active, 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"
+                               class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20"
+                               :disabled="!link.url"
+                               preserve-scroll />
                         </nav>
                     </div>
+                </div>
+
+                <!-- AI Evaluation Result Display -->
+                <div v-if="aiResult" class="max-w-3xl mx-auto my-8 bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                    <strong>AI Evaluation for {{ aiUserName }}:</strong>
+                    <p class="mt-2 whitespace-pre-line">{{ aiResult }}</p>
                 </div>
             </div>
         </div>
@@ -231,6 +289,7 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.email" />
                     </div>
 
+
                     <!-- Image Upload -->
                     <div>
                         <label for="image" class="block text-sm font-medium text-slate-700">Profile Image</label>
@@ -246,6 +305,7 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.image" />
                     </div>
 
+
                     <!-- Role & Hierarchy -->
                     <div>
                         <label for="role" class="block text-sm font-medium text-slate-700">Role</label>
@@ -255,6 +315,7 @@ function handleImageUpload(e) {
                         </select>
                         <InputError class="mt-2" :message="form.errors.role" />
                     </div>
+
 
                     <!-- DYNAMIC MANAGER (PARENT) SECTION -->
                     <div>
@@ -281,9 +342,10 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.parent_id" />
                     </div>
 
+
                     <!-- Team Assignment for Employees -->
                     <div v-if="form.role === 'employee'">
-                         <label for="team_id" class="block text-sm font-medium text-slate-700">Team</label>
+                        <label for="team_id" class="block text-sm font-medium text-slate-700">Team</label>
                         <select v-model="form.team_id" id="team_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">-- Assign a team --</option>
                             <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
@@ -291,21 +353,23 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.team_id" />
                     </div>
 
+
                     <!-- Flexible Password Section -->
                     <div class="border-t border-slate-200 pt-6">
-                         <h3 class="text-base font-semibold text-slate-800">{{ modalMode === 'create' ? 'Set Password' : 'Change Password (Optional)' }}</h3>
+                        <h3 class="text-base font-semibold text-slate-800">{{ modalMode === 'create' ? 'Set Password' : 'Change Password (Optional)' }}</h3>
                         <div class="mt-4 space-y-6">
+                          <div>
+                               <label for="password" class="block text-sm font-medium text-slate-700">New Password</label>
+                               <input v-model="form.password" id="password" type="password" :required="modalMode === 'create'" autocomplete="new-password" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                               <InputError class="mt-2" :message="form.errors.password" />
+                           </div>
                            <div>
-                                <label for="password" class="block text-sm font-medium text-slate-700">New Password</label>
-                                <input v-model="form.password" id="password" type="password" :required="modalMode === 'create'" autocomplete="new-password" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-                                <InputError class="mt-2" :message="form.errors.password" />
-                            </div>
-                            <div>
-                                <label for="password_confirmation" class="block text-sm font-medium text-slate-700">Confirm New Password</label>
-                                <input v-model="form.password_confirmation" id="password_confirmation" type="password" :required="modalMode === 'create'" autocomplete="new-password" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-                            </div>
+                               <label for="password_confirmation" class="block text-sm font-medium text-slate-700">Confirm New Password</label>
+                               <input v-model="form.password_confirmation" id="password_confirmation" type="password" :required="modalMode === 'create'" autocomplete="new-password" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                           </div>
                         </div>
                     </div>
+
 
                     <!-- Form Actions -->
                     <div class="mt-6 flex justify-end gap-3">

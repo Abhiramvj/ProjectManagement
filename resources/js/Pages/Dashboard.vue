@@ -24,6 +24,8 @@ const props = defineProps({
     greeting: { type: Object, required: true },
     projects: { type: Array, default: () => [] },
     myTasks: { type: Array, default: () => [] },
+    // --- Prop for announcements ---
+    announcements: { type: Array, default: () => [] },
 });
 
 // --- ROLE-BASED VISIBILITY & HELPERS ---
@@ -37,54 +39,114 @@ const hasPermission = (permission) => {
     return authUser.value.permissions.includes(permission);
 };
 
+// --- Computed property for managing announcements ---
+const canManageAnnouncements = computed(() => hasPermission('manage announcements'));
+
 const canViewAttendanceStats = computed(() => hasPermission('manage employees'));
+
+// --- ANNOUNCEMENT MANAGEMENT ---
+const isAnnouncementModalOpen = ref(false);
+const announcementModalMode = ref('create'); // 'create' or 'edit'
+const editingAnnouncementId = ref(null);
+const announcementForm = useForm({
+    title: '',
+    content: '',
+});
+
+const isViewAnnouncementModalOpen = ref(false);
+const viewingAnnouncement = ref(null);
+
+function openCreateAnnouncementModal() {
+    announcementModalMode.value = 'create';
+    announcementForm.reset();
+    editingAnnouncementId.value = null;
+    isAnnouncementModalOpen.value = true;
+}
+
+function openEditAnnouncementModal(announcement) {
+    announcementModalMode.value = 'edit';
+    editingAnnouncementId.value = announcement.id;
+    announcementForm.title = announcement.title;
+    announcementForm.content = announcement.content;
+    isAnnouncementModalOpen.value = true;
+}
+
+function closeAnnouncementModal() {
+    isAnnouncementModalOpen.value = false;
+    announcementForm.reset();
+}
+
+function saveAnnouncement() {
+    const onFinish = () => {
+        closeAnnouncementModal();
+        router.reload({ only: ['announcements'] });
+    };
+
+    if (announcementModalMode.value === 'create') {
+        announcementForm.post(route('announcements.store'), {
+            preserveScroll: true,
+            onSuccess: onFinish,
+        });
+    } else {
+        announcementForm.put(route('announcements.update', editingAnnouncementId.value), {
+            preserveScroll: true,
+            onSuccess: onFinish,
+        });
+    }
+}
+
+function deleteAnnouncement() {
+    if (confirm('Are you sure you want to delete this announcement?')) {
+        router.delete(route('announcements.destroy', editingAnnouncementId.value), {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeAnnouncementModal();
+                router.reload({ only: ['announcements'] });
+            },
+        });
+    }
+}
+
+function openViewAnnouncementModal(announcement) {
+    viewingAnnouncement.value = announcement;
+    isViewAnnouncementModalOpen.value = true;
+}
+
+function closeViewAnnouncementModal() {
+    isViewAnnouncementModalOpen.value = false;
+    viewingAnnouncement.value = null;
+}
+// --- END ANNOUNCEMENT MANAGEMENT ---
 
 // --- TASK MANAGEMENT ---
 const updateTaskStatus = (task, newStatus) => {
-    // This sends a PATCH request to your backend.
-    // Ensure you have a route like: Route::patch('/tasks/{task}/status', ...)->name('tasks.updateStatus');
     router.patch(route('tasks.updateStatus', task.id), {
         status: newStatus
     }, {
         preserveScroll: true,
     });
 };
-
-// --- HELPER FUNCTIONS FOR THE 'MY ASSIGNED TASKS' PANEL ---
-
-// Determines the background/border color for a task item based on its status.
 const getTaskStatusColor = (status) => {
     if (status === 'completed' || status === 'done') return 'bg-green-50 border-green-200';
     if (status === 'in_progress') return 'bg-blue-50 border-blue-200';
-    // Default for 'todo', 'pending', etc.
     return 'bg-gray-50 border-gray-200';
 };
-
-// Determines the color for the small status badge.
 const getStatusBadgeColor = (status) => {
     if (status === 'completed' || status === 'done') return 'bg-green-100 text-green-800';
     if (status === 'in_progress') return 'bg-blue-100 text-blue-800';
     return 'bg-gray-100 text-gray-800';
 };
-
-// Converts snake_case status from the DB (e.g., 'in_progress') to a more readable format.
 const getStatusDisplayName = (status) => {
     return (status || 'todo').replace(/_/g, ' ');
 };
-
-// Logic to show the "Start" button. Now robustly handles 'todo' or 'pending'.
 const canStartTask = (status) => status === 'todo' || status === 'pending';
-
-// Logic to show the "Done" button.
 const canCompleteTask = (status) => status === 'in_progress';
-
 
 // --- OTHER EXISTING SCRIPT LOGIC ---
 const companyExperience = computed(() => {
     if (!props.user.hire_date) return 'N/A';
     return formatDistanceToNowStrict(new Date(props.user.hire_date));
 });
-
 const isNoteModalVisible = ref(false);
 const modalMode = ref('create');
 const editingNoteId = ref(null);
@@ -92,12 +154,9 @@ const noteForm = useForm({ note: '', date: '' });
 const now = ref(new Date());
 let timeUpdater = null;
 const liveTime = computed(() => now.value.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }));
-
 onMounted(() => { timeUpdater = setInterval(() => { now.value = new Date(); }, 1000); });
 onUnmounted(() => { clearInterval(timeUpdater); });
-
 const calendar = ref(null);
-
 watch(() => props.calendarEvents, (newEvents) => {
     if (calendar.value) {
         const calendarApi = calendar.value.getApi();
@@ -105,16 +164,13 @@ watch(() => props.calendarEvents, (newEvents) => {
         calendarApi.addEventSource(newEvents);
     }
 }, { deep: true });
-
 const currentCalendarView = ref('dayGridMonth');
-
 function handleDateClick(arg) {
     modalMode.value = 'create';
     editingNoteId.value = null;
     noteForm.date = arg.dateStr;
     isNoteModalVisible.value = true;
 }
-
 function handleEventClick(arg) {
     if (arg.event.extendedProps.type === 'note') {
         modalMode.value = 'edit';
@@ -124,7 +180,6 @@ function handleEventClick(arg) {
         isNoteModalVisible.value = true;
     }
 }
-
 const calendarOptions = ref({
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
@@ -139,14 +194,12 @@ const calendarOptions = ref({
     eventDisplay: 'block',
     eventClassNames: 'p-1 rounded-md font-medium cursor-pointer border-none text-xs',
 });
-
 function changeCalendarView(view) {
     if(calendar.value) {
         calendar.value.getApi().changeView(view);
         currentCalendarView.value = view;
     }
 }
-
 function saveNote() {
     const action = modalMode.value === 'create' ? route('calendar-notes.store') : route('calendar-notes.update', editingNoteId.value);
     const method = modalMode.value === 'create' ? 'post' : 'put';
@@ -158,7 +211,6 @@ function saveNote() {
         },
     });
 }
-
 function deleteNote() {
     if (confirm('Are you sure you want to delete this note?')) {
         router.delete(route('calendar-notes.destroy', editingNoteId.value), {
@@ -170,13 +222,11 @@ function deleteNote() {
         });
     }
 }
-
 function closeModal() {
     isNoteModalVisible.value = false;
     noteForm.reset();
     editingNoteId.value = null;
 }
-
 const chartData = computed(() => ({
     labels: ['Present', 'Absent'],
     datasets: [{
@@ -185,7 +235,6 @@ const chartData = computed(() => ({
         borderWidth: 0,
     }],
 }));
-
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -199,7 +248,60 @@ const chartOptions = {
 
     <AuthenticatedLayout>
 
-        <!-- Calendar Note Modal -->
+        <!-- Announcement Modals -->
+        <Modal :show="isViewAnnouncementModalOpen" @close="closeViewAnnouncementModal">
+            <div v-if="viewingAnnouncement" class="p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-slate-900">{{ viewingAnnouncement.title }}</h3>
+                        <div class="flex items-center space-x-2 mt-2 text-sm text-slate-500">
+                            <img class="h-6 w-6 rounded-full" :src="viewingAnnouncement.author.avatar_url || `https://ui-avatars.com/api/?name=${viewingAnnouncement.author.name.replace(' ', '+')}&background=random`" alt="">
+                            <span>{{ viewingAnnouncement.author.name }}</span>
+                            <span>•</span>
+                            <span>{{ viewingAnnouncement.created_at_formatted }}</span>
+                        </div>
+                    </div>
+                    <button @click="closeViewAnnouncementModal" class="p-1 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">×</button>
+                </div>
+                <div class="mt-4 prose prose-sm max-w-none text-slate-600" v-html="viewingAnnouncement.content"></div>
+                <div class="mt-6 text-right">
+                    <button type="button" @click="closeViewAnnouncementModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Close</button>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal :show="isAnnouncementModalOpen" @close="closeAnnouncementModal">
+             <div class="p-6">
+                <h3 class="text-lg font-bold text-slate-900">{{ announcementModalMode === 'create' ? 'New Announcement' : 'Edit Announcement' }}</h3>
+                <form @submit.prevent="saveAnnouncement" class="mt-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="announcement-title" class="block text-sm font-medium text-slate-700">Title</label>
+                            <input v-model="announcementForm.title" id="announcement-title" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Upcoming Holiday">
+                            <InputError class="mt-1 text-xs" :message="announcementForm.errors.title" />
+                        </div>
+                         <div>
+                            <label for="announcement-content" class="block text-sm font-medium text-slate-700">Content</label>
+                            <textarea v-model="announcementForm.content" id="announcement-content" rows="6" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter the details of the announcement..."></textarea>
+                            <InputError class="mt-1 text-xs" :message="announcementForm.errors.content" />
+                        </div>
+                        <div class="flex justify-between items-center pt-2">
+                             <div>
+                                <button v-if="announcementModalMode === 'edit'" type="button" @click="deleteAnnouncement" class="text-sm font-semibold text-red-600 hover:text-red-800">Delete</button>
+                            </div>
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" @click="closeAnnouncementModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Cancel</button>
+                                <button type="submit" :disabled="announcementForm.processing" class="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50">
+                                    {{ announcementForm.processing ? 'Saving...' : 'Save Announcement' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </Modal>
+
+        <!-- Calendar Note Modal (Existing) -->
         <Modal :show="isNoteModalVisible" @close="closeModal">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
@@ -266,6 +368,36 @@ const chartOptions = {
                     </div>
                 </div>
 
+                <!-- Announcement Panel -->
+                <div v-if="announcements.length > 0 || canManageAnnouncements" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-900">Announcements</h3>
+                        <button v-if="canManageAnnouncements" @click="openCreateAnnouncementModal" class="px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors shadow-sm">New Announcement</button>
+                    </div>
+                    <div v-if="announcements.length > 0" class="space-y-4">
+                        <div v-for="announcement in announcements" :key="announcement.id" class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <p class="font-semibold text-slate-800">{{ announcement.title }}</p>
+                                <div class="text-xs text-slate-500 mt-1 flex items-center space-x-2">
+                                    <span>By {{ announcement.author.name }}</span>
+                                    <span>•</span>
+                                    <span>{{ announcement.created_at_formatted }}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                <button @click="openViewAnnouncementModal(announcement)" class="text-sm font-medium text-blue-600 hover:text-blue-800">Read More</button>
+                                <template v-if="canManageAnnouncements">
+                                    <span class="text-slate-300">|</span>
+                                    <button @click="openEditAnnouncementModal(announcement)" class="text-sm font-medium text-slate-600 hover:text-slate-800">Edit</button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8">
+                        <p class="text-slate-500">No announcements at the moment.</p>
+                    </div>
+                </div>
+
                 <!-- Projects and Tasks Panels -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Panel: Active Projects -->
@@ -326,7 +458,6 @@ const chartOptions = {
                     </div>
                 </div>
 
-
                 <!-- Calendar and Attendance Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Calendar Card -->
@@ -372,6 +503,7 @@ const chartOptions = {
         </div>
     </AuthenticatedLayout>
 </template>
+
 <style>
 /* Global styles for FullCalendar - needed for basic rendering */
 .fc .fc-daygrid-day-number {

@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Http\Controllers\AnnouncementController; // <-- Make sure this is imported
+
 
 // Make login page the landing page for guests
 Route::get('/', function () {
@@ -94,8 +96,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'update'])->name('calendar-notes.update');
     Route::delete('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'destroy'])->name('calendar-notes.destroy');
 
-});
 
+    Route::resource('announcements', AnnouncementController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->middleware('can:manage announcements');
+    // -----------------------------------------
+});
+    
 // Developer login route
 Route::get('/dev-login/{role}', function ($role) {
     abort_unless(app()->isLocal(), 403);

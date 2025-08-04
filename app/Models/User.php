@@ -7,10 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\HasMany; // <-- Add this if it's not there
+
 
 class User extends Authenticatable
 {
@@ -439,6 +440,11 @@ class User extends Authenticatable
                 return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=random';
             }
         );
+    }
+
+    public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
+    {
+        return $this->hasMany(Announcement::class);
     }
     
 }
