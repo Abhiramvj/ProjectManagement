@@ -16,6 +16,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class LeaveApplicationController extends Controller
@@ -40,11 +41,7 @@ class LeaveApplicationController extends Controller
 
         $daysToCredit = $request->input('comp_off_days');
 
-        // Increment user's comp_off_balance
         $user->increment('comp_off_balance', $daysToCredit);
-
-        // Optionally notify user of new comp off balance (implement notification if desired)
-        // $user->notify(new CompOffApprovedNotification($daysToCredit));
 
         return redirect()->back()->with('success', "Compensatory off of {$daysToCredit} days credited to user.");
     }
@@ -57,7 +54,6 @@ class LeaveApplicationController extends Controller
 
         $updateLeaveStatus->handle($leave_application, $status, $rejectReason);
 
-        // Deduct comp_off_balance on approval if leave type is compensatory
         if ($status === 'approved' && $leave_application->leave_type === 'compensatory') {
             $user = $leave_application->user;
             $user->decrement('comp_off_balance', $leave_application->leave_days);

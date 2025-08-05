@@ -8,6 +8,8 @@ import { ref, computed, watch } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+const showColors = ref(true)
+
 
 
 const props = defineProps({
@@ -82,10 +84,15 @@ const calendarEvents = computed(() =>
       end: ev.end
         ? toISODateOnly(new Date(new Date(ev.end + 'T00:00:00').getTime() + 86400000))
         : ev.start,
-      color: leaveColors[ev.color_category] || '#9ca3af',
+      backgroundColor: showColors.value
+        ? (leaveColors[ev.color_category] || '#9ca3af')
+        : 'transparent',   // Use transparent instead of gray
+      borderColor: 'transparent', // Remove border color as well
       title: ev.title,
     }))
 )
+
+
 
 function getSelectionBackground() {
   const [start, end] = selectedDates.value
@@ -232,9 +239,12 @@ const calendarOptions = ref({
   },
 })
 
-watch([calendarEvents, selectedDates], () => {
+watch([calendarEvents, selectedDates, showColors], () => {
   calendarOptions.value.events = [...calendarEvents.value, ...getSelectionBackground()]
 }, { deep: true })
+
+
+
 
 const leaveTypeDescriptions = {
   annual: {
@@ -318,7 +328,6 @@ compensatory: {
   ],
 },
 
-  // add other leave types as needed here
 }
 
 const leaveTypeTags = {
@@ -484,6 +493,7 @@ function submitEditReason() {
         </div>
 
         <div class="space-y-3 flex flex-col justify-between">
+          
           <button @click="scrollToLeaveForm" class="w-full text-left bg-blue-600 text-white p-4 rounded-lg shadow-sm hover:bg-blue-700 transition font-medium">
             Apply Leave
           </button>
@@ -502,10 +512,33 @@ function submitEditReason() {
           <h3 class="text-lg font-semibold text-gray-900">New Leave Request</h3>
           <p class="mt-1 text-sm text-gray-500">Select dates and provide details for your leave</p>
         </div>
+        
         <form @submit.prevent="submitApplication" class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6" enctype="multipart/form-data">
           <div class="lg:col-span-2 space-y-4">
             <div class="flex items-center justify-between">
-              <InputLabel value="Select Dates" class="text-sm font-medium text-gray-700" />
+              <div class="flex items-center mb-3 space-x-3">
+                <label class="text-sm font-medium text-gray-700 select-none">
+                  Color-code leave types
+                </label>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="showColors.toString()"
+                  @click="showColors = !showColors"
+                  :class="[
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500',
+                    showColors ? 'bg-blue-600' : 'bg-gray-300',
+                  ]"
+                >
+                <span
+                  :class="[
+                    'inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform',
+                    showColors ? 'translate-x-6' : 'translate-x-1',
+                ]"
+                ></span>
+                </button>
+              </div>
+              <InputLabel value="" class="text-sm font-medium text-gray-700" />
               <div class="text-xs font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-800">
                 <template v-if="form.start_date && !form.end_date">
                   {{ form.start_date }}<span v-if="form.day_type === 'half'">({{ form.start_half_session || 'full day' }})</span>
@@ -524,16 +557,15 @@ function submitEditReason() {
           <div class="space-y-4">
             <div class="bg-blue-50 p-4 rounded-lg">
               <div class="text-sm font-medium text-gray-700">Remaining Leave Balance</div>
-<div class="text-2xl font-bold text-blue-600 mt-1">
-  <template v-if="form.leave_type === 'compensatory'">
-    {{ props.compOffBalance }} day{{ props.compOffBalance !== 1 ? 's' : '' }}
-  </template>
-  <template v-else>
-    {{ props.remainingLeaveBalance }} day{{ props.remainingLeaveBalance !== 1 ? 's' : '' }}
-  </template>
-</div>
-
-            </div>
+                <div class="text-2xl font-bold text-blue-600 mt-1">
+                  <template v-if="form.leave_type === 'compensatory'">
+                    {{ props.compOffBalance }} day{{ props.compOffBalance !== 1 ? 's' : '' }}
+                  </template>
+                  <template v-else>
+                    {{ props.remainingLeaveBalance }} day{{ props.remainingLeaveBalance !== 1 ? 's' : '' }}
+                  </template>
+                </div>
+              </div>
             <div>
               <InputLabel for="leave_type" value="Leave Type" class="text-sm font-medium text-gray-700 mb-1" />
               <select id="leave_type" v-model="form.leave_type" required
