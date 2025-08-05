@@ -17,15 +17,15 @@ class ProjectFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition()
-{
-    return [
-        'name' => $this->faker->company,
-        'description' => $this->faker->paragraph,
-        'status' => 'in-progress',
-        'end_date' => now()->addMonths(3),
-        'total_hours_required' => $this->faker->numberBetween(100, 200),
-        'project_manager_id' => User::factory(),
-        'team_id' => Team::factory(),
-    ];
-}   
+    {
+        return [
+            'name' => $this->faker->company,
+            'description' => $this->faker->paragraph,
+            'status' => 'in-progress',
+            'end_date' => now()->addMonths(3),
+            'total_hours_required' => $this->faker->numberBetween(100, 200),
+            'project_manager_id' => User::factory(),
+            'team_id' => Team::factory(),
+        ];
+    }
 }

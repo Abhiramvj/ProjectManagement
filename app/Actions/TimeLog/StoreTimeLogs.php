@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Actions\TimeLog;
 
 use Carbon\Carbon;
