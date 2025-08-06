@@ -9,7 +9,15 @@ class Team extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // Allows mass assignment for all fields
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'team_lead_id',
+    ];
 
     // A Team is led by one User (the Team Lead)
     public function teamLead()
@@ -17,6 +25,7 @@ class Team extends Model
         return $this->belongsTo(User::class, 'team_lead_id');
     }
 
+    // A Team has many members
     public function members()
     {
         return $this->belongsToMany(User::class, 'team_user', 'team_id', 'user_id');

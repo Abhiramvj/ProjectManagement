@@ -21,15 +21,19 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = [
+      protected $fillable = [
         'name',
         'email',
         'password',
+        'designation',
+        'hire_date',
+        'birth_date',
+        'work_mode',
         'parent_id',
         'leave_approver_id',
-        'leave_balance', // Add this when you create the migration
-        'designation',
+        'team_id',
         'image',
+        'leave_balance',
     ];
 
     /**
@@ -367,15 +371,23 @@ class User extends Authenticatable
      */
     public function getTaskCompletionRate(): float
     {
-        $totalTasks = $this->assignedTasks()->count();
+        // Use a single, raw query to get both counts efficiently from the database.
+        $stats = $this->assignedTasks()
+            ->selectRaw("
+                count(*) as total_tasks,
+                sum(case when status = 'completed' then 1 else 0 end) as completed_tasks
+            ")
+            ->first();
 
-        if ($totalTasks === 0) {
+        // If there are no tasks, the completion rate is 0.
+        if (!$stats || $stats->total_tasks == 0) {
             return 0;
         }
 
-        $completedTasks = $this->assignedTasks()->where('status', 'completed')->count();
+        // Perform the calculation in PHP.
+        $completionRate = ($stats->completed_tasks / $stats->total_tasks) * 100;
 
-        return round(($completedTasks / $totalTasks) * 100, 1);
+        return round($completionRate, 1);
     }
 
     // === PROJECTS ===
@@ -393,11 +405,16 @@ class User extends Authenticatable
     /**
      * Get user performance score
      */
-    public function getPerformanceScore(): int
+       public function getPerformanceScore(): int
     {
         $taskScore = $this->getTaskCompletionRate();
         $timeScore = min(100, ($this->getCurrentMonthHours() / 160) * 100);
-        $leaveScore = max(0, 100 - ($this->getUsedLeaveDays() / 20) * 100);
+
+        $totalLeave = $this->leave_balance ?? 20;
+        $leaveScore = 100;
+        if ($totalLeave > 0) {
+            $leaveScore = max(0, 100 - ($this->getUsedLeaveDays() / $totalLeave) * 100);
+        }
 
         return round(($taskScore + $timeScore + $leaveScore) / 3);
     }
@@ -443,5 +460,10 @@ class User extends Authenticatable
                 return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&background=random';
             }
         );
+    }
+
+     public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
+    {
+        return $this->hasMany(Announcement::class);
     }
 }

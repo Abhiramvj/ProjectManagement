@@ -2,29 +2,53 @@
 
 namespace App\Http\Controllers;
 
+// All necessary imports from both files, deduplicated
+use App\Models\Announcement;
 use App\Models\CalendarNote;
 use App\Models\LeaveApplication;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\LeaveStatsService;
+use App\Services\TaskStatsService;
+use App\Services\TimeStatsService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
+    // Using the Service-based architecture from the second controller for better organization
+    protected $taskStatsService;
+    protected $timeStatsService;
+    protected $leaveStatsService;
+
+    public function __construct(
+        TaskStatsService $taskStatsService,
+        TimeStatsService $timeStatsService,
+        LeaveStatsService $leaveStatsService
+    ) {
+        $this->taskStatsService = $taskStatsService;
+        $this->timeStatsService = $timeStatsService;
+        $this->leaveStatsService = $leaveStatsService;
+    }
+
+    /**
+     * Display the user's dashboard.
+     */
     public function index()
     {
         $user = Auth::user()->load('parent');
 
-        // --- ATTENDANCE & GREETING DATA ---
+        // --- ATTENDANCE & GREETING DATA (Common to both) ---
         $totalEmployees = User::count();
         $absentTodayUsers = User::whereHas('leaveApplications', function ($query) {
             $today = now()->toDateString();
             $query->where('status', 'approved')
-                ->where('start_date', '<=', $today)
-                ->where('end_date', '>=', $today);
+                  ->where('start_date', '<=', $today)
+                  ->where('end_date', '>=', $today);
         })->get();
 
         $attendanceData = [
@@ -45,8 +69,7 @@ class DashboardController extends Controller
             $greetingIcon = '🌙';
         }
 
-        // --- CALENDAR DATA (FIXED) ---
-        // The key changes are here to fix the time prefix issue
+        // --- CALENDAR DATA (Common to both) ---
         $leaveEvents = LeaveApplication::where('user_id', $user->id)
             ->where('status', 'approved')
             ->get()
@@ -54,11 +77,11 @@ class DashboardController extends Controller
                 return [
                     'id' => 'leave_'.$leave->id,
                     'title' => ucfirst($leave->leave_type).' Leave',
-                    'start' => $leave->start_date, // Just date, no time
+                    'start' => $leave->start_date,
                     'end' => $leave->start_date === $leave->end_date
                         ? null // Single day event
                         : Carbon::parse($leave->end_date)->addDay()->toDateString(),
-                    'allDay' => true, // This is crucial - makes it an all-day event
+                    'allDay' => true,
                     'backgroundColor' => $this->getLeaveColor($leave->leave_type),
                     'borderColor' => $this->getLeaveColor($leave->leave_type),
                     'textColor' => '#ffffff',
@@ -78,7 +101,7 @@ class DashboardController extends Controller
                     'id' => 'note_'.$note->id,
                     'title' => $note->note,
                     'start' => $note->date,
-                    'allDay' => true, // Notes are also all-day events
+                    'allDay' => true,
                     'backgroundColor' => '#FBBF24',
                     'borderColor' => '#F59E0B',
                     'textColor' => '#000000',
@@ -91,31 +114,41 @@ class DashboardController extends Controller
 
         $allCalendarEvents = (new Collection($leaveEvents))->merge($noteEvents);
 
-        // --- PROJECTS AND TASKS ---
+        // --- PROJECTS AND TASKS (Using the more concise logic) ---
         $projects = collect();
-        $myTasks = collect();
-
-        // Fetch projects based on user role
-        if ($user->hasRole(['admin', 'project-manager'])) {
+        if ($user->hasRole(['admin', 'project-manager', 'team-lead'])) {
             $projects = Project::where('status', '!=', 'completed')
-                ->latest()
-                ->get();
-        } elseif ($user->hasRole('team-lead')) {
-            $projects = Project::where('status', '!=', 'completed')
-                ->whereHas('members', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })
-                ->latest()
-                ->get();
+                ->whereHas('members', fn ($q) => $q->where('user_id', $user->id))
+                ->latest()->get();
         }
 
-        // Fetch tasks assigned to current user
         $myTasks = Task::where('assigned_to_id', $user->id)
             ->with('project:id,name')
             ->where('status', '!=', 'completed')
-            ->orderBy('due_date', 'asc')
-            ->get();
+            ->orderBy('due_date', 'asc')->get();
 
+        // --- ANNOUNCEMENTS (Merged from the first controller) ---
+        $announcements = Announcement::with('user:id,name,avatar_url')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($announcement) {
+                return [
+                    'id' => $announcement->id,
+                    'title' => $announcement->title,
+                    'content' => $announcement->content,
+                    'author' => $announcement->user,
+                    'created_at_formatted' => $announcement->created_at->format('M d, Y'),
+                ];
+            });
+
+        // --- PERFORMANCE STATS (Using the Service classes) ---
+        $taskStats = $this->taskStatsService->getStatsForUser($user->id);
+        $timeStats = $this->timeStatsService->getStatsForUser($user->id);
+        $leaveStats = $this->leaveStatsService->getStatsForUser($user->id);
+
+
+        // --- RENDER VIEW (With all props combined) ---
         return Inertia::render('Dashboard', [
             'user' => $user->append('avatar_url'),
             'attendance' => $attendanceData,
@@ -127,11 +160,15 @@ class DashboardController extends Controller
             ],
             'projects' => $projects,
             'myTasks' => $myTasks,
+            'announcements' => $announcements, // <-- Merged
+            'taskStats' => $taskStats,         // <-- Merged
+            'timeStats' => $timeStats,         // <-- Merged
+            'leaveStats' => $leaveStats,         // <-- Merged
         ]);
     }
 
     /**
-     * Get color for different leave types
+     * Get color for different leave types.
      */
     private function getLeaveColor($leaveType)
     {

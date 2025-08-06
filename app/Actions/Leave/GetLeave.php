@@ -12,45 +12,29 @@ class GetLeave
      * based on leave type and remaining leave balance.
      */
     private function getLeaveColorCategory(LeaveApplication $request): string
-    {
-        // Prioritize status-based categories
-        if ($request->status === 'pending') {
-            return 'pending'; // special category/color for pending
-        }
-
-        // Followed by leave type + paid logic as before
-        $leaveType = $request->leave_type;
-        $remainingBalance = $request->user->getRemainingLeaveBalance();
-
-        if ($leaveType === 'personal') {
-            if ($remainingBalance >= $request->leave_days) {
-                return 'personal';
-            } else {
-                return 'paid';
-            }
-        }
-
-        if ($leaveType === 'annual') {
-            return 'annual';
-        }
-        if ($leaveType === 'sick') {
-            return 'sick';
-        }
-        if ($leaveType === 'emergency') {
-            return 'emergency';
-        }
-        if (in_array($leaveType, ['maternity', 'paternity'])) {
-            return $leaveType;
-        }
-        if ($leaveType === 'wfh') {
-            return 'wfh';
-        }
-        if ($leaveType === 'compensatory') {
-            return 'compensatory';
-        }
-
-        return 'unknown';
+{
+    if ($request->status === 'pending') {
+        return 'pending';
     }
+
+    $leaveType = $request->leave_type;
+    $user = $request->user;
+    $remainingBalance = $user ? $user->getRemainingLeaveBalance() : 0;
+
+    if ($leaveType === 'personal') {
+        return $remainingBalance >= $request->leave_days ? 'personal' : 'paid';
+    }
+
+    return match ($leaveType) {
+        'annual' => 'annual',
+        'sick' => 'sick',
+        'emergency' => 'emergency',
+        'maternity', 'paternity' => $leaveType,
+        'wfh' => 'wfh',
+        'compensatory' => 'compensatory',
+        default => 'unknown',
+    };
+}
 
     /**
      * Fetch leave requests, annotate with color category,

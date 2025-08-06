@@ -2,12 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use Spatie\Permission\Models\Role;
 
 class ImportHierarchyCommand extends Command
 {
@@ -23,7 +25,7 @@ class ImportHierarchyCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Imports users from an Excel file into the users table, linking managers by name.';
+    protected $description = 'Imports users, roles, and manager relationships from an Excel file.';
 
     /**
      * Execute the console command.
@@ -34,25 +36,20 @@ class ImportHierarchyCommand extends Command
 
         if (! file_exists($filePath)) {
             $this->error("File not found at: {$filePath}");
-
-            return 1;
+            return Command::FAILURE;
         }
 
-        $this->info('Starting user import from Excel...');
+        $this->info("File found. Starting import...");
 
         $reader = new Xlsx;
         $spreadsheet = $reader->load($filePath);
         $excelData = $spreadsheet->getActiveSheet()->toArray();
         array_shift($excelData); // Remove header row
 
-        // Optional: Uncomment to clear old data before importing
-        // DB::table('users')->where('id', '>', 1)->delete();
-        // $this->warn('Cleared existing user data (except user ID 1).');
-
         DB::beginTransaction();
         try {
-            // --- PASS 1: INSERT ALL USERS ---
-            $this->info('--- Pass 1: Creating user records ---');
+            // --- PASS 1: CREATE USERS AND ASSIGN ROLES ---
+            $this->info('--- Pass 1: Creating user records and assigning roles ---');
             foreach ($excelData as $rowNumber => $row) {
                 $name = $row[0] ?? null;
                 if (empty($name)) {
@@ -60,63 +57,61 @@ class ImportHierarchyCommand extends Command
                 }
 
                 $email = strtolower(str_replace(' ', '.', $name)).'@company.com';
-                if (DB::table('users')->where('email', $email)->exists()) {
-                    $this->warn("User '{$name}' already exists. Skipping insertion.");
-
+                if (User::where('email', $email)->exists()) {
+                    $this->warn("User '{$name}' with email '{$email}' already exists. Skipping insertion.");
                     continue;
                 }
 
-                // --- ROBUST DATE PARSING LOGIC ---
-                // This function will try multiple formats
                 $parseDate = function ($dateString) {
-                    if (empty($dateString)) {
-                        return null;
-                    }
-                    // Try format 1: dd/mm/yyyy (e.g., 28/06/1990)
+                    if (empty($dateString)) return null;
+                    // Try parsing as a standard date format first (e.g., from a proper export)
                     try {
-                        return Carbon::createFromFormat('d/m/Y', $dateString)->format('Y-m-d');
+                        return Carbon::parse($dateString)->format('Y-m-d');
                     } catch (Exception $e) {
-                        // try format 2: d-M-Y (e.g., 28-Jun-1990)
+                        // Fallback for Excel's integer date format
                         try {
-                            return Carbon::createFromFormat('d-M-Y', $dateString)->format('Y-m-d');
-                        } catch (Exception $e2) {
-                            // If both fail, return null
-                            return null;
+                           return Carbon::createFromTimestamp(strtotime('1900-01-01') + ($dateString - 2) * 86400)->format('Y-m-d');
+                        } catch(Exception $e2) {
+                            return null; // Return null if all parsing fails
                         }
                     }
                 };
 
-                $hire_date = $parseDate($row[2] ?? null);
-                $birth_date = $parseDate($row[3] ?? null);
-
-                if (empty($hire_date)) {
-                    $this->warn("Could not parse hire date for '{$name}' on row ".($rowNumber + 2).'. Setting to NULL.');
-                }
-                if (empty($birth_date)) {
-                    $this->warn("Could not parse birth date for '{$name}' on row ".($rowNumber + 2).'. Setting to NULL.');
-                }
-                // --- END OF ROBUST DATE PARSING ---
-
-                DB::table('users')->insert([
+                // --- THE FIX: USE User::create() and get the model instance back ---
+                // This method is secure because it respects the `$fillable` array on your User model.
+                $user = User::create([
                     'name' => $name,
                     'email' => $email,
                     'password' => Hash::make('password'),
                     'designation' => $row[1] ?? null,
-                    'hire_date' => $hire_date,
-                    'birth_date' => $birth_date,
+                    'hire_date' => $parseDate($row[2] ?? null),
+                    'birth_date' => $parseDate($row[3] ?? null),
                     'leave_balance' => 20.00,
-                    'parent_id' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'parent_id' => null, // This will be set in Pass 2
                 ]);
 
-                $this->line("Created user: {$name}");
+                // Now the $user variable exists and is a full Eloquent model.
+                $this->line("Created user: {$user->name}");
+
+                // Role Assignment Logic now works correctly.
+                $processedRoleName = strtolower(trim($row[6] ?? ''));
+                if (!empty($processedRoleName)) {
+                    // Using query caching for performance
+                    $role = Role::query()->where('name', $processedRoleName)->first();
+                    if ($role) {
+                        $user->assignRole($role);
+                        $this->line(" -> SUCCESS: Role '{$role->name}' found and assigned.");
+                    } else {
+                        $this->warn(" -> WARNING: Role '{$processedRoleName}' was not found in the database.");
+                    }
+                } else {
+                     $this->warn(" -> WARNING: No role specified in column G for {$user->name}.");
+                }
             }
 
             // --- PASS 2: LINK MANAGERS ---
-            $this->info('--- Pass 2: Linking managers by setting parent_id ---');
-            $allUsers = DB::table('users')->get(['id', 'name']);
-
+            $this->info('--- Pass 2: Linking managers ---');
+            $allUsers = User::all()->keyBy('name'); // Key by name for faster lookups
             foreach ($excelData as $row) {
                 $employeeName = $row[0] ?? null;
                 $managerName = $row[4] ?? null;
@@ -124,14 +119,14 @@ class ImportHierarchyCommand extends Command
                     continue;
                 }
 
-                $employeeUser = $allUsers->firstWhere('name', $employeeName);
-                $managerUser = $allUsers->firstWhere('name', $managerName);
+                $employeeUser = $allUsers->get($employeeName);
+                $managerUser = $allUsers->get($managerName);
 
                 if ($employeeUser && $managerUser) {
-                    DB::table('users')->where('id', $employeeUser->id)->update(['parent_id' => $managerUser->id]);
+                    $employeeUser->update(['parent_id' => $managerUser->id]);
                     $this->line("Linked {$employeeName} -> {$managerName}");
-                } else {
-                    $this->warn("Could not create link for '{$employeeName}'. Check if manager '{$managerName}' exists.");
+                } else if (!$managerUser) {
+                    $this->warn("Could not create link for '{$employeeName}'. Manager '{$managerName}' was not found.");
                 }
             }
 
@@ -139,7 +134,7 @@ class ImportHierarchyCommand extends Command
             $this->info('------------------------------------');
             $this->info('User import completed successfully! Data has been saved.');
 
-            return 0;
+            return Command::SUCCESS;
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -147,7 +142,7 @@ class ImportHierarchyCommand extends Command
             $this->error('Error Message: '.$e->getMessage());
             $this->error('File: '.$e->getFile().' on line '.$e->getLine());
 
-            return 1;
+            return Command::FAILURE;
         }
     }
 }

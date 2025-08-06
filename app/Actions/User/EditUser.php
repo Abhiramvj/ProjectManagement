@@ -2,21 +2,43 @@
 
 namespace App\Actions\User;
 
-use App\Models\Team;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
 
 class EditUser
 {
-    public function handle(User $user)
+    /**
+     * The action to get data for the creation form.
+     * We reuse it here to get all the dropdown options.
+     *
+     * @var \App\Actions\User\CreateUsers
+     */
+    protected $createUsers;
+
+    /**
+     * Inject the CreateUsers action.
+     */
+    public function __construct(CreateUsers $createUsers)
     {
-        // Load the user's current roles to pre-select them in the form
+        $this->createUsers = $createUsers;
+    }
+
+    /**
+     * Prepare the props for the user edit page.
+     *
+     * @param \App\Models\User $user The user being edited.
+     * @return array
+     */
+    public function handle(User $user): array
+    {
+ 
+        $formProps = $this->createUsers->handle();
+
         $user->load('roles');
 
-        return [
-            'user' => $user,
-            'roles' => Role::all(),
-            'teams' => Team::all(),
-        ];
+
+        return array_merge(
+            ['user' => $user],
+            $formProps
+        );
     }
 }

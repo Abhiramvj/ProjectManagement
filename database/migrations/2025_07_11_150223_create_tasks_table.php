@@ -14,13 +14,10 @@ return new class extends Migration
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-
-            // THESE ARE THE TWO COLUMNS THAT WERE MISSING/INCOMPLETE
-            $table->foreignId('project_id')->constrained()->onDelete('cascade'); // Links to projects table
-            $table->foreignId('assigned_to_id')->constrained('users'); // Links to users table
-
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('assigned_to_id')->constrained('users');
             $table->string('status')->default('todo');
-            $table->date('due_date')->nullable(); // todo, in-progress, done
+            $table->date('due_date')->nullable();
             $table->timestamps();
         });
     }

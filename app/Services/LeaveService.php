@@ -6,6 +6,7 @@ use App\Models\LeaveApplication;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log; // Added for logging
 
 class LeaveService
 {
@@ -45,8 +46,7 @@ class LeaveService
                 ->selectRaw('
                     status,
                     COUNT(*) as count,
-                    SUM(leave_days) as total_days,
-                    AVG(leave_days) as avg_days
+                    SUM(leave_days) as total_days
                 ')
                 ->groupBy('status')
                 ->get()
@@ -76,7 +76,7 @@ class LeaveService
     {
         $query = LeaveApplication::forUser($user->id)
             ->where('status', '!=', 'rejected')
-            ->overlapsWith($startDate, $endDate);
+            ->overlapsWith($startDate, $endDate); // <-- This now works correctly
 
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
@@ -97,7 +97,7 @@ class LeaveService
                 ->with([
                     'leaveApplications' => function ($query) use ($startDate, $endDate) {
                         $query->approved()
-                            ->overlapsWith($startDate, $endDate)
+                            ->overlapsWith($startDate, $endDate) // <-- This now works correctly
                             ->select('id', 'user_id', 'start_date', 'end_date', 'leave_type', 'day_type', 'leave_days');
                     },
                     'teams:id,name',
@@ -105,7 +105,6 @@ class LeaveService
                 ->select('id', 'name')
                 ->orderBy('name');
 
-            // Apply filters
             if (! empty($filters['employee_name'])) {
                 $usersQuery->where('name', 'like', "%{$filters['employee_name']}%");
             }
@@ -128,9 +127,8 @@ class LeaveService
         $year = $year ?? Carbon::now()->year;
         Cache::forget("leave_balance_{$user->id}_{$year}");
         Cache::forget("leave_stats_{$user->id}_{$year}");
-
-        // Clear calendar cache (simplified - in production you might want more targeted clearing)
-        Cache::flush(); // This is aggressive but ensures consistency
+        // A more targeted cache clearing might be needed for the calendar if it becomes complex
+        Cache::flush();
     }
 
     /**
@@ -139,12 +137,8 @@ class LeaveService
     public function getLeaveTypeColors(): array
     {
         return [
-            'sick' => '#ff9800',
-            'annual' => '#EF5350',
-            'personal' => '#9C27B0',
-            'emergency' => '#F44336',
-            'maternity' => '#E91E63',
-            'paternity' => '#3F51B5',
+            'sick' => '#ff9800', 'annual' => '#EF5350', 'personal' => '#9C27B0',
+            'emergency' => '#F44336', 'maternity' => '#E91E63', 'paternity' => '#3F51B5',
         ];
     }
 
@@ -153,50 +147,24 @@ class LeaveService
      */
     public function calculateLeaveDays(Carbon $startDate, Carbon $endDate, string $dayType = 'full', array $data = []): float
     {
-        // Debug logging
-        \Log::info('LeaveService calculateLeaveDays called', [
-            'startDate' => $startDate->toDateString(),
-            'endDate' => $endDate->toDateString(),
-            'dayType' => $dayType,
+        Log::info('LeaveService calculateLeaveDays called', [
+            'startDate' => $startDate->toDateString(), 'endDate' => $endDate->toDateString(), 'dayType' => $dayType,
             'start_half_session' => $data['start_half_session'] ?? 'not set',
             'end_half_session' => $data['end_half_session'] ?? 'not set',
         ]);
 
         if ($dayType === 'half') {
             if ($startDate->isSameDay($endDate)) {
-                // Single day half-day leave is always 0.5 days
-                \Log::info('Calculated half-day single day', ['result' => 0.5]);
-
                 return 0.5;
             } else {
-                // Multi-day leave with half-day sessions
                 $totalDays = $startDate->diffInDaysFiltered(fn ($date) => ! $date->isWeekend(), $endDate) + 1;
                 $deduction = 0;
-
-                // If leave starts in the afternoon, the morning was worked (deduct 0.5)
-                if (($data['start_half_session'] ?? null) === 'afternoon') {
-                    $deduction += 0.5;
-                }
-                // If leave ends in the morning, the afternoon will be worked (deduct 0.5)
-                if (($data['end_half_session'] ?? null) === 'morning') {
-                    $deduction += 0.5;
-                }
-
-                $result = max(0.5, $totalDays - $deduction);
-                \Log::info('Calculated multi-day half-day', [
-                    'totalDays' => $totalDays,
-                    'deduction' => $deduction,
-                    'result' => $result,
-                ]);
-
-                return $result;
+                if (($data['start_half_session'] ?? null) === 'afternoon') $deduction += 0.5;
+                if (($data['end_half_session'] ?? null) === 'morning') $deduction += 0.5;
+                return max(0.5, $totalDays - $deduction);
             }
         }
 
-        // Full day calculation: Count weekdays only
-        $result = $startDate->diffInDaysFiltered(fn ($date) => ! $date->isWeekend(), $endDate) + 1;
-        \Log::info('Calculated full day', ['result' => $result]);
-
-        return $result;
+        return $startDate->diffInDaysFiltered(fn ($date) => ! $date->isWeekend(), $endDate) + 1;
     }
 }

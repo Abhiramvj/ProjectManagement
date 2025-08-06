@@ -147,20 +147,31 @@ class ShowPerformance
                 ];
             });
 
-        // Leave statistics
+        // --- [START] CORRECTED LEAVE STATISTICS ---
+
         $approvedLeave = LeaveApplication::where('user_id', $user->id)
             ->where('status', 'approved')
             ->get();
 
+        // Best practice: Get allowance from user model, otherwise default to 20
+        // You might need to add a 'leave_allowance' column to your 'users' table
+        $totalAllowance = $user->leave_allowance ?? 20;
+
+        $currentYearLeave = $approvedLeave->filter(
+            fn ($leave) => Carbon::parse($leave->start_date)->year === Carbon::now()->year
+        )->sum(
+            fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1
+        );
+
         $leaveStats = [
-            'total_days' => $approvedLeave->sum(fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1
-            ),
-            'current_year' => $approvedLeave->filter(fn ($leave) => Carbon::parse($leave->start_date)->year === Carbon::now()->year
-            )->sum(fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1
-            ),
+            'current_year' => $currentYearLeave,
+            'balance'      => $totalAllowance, // <-- THE FIX #1: Add the balance key
+            'remaining'    => max(0, $totalAllowance - $currentYearLeave), // <-- THE FIX #2: Use the variable
+            'total_days'   => $approvedLeave->sum(fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1),
         ];
 
-        $leaveStats['remaining'] = max(0, 20 - $leaveStats['current_year']);
+        // --- [END] CORRECTED LEAVE STATISTICS ---
+
 
         // Recent leave applications
         $recentLeave = LeaveApplication::where('user_id', $user->id)
@@ -187,7 +198,7 @@ class ShowPerformance
             'projectHours' => $projectHours->toArray(),
             'monthlyHours' => $monthlyHours->toArray(),
             'recentTimeLogs' => $recentTimeLogs->toArray(),
-            'leaveStats' => $leaveStats,
+            'leaveStats' => $leaveStats, // This will now contain the 'balance'
             'recentLeave' => $recentLeave->toArray(),
         ];
     }

@@ -27,6 +27,8 @@ class StoreUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', Password::defaults()],
+            'designation' => 'nullable|string',
+            'work_mode' => 'nullable|string',
             'role' => 'required|string|exists:roles,name',
             'team_id' => 'nullable|exists:teams,id',
             'parent_id' => 'nullable|exists:users,id',

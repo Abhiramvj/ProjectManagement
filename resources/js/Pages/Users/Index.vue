@@ -6,47 +6,48 @@ import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { debounce } from 'lodash';
 
+// Tell Inertia to use the layout.
+defineOptions({ layout: AuthenticatedLayout });
+
 // =========== PROPS ===========
-// Data passed from the UserController@index method in Laravel
 const props = defineProps({
-    users: Object, // Laravel paginated object
+    users: Object,
     roles: Array,
     teams: Array,
     potential_managers: Object,
     theAdmin: Object,
     filters: Object,
+    workModes: Array, // <-- This receives the data from the backend
 });
 
 // =========== STATE MANAGEMENT ===========
 const isModalVisible = ref(false);
-const modalMode = ref('create'); // Can be 'create' or 'edit'
-const editingUser = ref(null); // Stores the user object being edited
-const search = ref(props.filters?.search || ''); // Search input state
+const modalMode = ref('create');
+const editingUser = ref(null);
+const search = ref(props.filters?.search || '');
+const imagePreview = ref(null);
 
 // =========== FORM HANDLING ===========
-// A single reactive form for both creating and editing users
 const form = useForm({
-    _method: null, // Will be 'post' for create, 'put' for edit (for method spoofing)
+    _method: null,
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
     role: '',
+    designation: '',
+    work_mode: '',
     team_id: '',
     parent_id: '',
-    image: null, // Holds the file object for new avatar uploads
-    imagePreview: null, // Holds the URL for the image preview
+    image: null,
 });
 
 
 // =========== DYNAMIC FORM LOGIC ===========
-// Watch for role changes to automatically set the manager or clear dependencies
 watch(() => form.role, (newRole, oldRole) => {
-    // Auto-assign the admin as the manager for Project Managers
     if (newRole === 'project-manager' && props.theAdmin) {
         form.parent_id = props.theAdmin.id;
     }
-    // If the role is changed *from* something else, clear the old manager/team
     else if (newRole !== oldRole) {
         form.parent_id = '';
         if (newRole !== 'employee') {
@@ -58,10 +59,11 @@ watch(() => form.role, (newRole, oldRole) => {
 
 // =========== MODAL CONTROLS ===========
 const openCreateModal = () => {
-    form.reset(); // Clear form fields and errors
+    form.reset();
+    imagePreview.value = null;
     modalMode.value = 'create';
     editingUser.value = null;
-    form._method = 'post'; // Set method for creation
+    form._method = 'post';
     isModalVisible.value = true;
 };
 
@@ -69,15 +71,15 @@ const openEditModal = (user) => {
     form.reset();
     modalMode.value = 'edit';
     editingUser.value = user;
-    form._method = 'put'; // Set method for editing/updating
+    form._method = 'put';
 
-    // Populate form with the user's existing data
     form.name = user.name;
     form.email = user.email;
     form.role = user.roles[0]?.name || '';
+    form.work_mode = user.work_mode || '';
     form.team_id = user.team_id || '';
     form.parent_id = user.parent_id || '';
-    form.imagePreview = user.image ? `/storage/${user.image}` : null;
+    imagePreview.value = user.image ? `/storage/${user.image}` : null;
 
     isModalVisible.value = true;
 };
@@ -95,11 +97,9 @@ const submit = () => {
         ? route('users.store')
         : route('users.update', editingUser.value.id);
 
-    // Always use form.post() because it correctly handles multipart/form-data for file uploads.
-    // The `form._method` property ('post' or 'put') tells Laravel how to handle the request.
     form.post(routeName, {
         onSuccess: () => closeModal(),
-        preserveScroll: true, // Keep the user's scroll position on the page
+        preserveScroll: true,
     });
 };
 
@@ -113,20 +113,17 @@ const deleteUser = (userId) => {
 
 
 // =========== FEATURES ===========
-// Debounced search function to filter users without overwhelming the server
 const searchUsers = debounce(() => {
     router.get(route('users.index'), { search: search.value }, { preserveState: true, replace: true });
 }, 300);
 
-// Computed property for easy access to pagination links
 const paginationLinks = computed(() => props.users.links);
 
-// Handles new image selection and creates a local preview URL
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (file) {
         form.image = file;
-        form.imagePreview = URL.createObjectURL(file);
+        imagePreview.value = URL.createObjectURL(file);
     }
 }
 </script>
@@ -134,87 +131,70 @@ function handleImageUpload(e) {
 <template>
     <Head title="Manage Users" />
 
-    <AuthenticatedLayout>
-        <div class="p-4 sm:p-6 lg:p-8 font-sans">
-            <div class="max-w-7xl mx-auto space-y-6">
+    <div class="p-4 sm:p-6 lg:p-8 font-sans">
+        <div class="max-w-7xl mx-auto space-y-6">
 
-                <!-- Page Header -->
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <h1 class="text-3xl font-bold text-slate-900">Manage Users</h1>
-                    <button @click="openCreateModal" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2 -ml-1">
-                            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                        </svg>
-                        Add User
-                    </button>
+            <!-- Page Header -->
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <h1 class="text-3xl font-bold text-slate-900">Manage Users</h1>
+                <button @click="openCreateModal" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2 -ml-1"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+                    Add User
+                </button>
+            </div>
+
+            <!-- Users List Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                 <div class="p-4 sm:px-6 border-b border-slate-200">
+                    <input v-model="search" @input="searchUsers" type="text" placeholder="Search by name or email..." class="block w-full max-w-xs rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                 </div>
-
-                <!-- Users List Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-                     <div class="p-4 sm:px-6 border-b border-slate-200">
-                        <input v-model="search" @input="searchUsers" type="text" placeholder="Search by name or email..."
-                               class="block w-full max-w-xs rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-200">
-                            <thead class="bg-slate-50">
-                                <tr>
-                                    <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
-                                    <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined On</th>
-                                    <th scope="col" class="relative py-3.5 px-6"><span class="sr-only">Actions</span></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 bg-white">
-                                <tr v-if="!users.data.length">
-                                    <td colspan="4" class="px-6 py-8 text-center text-slate-500">No users found.</td>
-                                </tr>
-                                <tr v-for="user in users.data" :key="user.id" class="hover:bg-slate-50 transition-colors">
-                                    <td class="whitespace-nowrap py-4 px-6 text-sm">
-                                        <div class="flex items-center gap-3">
-                                            <img class="h-10 w-10 rounded-full object-cover" :src="user.image ? `/storage/${user.image}` : `https://ui-avatars.com/api/?name=${user.name}&background=random`" alt="Profile avatar">
-                                            <div>
-                                                <div class="font-medium text-slate-900">{{ user.name }}</div>
-                                                <div class="text-slate-500">{{ user.email }}</div>
-                                            </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Work Mode</th>
+                                <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined On</th>
+                                <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"><span class="sr-only text-slate-500">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            <tr v-if="!users.data.length">
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No users found.</td>
+                            </tr>
+                            <tr v-for="user in users.data" :key="user.id" class="hover:bg-slate-50 transition-colors">
+                                <td class="whitespace-nowrap py-4 px-6 text-sm">
+                                    <div class="flex items-center gap-3">
+                                        <img class="h-10 w-10 rounded-full object-cover" :src="user.image ? `/storage/${user.image}` : `https://ui-avatars.com/api/?name=${user.name}&background=random`" alt="Profile avatar">
+                                        <div>
+                                            <div class="font-medium text-slate-900">{{ user.name }}</div>
+                                            <div class="text-slate-500">{{ user.email }}</div>
                                         </div>
-                                    </td>
-                                    <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600 capitalize">{{ user.roles[0]?.name.replace('-', ' ') || 'N/A' }}</td>
-                                    <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600">{{ new Date(user.created_at).toLocaleDateString() }}</td>
-                                    <td class="px-6 py-4 text-right text-sm font-medium">
-                                        <Link :href="route('performance.show', user.id)" class="text-indigo-600 hover:text-indigo-900">
-                                            View Performance
-                                        </Link>
-                                        </td>
-                                    <td class="whitespace-nowrap py-4 px-6 text-right text-sm font-medium">
-                                         <Link :href="route('performance.show', user.id)" class="text-indigo-600 hover:text-indigo-900">
-                    View Performance
-                  </Link>
-                                    </td>
-                                    <td class="whitespace-nowrap py-4 px-6 text-right text-sm font-medium">
-                                        <div class="flex items-center justify-end space-x-4">
-                                            <button @click="openEditModal(user)" class="text-indigo-600 hover:text-indigo-900">Edit</button>
-                                            <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-900">Delete</button>
-                                        </div>
-                                    </td>
-                                    
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                     <!-- Pagination Links -->
-                    <div v-if="paginationLinks.length > 3" class="p-4 sm:px-6 border-t border-slate-200 flex items-center justify-between">
-                        <div class="text-sm text-slate-600">Showing {{ users.from }} to {{ users.to }} of {{ users.total }} results</div>
-                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                             <Link v-for="(link, index) in paginationLinks" :key="index"
-                                  :href="link.url"
-                                  v-html="link.label"
-                                  :class="{ 'bg-slate-900 text-white': link.active, 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"
-                                  class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20"
-                                  :disabled="!link.url"
-                                  preserve-scroll />
-                        </nav>
-                    </div>
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600 capitalize">{{ user.roles[0]?.name.replace('-', ' ') || 'N/A' }}</td>
+                                <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600">{{ user.work_mode || 'N/A' }}</td>
+                                <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600">{{ new Date(user.created_at).toLocaleDateString() }}</td>
+                                <td class="whitespace-nowrap py-4 px-6 text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end space-x-4">
+                                        <Link :href="route('performance.show', user.id)" class="text-green-600 hover:text-green-900">Performance</Link>
+                                        <button @click="openEditModal(user)" class="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                        <button @click="deleteUser(user.id)" class="text-red-600 hover:text-red-900">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="paginationLinks.length > 3" class="p-4 sm:px-6 border-t border-slate-200 flex items-center justify-between">
+                    <div class="text-sm text-slate-600">Showing {{ users.from }} to {{ users.to }} of {{ users.total }} results</div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                         <template v-for="(link, index) in paginationLinks" :key="index">
+                            <span v-if="!link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed ring-1 ring-inset ring-slate-300" :class="{ 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"/>
+                            <Link v-else :href="link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20" :class="{ 'bg-slate-900 text-white': link.active, 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }" preserve-scroll />
+                        </template>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -224,7 +204,7 @@ function handleImageUpload(e) {
             <div class="p-6">
                 <h2 class="text-lg font-bold text-slate-900">{{ modalMode === 'create' ? 'Create New User' : 'Edit User' }}</h2>
                 <form @submit.prevent="submit" class="mt-6 space-y-6">
-                    <!-- General Info -->
+                    <!-- Name, Email, Image, Role -->
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
                         <input v-model="form.name" id="name" type="text" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
@@ -236,22 +216,23 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.email" />
                     </div>
 
-                    <!-- Image Upload -->
+                     <div>
+                        <label for="designation" class="block text-sm font-medium text-slate-700">Designation / Job Title</label>
+                        <input v-model="form.designation" id="designation" type="text" placeholder="e.g., Software Engineer" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                        <InputError class="mt-2" :message="form.errors.designation" />
+                    </div>
+
                     <div>
                         <label for="image" class="block text-sm font-medium text-slate-700">Profile Image</label>
                         <div class="mt-2 flex items-center gap-4">
-                            <img v-if="form.imagePreview" :src="form.imagePreview" alt="Preview" class="w-16 h-16 rounded-full object-cover border" />
+                            <img v-if="imagePreview" :src="imagePreview" alt="Preview" class="w-16 h-16 rounded-full object-cover border" />
                             <div v-else class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                                </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
                             </div>
                             <input id="image" type="file" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" @change="handleImageUpload"/>
                         </div>
                         <InputError class="mt-2" :message="form.errors.image" />
                     </div>
-
-                    <!-- Role & Hierarchy -->
                     <div>
                         <label for="role" class="block text-sm font-medium text-slate-700">Role</label>
                         <select v-model="form.role" id="role" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm capitalize">
@@ -261,7 +242,19 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.role" />
                     </div>
 
-                    <!-- DYNAMIC MANAGER (PARENT) SECTION -->
+                    <!-- DYNAMIC WORK MODE DROPDOWN -->
+                    <div>
+                        <label for="work_mode" class="block text-sm font-medium text-slate-700">Work Mode</label>
+                        <select v-model="form.work_mode" id="work_mode" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="">-- Not Set --</option>
+                            <option v-for="mode in workModes" :key="mode" :value="mode">
+                                {{ mode }}
+                            </option>
+                        </select>
+                        <InputError class="mt-2" :message="form.errors.work_mode" />
+                    </div>
+
+                    <!-- Reports To and Team -->
                     <div>
                         <div v-if="form.role === 'project-manager'">
                             <label class="block text-sm font-medium text-slate-700">Reports To</label>
@@ -285,8 +278,6 @@ function handleImageUpload(e) {
                         </div>
                         <InputError class="mt-2" :message="form.errors.parent_id" />
                     </div>
-
-                    <!-- Team Assignment for Employees -->
                     <div v-if="form.role === 'employee'">
                          <label for="team_id" class="block text-sm font-medium text-slate-700">Team</label>
                         <select v-model="form.team_id" id="team_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
@@ -296,7 +287,7 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.team_id" />
                     </div>
 
-                    <!-- Flexible Password Section -->
+                    <!-- Password Fields -->
                     <div class="border-t border-slate-200 pt-6">
                          <h3 class="text-base font-semibold text-slate-800">{{ modalMode === 'create' ? 'Set Password' : 'Change Password (Optional)' }}</h3>
                         <div class="mt-4 space-y-6">
@@ -322,5 +313,5 @@ function handleImageUpload(e) {
                 </form>
             </div>
         </Modal>
-    </AuthenticatedLayout>
+    </div>
 </template>

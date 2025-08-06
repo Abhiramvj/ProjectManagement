@@ -19,13 +19,18 @@ class ProjectFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->company,
-            'description' => $this->faker->paragraph,
-            'status' => 'in-progress',
-            'end_date' => now()->addMonths(3),
-            'total_hours_required' => $this->faker->numberBetween(100, 200),
+            'name' => 'Project ' . fake()->company(),
+            'description' => fake()->paragraph(),
+
+            // This line ensures a user is created for the project manager
             'project_manager_id' => User::factory(),
+
+            // This line ensures a team is created for the project
             'team_id' => Team::factory(),
+
+            'status' => fake()->randomElement(['pending', 'in-progress', 'on-hold']),
+            'end_date' => fake()->dateTimeBetween('+1 month', '+6 months'),
+            'total_hours_required' => fake()->numberBetween(100, 500),
         ];
     }
 }

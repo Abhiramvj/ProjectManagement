@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\User; // <-- IMPORTANT: Import the User model
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Model>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Team>
  */
-class ProjectFacrtoryFactory extends Factory
+class TeamFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -17,7 +18,8 @@ class ProjectFacrtoryFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => $this->faker->words(2, true) . ' Team',
+            'team_lead_id' => User::factory(),
         ];
     }
 }

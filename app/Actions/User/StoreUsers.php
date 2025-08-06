@@ -2,43 +2,39 @@
 
 namespace App\Actions\User;
 
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Arr;
 
 class StoreUsers
 {
     public function handle(array $data): User
     {
-        // Find the first HR user to use as leave approver
-        $hrApprover = User::role('hr')->first();
-
-        // Handle image upload
-        $imagePath = null;
-        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-            $imagePath = $data['image']->store('profile_images', 'public');
-        }
-
-        // Create the user
-        $user = User::create([
+        $userData = [
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'work_mode' => $data['work_mode'] ?? null,
             'parent_id' => $data['parent_id'] ?? null,
-            'leave_approver_id' => $hrApprover?->id,
-            'image' => $imagePath,
-        ]);
+            'designation' => $data['designation'] ?? null,
+            'image' => null,
+        ];
 
-        // Assign role using Spatie
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $userData['image'] = $data['image']->store('profile_images', 'public');
+        }
+
+        // Create the user first
+        $user = User::create($userData);
+
+        // Assign the role
         $user->assignRole($data['role']);
 
-        // If employee, link them to a team
-        if ($data['role'] === 'employee' && isset($data['team_id'])) {
-            $team = Team::find($data['team_id']);
-            if ($team) {
-                $team->members()->attach($user->id);
-            }
+        // --- NEW LOGIC TO HANDLE THE PIVOT TABLE ---
+        // If a team_id is provided, attach the user to that team.
+        if (!empty($data['team_id'])) {
+            $user->teams()->attach($data['team_id']);
         }
 
         return $user;

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
@@ -34,6 +35,10 @@ Route::get('/', function () {
     ]);
 })->middleware('guest')->name('login');
 
+Route::get('/phpinfo', function () {
+    phpinfo();
+});
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -49,6 +54,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/performance/{user}', [PerformanceReportController::class, 'show'])
         ->name('performance.show')
         ->middleware(['can:manage employees']);
+
+        Route::post('/performance/{user}/generate-summary', [PerformanceReportController::class, 'generateSummary'])
+    ->name('performance.generateSummary')
+    ->middleware(['can:manage employees']);
+
+    Route::post('/my-performance/generate-summary', [PerformanceReportController::class, 'generateMySummary'])
+    ->middleware(['auth'])
+    ->name('my-performance.generateSummary');
 
     // Role management routes
     Route::resource('roles', RoleController::class)
@@ -103,6 +116,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'update'])->name('calendar-notes.update');
     Route::delete('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'destroy'])->name('calendar-notes.destroy');
 
+     Route::resource('announcements', AnnouncementController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->middleware('can:manage announcements');
+    // -----------------------------------------
+
+
 });
 
 // Developer login route
@@ -116,3 +135,6 @@ Route::get('/dev-login/{role}', function ($role) {
 })->name('dev.login');
 
 require __DIR__.'/auth.php';
+
+
+

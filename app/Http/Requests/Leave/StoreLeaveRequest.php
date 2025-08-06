@@ -45,19 +45,21 @@ class StoreLeaveRequest extends FormRequest
     }
 
     public function withValidator(Validator $validator): void
-    {
-        $validator->after(function ($validator) {
-            $userId = $this->user()->id;
-            $start = $this->input('start_date');
-            $end = $this->input('end_date');
+{
+    $validator->after(function ($validator) {
+        $userId = $this->user()->id;
+        $start = $this->input('start_date');
+        $end = $this->input('end_date');
 
+        // Only check overlap if both dates exist and are not empty
+        if (!empty($start) && !empty($end)) {
             $hasOverlap = LeaveApplication::where('user_id', $userId)
                 ->where(function ($query) use ($start, $end) {
                     $query->whereBetween('start_date', [$start, $end])
                         ->orWhereBetween('end_date', [$start, $end])
                         ->orWhere(function ($query) use ($start, $end) {
                             $query->where('start_date', '<=', $start)
-                                ->where('end_date', '>=', $end);
+                                  ->where('end_date', '>=', $end);
                         });
                 })
                 ->whereIn('status', ['pending', 'approved'])
@@ -66,6 +68,8 @@ class StoreLeaveRequest extends FormRequest
             if ($hasOverlap) {
                 $validator->errors()->add('start_date', 'These dates overlap with an existing leave request.');
             }
-        });
-    }
+        }
+    });
+}
+
 }

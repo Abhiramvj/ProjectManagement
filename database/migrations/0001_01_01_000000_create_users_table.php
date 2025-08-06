@@ -14,23 +14,23 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-
-            // --- ADD THE MISSING COLUMNS HERE ---
             $table->string('employee_id')->nullable()->unique();
             $table->string('designation')->nullable();
+            $table->string('work_mode')->nullable();
             $table->string('avatar_url')->nullable();
             $table->date('hire_date')->nullable();
+            $table->date('birth_date')->nullable();
             $table->decimal('total_experience_years', 4, 1)->default(0.0);
-            // ------------------------------------
-
             $table->string('email')->unique();
+            $table->string('image')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->unsignedTinyInteger('leave_balance')->default(0);
+            $table->float('comp_off_balance')->default(0);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-
-            // -----------------------------------------------
-
             $table->rememberToken();
             $table->timestamps();
+
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -54,8 +54,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['parent_id']);
+            $table->dropColumn('parent_id');
+            $table->dropColumn('work_mode');
+            $table->dropColumn('leave_balance');
+             $table->dropColumn('comp_off_balance');
+        });
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+
     }
 };

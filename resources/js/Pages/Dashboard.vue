@@ -13,10 +13,11 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import axios from 'axios';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// --- PROPS ---
+// --- MODIFIED --- Add the new performance props
 const props = defineProps({
     user: { type: Object, required: true },
     attendance: { type: Object, required: true },
@@ -24,9 +25,67 @@ const props = defineProps({
     greeting: { type: Object, required: true },
     projects: { type: Array, default: () => [] },
     myTasks: { type: Array, default: () => [] },
+    // [+] New props for performance data
+    taskStats: { type: Object, required: true },
+    timeStats: { type: Object, required: true },
+    leaveStats: { type: Object, required: true },
+    announcements: { type: Array, default: () => [] },
 });
 
-// --- ROLE-BASED VISIBILITY & HELPERS ---
+
+// --- [+] NEW --- Logic for Performance Score and AI Summary
+const performanceScore = computed(() => {
+    if (!props.taskStats || !props.timeStats || !props.leaveStats || !props.leaveStats.balance) {
+        return NaN;
+    }
+    const taskScore = props.taskStats.completion_rate;
+    const timeScore = Math.min(100, (props.timeStats.current_month / 160) * 100);
+    const leaveScore = Math.max(0, 100 - (props.leaveStats.current_year / props.leaveStats.balance) * 100);
+    return Math.round((taskScore + timeScore + leaveScore) / 3);
+});
+
+const isDataReadyForSummary = computed(() => {
+    return props.taskStats && props.timeStats && props.leaveStats &&
+           typeof performanceScore.value === 'number' &&
+           !isNaN(performanceScore.value);
+});
+
+const isSummaryModalVisible = ref(false);
+const generatedSummary = ref('');
+const isLoadingSummary = ref(false);
+const summaryError = ref('');
+
+// This function now calls a generic summary route, as the backend knows who the user is.
+// IMPORTANT: Ensure you have a route named 'my-performance.generateSummary' pointing to a controller method.
+const fetchAiSummary = async () => {
+    isLoadingSummary.value = true;
+    summaryError.value = '';
+    generatedSummary.value = '';
+
+    try {
+        const response = await axios.post(route('my-performance.generateSummary'), {
+            taskStats: props.taskStats,
+            timeStats: props.timeStats,
+            leaveStats: props.leaveStats,
+            performanceScore: performanceScore.value
+        });
+        generatedSummary.value = response.data.summary;
+    } catch (error) {
+        console.error("Error generating AI summary:", error);
+        summaryError.value = error.response?.data?.error || 'An unexpected error occurred.';
+    } finally {
+        isLoadingSummary.value = false;
+        isSummaryModalVisible.value = true; // Open the modal regardless of outcome
+    }
+};
+
+const closeSummaryModal = () => {
+    isSummaryModalVisible.value = false;
+};
+// --- END NEW ---
+
+
+// --- ROLE-BASED VISIBILITY & HELPERS (Unchanged) ---
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 
@@ -37,54 +96,108 @@ const hasPermission = (permission) => {
     return authUser.value.permissions.includes(permission);
 };
 
+// --- Computed property for managing announcements ---
+const canManageAnnouncements = computed(() => hasPermission('manage announcements'));
+
 const canViewAttendanceStats = computed(() => hasPermission('manage employees'));
 
-// --- TASK MANAGEMENT ---
+// --- ANNOUNCEMENT MANAGEMENT ---
+const isAnnouncementModalOpen = ref(false);
+const announcementModalMode = ref('create'); // 'create' or 'edit'
+const editingAnnouncementId = ref(null);
+const announcementForm = useForm({
+    title: '',
+    content: '',
+});
+
+const isViewAnnouncementModalOpen = ref(false);
+const viewingAnnouncement = ref(null);
+
+function openCreateAnnouncementModal() {
+    announcementModalMode.value = 'create';
+    announcementForm.reset();
+    editingAnnouncementId.value = null;
+    isAnnouncementModalOpen.value = true;
+}
+
+function openEditAnnouncementModal(announcement) {
+    announcementModalMode.value = 'edit';
+    editingAnnouncementId.value = announcement.id;
+    announcementForm.title = announcement.title;
+    announcementForm.content = announcement.content;
+    isAnnouncementModalOpen.value = true;
+}
+
+function closeAnnouncementModal() {
+    isAnnouncementModalOpen.value = false;
+    announcementForm.reset();
+}
+
+function saveAnnouncement() {
+    const onFinish = () => {
+        closeAnnouncementModal();
+        router.reload({ only: ['announcements'] });
+    };
+
+    if (announcementModalMode.value === 'create') {
+        announcementForm.post(route('announcements.store'), {
+            preserveScroll: true,
+            onSuccess: onFinish,
+        });
+    } else {
+        announcementForm.put(route('announcements.update', editingAnnouncementId.value), {
+            preserveScroll: true,
+            onSuccess: onFinish,
+        });
+    }
+}
+
+function deleteAnnouncement() {
+    if (confirm('Are you sure you want to delete this announcement?')) {
+        router.delete(route('announcements.destroy', editingAnnouncementId.value), {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeAnnouncementModal();
+                router.reload({ only: ['announcements'] });
+            },
+        });
+    }
+}
+
+function openViewAnnouncementModal(announcement) {
+    viewingAnnouncement.value = announcement;
+    isViewAnnouncementModalOpen.value = true;
+}
+
+function closeViewAnnouncementModal() {
+    isViewAnnouncementModalOpen.value = false;
+    viewingAnnouncement.value = null;
+}
+
+
+
+
+// --- EXISTING SCRIPT SETUP LOGIC (Unchanged) ---
 const updateTaskStatus = (task, newStatus) => {
-    // This sends a PATCH request to your backend.
-    // Ensure you have a route like: Route::patch('/tasks/{task}/status', ...)->name('tasks.updateStatus');
-    router.patch(route('tasks.updateStatus', task.id), {
-        status: newStatus
-    }, {
-        preserveScroll: true,
-    });
+    router.patch(route('tasks.updateStatus', task.id), { status: newStatus }, { preserveScroll: true });
 };
-
-// --- HELPER FUNCTIONS FOR THE 'MY ASSIGNED TASKS' PANEL ---
-
-// Determines the background/border color for a task item based on its status.
 const getTaskStatusColor = (status) => {
     if (status === 'completed' || status === 'done') return 'bg-green-50 border-green-200';
     if (status === 'in_progress') return 'bg-blue-50 border-blue-200';
-    // Default for 'todo', 'pending', etc.
     return 'bg-gray-50 border-gray-200';
 };
-
-// Determines the color for the small status badge.
 const getStatusBadgeColor = (status) => {
     if (status === 'completed' || status === 'done') return 'bg-green-100 text-green-800';
     if (status === 'in_progress') return 'bg-blue-100 text-blue-800';
     return 'bg-gray-100 text-gray-800';
 };
-
-// Converts snake_case status from the DB (e.g., 'in_progress') to a more readable format.
-const getStatusDisplayName = (status) => {
-    return (status || 'todo').replace(/_/g, ' ');
-};
-
-// Logic to show the "Start" button. Now robustly handles 'todo' or 'pending'.
+const getStatusDisplayName = (status) => (status || 'todo').replace(/_/g, ' ');
 const canStartTask = (status) => status === 'todo' || status === 'pending';
-
-// Logic to show the "Done" button.
 const canCompleteTask = (status) => status === 'in_progress';
-
-
-// --- OTHER EXISTING SCRIPT LOGIC ---
 const companyExperience = computed(() => {
     if (!props.user.hire_date) return 'N/A';
     return formatDistanceToNowStrict(new Date(props.user.hire_date));
 });
-
 const isNoteModalVisible = ref(false);
 const modalMode = ref('create');
 const editingNoteId = ref(null);
@@ -92,12 +205,9 @@ const noteForm = useForm({ note: '', date: '' });
 const now = ref(new Date());
 let timeUpdater = null;
 const liveTime = computed(() => now.value.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }));
-
 onMounted(() => { timeUpdater = setInterval(() => { now.value = new Date(); }, 1000); });
 onUnmounted(() => { clearInterval(timeUpdater); });
-
 const calendar = ref(null);
-
 watch(() => props.calendarEvents, (newEvents) => {
     if (calendar.value) {
         const calendarApi = calendar.value.getApi();
@@ -105,16 +215,13 @@ watch(() => props.calendarEvents, (newEvents) => {
         calendarApi.addEventSource(newEvents);
     }
 }, { deep: true });
-
 const currentCalendarView = ref('dayGridMonth');
-
 function handleDateClick(arg) {
     modalMode.value = 'create';
     editingNoteId.value = null;
     noteForm.date = arg.dateStr;
     isNoteModalVisible.value = true;
 }
-
 function handleEventClick(arg) {
     if (arg.event.extendedProps.type === 'note') {
         modalMode.value = 'edit';
@@ -124,7 +231,6 @@ function handleEventClick(arg) {
         isNoteModalVisible.value = true;
     }
 }
-
 const calendarOptions = ref({
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
@@ -139,44 +245,33 @@ const calendarOptions = ref({
     eventDisplay: 'block',
     eventClassNames: 'p-1 rounded-md font-medium cursor-pointer border-none text-xs',
 });
-
 function changeCalendarView(view) {
     if(calendar.value) {
         calendar.value.getApi().changeView(view);
         currentCalendarView.value = view;
     }
 }
-
 function saveNote() {
     const action = modalMode.value === 'create' ? route('calendar-notes.store') : route('calendar-notes.update', editingNoteId.value);
     const method = modalMode.value === 'create' ? 'post' : 'put';
     noteForm[method](action, {
         preserveScroll: true,
-        onSuccess: () => {
-            closeModal();
-            router.reload({ only: ['calendarEvents'] });
-        },
+        onSuccess: () => { closeModal(); router.reload({ only: ['calendarEvents'] }); },
     });
 }
-
 function deleteNote() {
     if (confirm('Are you sure you want to delete this note?')) {
         router.delete(route('calendar-notes.destroy', editingNoteId.value), {
             preserveScroll: true,
-            onSuccess: () => {
-                closeModal();
-                router.reload({ only: ['calendarEvents'] });
-            },
+            onSuccess: () => { closeModal(); router.reload({ only: ['calendarEvents'] }); },
         });
     }
 }
-
 function closeModal() {
     isNoteModalVisible.value = false;
     noteForm.reset();
     editingNoteId.value = null;
 }
-
 const chartData = computed(() => ({
     labels: ['Present', 'Absent'],
     datasets: [{
@@ -185,13 +280,13 @@ const chartData = computed(() => ({
         borderWidth: 0,
     }],
 }));
-
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '80%',
     plugins: { legend: { display: false }, tooltip: { enabled: true } },
 };
+
 </script>
 
 <template>
@@ -199,7 +294,88 @@ const chartOptions = {
 
     <AuthenticatedLayout>
 
-        <!-- Calendar Note Modal -->
+        <!-- --- [+] NEW --- AI Performance Summary Modal --- -->
+        <Modal :show="isSummaryModalVisible" @close="closeSummaryModal">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-900">Your AI Performance Insights</h3>
+                    <button @click="closeSummaryModal" class="p-1 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">×</button>
+                </div>
+
+                <div v-if="isLoadingSummary" class="text-center py-10">
+                    <div class="mt-4 animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto"></div>
+                    <p class="text-slate-600 mt-3">Generating your summary, please wait...</p>
+                </div>
+
+                <div v-if="summaryError" class="text-red-700 bg-red-100 border border-red-200 p-4 rounded-lg">
+                    <p class="font-bold">Could not generate summary</p>
+                    <p class="text-sm">{{ summaryError }}</p>
+                </div>
+
+                <p v-if="generatedSummary" class="text-slate-700 whitespace-pre-wrap leading-relaxed">
+                    {{ generatedSummary }}
+                </p>
+
+                 <div class="mt-6 flex justify-end">
+                    <button type="button" @click="closeSummaryModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Close</button>
+                </div>
+            </div>
+        </Modal>
+
+         <Modal :show="isViewAnnouncementModalOpen" @close="closeViewAnnouncementModal">
+            <div v-if="viewingAnnouncement" class="p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-slate-900">{{ viewingAnnouncement.title }}</h3>
+                        <div class="flex items-center space-x-2 mt-2 text-sm text-slate-500">
+                            <img class="h-6 w-6 rounded-full" :src="viewingAnnouncement.author.avatar_url || `https://ui-avatars.com/api/?name=${viewingAnnouncement.author.name.replace(' ', '+')}&background=random`" alt="">
+                            <span>{{ viewingAnnouncement.author.name }}</span>
+                            <span>•</span>
+                            <span>{{ viewingAnnouncement.created_at_formatted }}</span>
+                        </div>
+                    </div>
+                    <button @click="closeViewAnnouncementModal" class="p-1 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">×</button>
+                </div>
+                <div class="mt-4 prose prose-sm max-w-none text-slate-600" v-html="viewingAnnouncement.content"></div>
+                <div class="mt-6 text-right">
+                    <button type="button" @click="closeViewAnnouncementModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Close</button>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal :show="isAnnouncementModalOpen" @close="closeAnnouncementModal">
+             <div class="p-6">
+                <h3 class="text-lg font-bold text-slate-900">{{ announcementModalMode === 'create' ? 'New Announcement' : 'Edit Announcement' }}</h3>
+                <form @submit.prevent="saveAnnouncement" class="mt-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="announcement-title" class="block text-sm font-medium text-slate-700">Title</label>
+                            <input v-model="announcementForm.title" id="announcement-title" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Upcoming Holiday">
+                            <InputError class="mt-1 text-xs" :message="announcementForm.errors.title" />
+                        </div>
+                         <div>
+                            <label for="announcement-content" class="block text-sm font-medium text-slate-700">Content</label>
+                            <textarea v-model="announcementForm.content" id="announcement-content" rows="6" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter the details of the announcement..."></textarea>
+                            <InputError class="mt-1 text-xs" :message="announcementForm.errors.content" />
+                        </div>
+                        <div class="flex justify-between items-center pt-2">
+                             <div>
+                                <button v-if="announcementModalMode === 'edit'" type="button" @click="deleteAnnouncement" class="text-sm font-semibold text-red-600 hover:text-red-800">Delete</button>
+                            </div>
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" @click="closeAnnouncementModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Cancel</button>
+                                <button type="submit" :disabled="announcementForm.processing" class="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50">
+                                    {{ announcementForm.processing ? 'Saving...' : 'Save Announcement' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </Modal>
+
+
+        <!-- Calendar Note Modal (Unchanged) -->
         <Modal :show="isNoteModalVisible" @close="closeModal">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
@@ -227,17 +403,26 @@ const chartOptions = {
 
         <div class="p-4 sm:p-6 lg:p-8 font-sans">
             <div class="max-w-7xl mx-auto space-y-6">
-                <!-- Dashboard Header -->
-                <div class="flex items-center justify-between">
+                <!-- Dashboard Header --- MODIFIED --- -->
+                <div class="flex flex-wrap items-center justify-between gap-4">
                     <h1 class="text-3xl font-bold text-slate-900">Dashboard</h1>
                     <div class="flex items-center space-x-3">
+                        <!-- [+] NEW BUTTON FOR PERFORMANCE INSIGHTS -->
+                        <button
+                            @click="fetchAiSummary"
+                            :disabled="isLoadingSummary || !isDataReadyForSummary"
+                            class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:border-blue-800 focus:ring ring-blue-300 disabled:opacity-50 transition ease-in-out duration-150"
+                            :title="!isDataReadyForSummary ? 'Performance data not yet available.' : 'Get AI insights on your performance'"
+                        >
+                            <span v-if="isLoadingSummary">Generating...</span>
+                            <span v-else>Get Performance Insights</span>
+                        </button>
                         <Link :href="route('leave.index')" class="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 transition-colors shadow-sm">Create Leave Request</Link>
                     </div>
                 </div>
 
-                <!-- Grid for Top Row Cards -->
+                <!-- Grid for Top Row Cards (Unchanged) -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- User Welcome Card -->
                     <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center space-x-4">
@@ -248,7 +433,9 @@ const chartOptions = {
                                     <p class="text-sm text-slate-500">{{ user.email }}</p>
                                 </div>
                             </div>
-                            <Link :href="route('profile.edit')" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center">Edit <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></Link>
+                            <Link :href="route('profile.edit')" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center">
+                                Edit <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg>
+                            </Link>
                         </div>
                         <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 border-t border-slate-100 pt-6">
                             <div><p class="text-xs text-slate-500">Designation</p><p class="text-sm font-semibold text-slate-800">{{ user.designation }}</p></div>
@@ -258,7 +445,6 @@ const chartOptions = {
                         </div>
                     </div>
 
-                    <!-- Greeting Card -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <h3 class="font-semibold text-slate-800">Good {{ greeting.message }}</h3>
                         <div class="flex items-center my-auto"><span class="text-4xl mr-4">{{ greeting.icon }}</span><span class="text-3xl font-bold text-slate-900">{{ liveTime }}</span></div>
@@ -266,106 +452,75 @@ const chartOptions = {
                     </div>
                 </div>
 
-                <!-- Projects and Tasks Panels -->
+                 <!-- Announcement Panel -->
+                <div v-if="announcements.length > 0 || canManageAnnouncements" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-900">Announcements</h3>
+                        <button v-if="canManageAnnouncements" @click="openCreateAnnouncementModal" class="px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors shadow-sm">New Announcement</button>
+                    </div>
+                    <div v-if="announcements.length > 0" class="space-y-4">
+                        <div v-for="announcement in announcements" :key="announcement.id" class="p-4 bg-slate-50 rounded-lg border border-slate-200 flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <p class="font-semibold text-slate-800">{{ announcement.title }}</p>
+                                <div class="text-xs text-slate-500 mt-1 flex items-center space-x-2">
+                                    <span>By {{ announcement.author.name }}</span>
+                                    <span>•</span>
+                                    <span>{{ announcement.created_at_formatted }}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                <button @click="openViewAnnouncementModal(announcement)" class="text-sm font-medium text-blue-600 hover:text-blue-800">Read More</button>
+                                <template v-if="canManageAnnouncements">
+                                    <span class="text-slate-300">|</span>
+                                    <button @click="openEditAnnouncementModal(announcement)" class="text-sm font-medium text-slate-600 hover:text-slate-800">Edit</button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8">
+                        <p class="text-slate-500">No announcements at the moment.</p>
+                    </div>
+                </div>
+
+                <!-- The rest of your template is completely unchanged -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Panel: Active Projects -->
                     <div v-if="projects && projects.length > 0" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h3 class="text-lg font-bold text-gray-900">Active Projects</h3>
                         <ul class="mt-4 space-y-3">
                             <li v-for="project in projects" :key="project.id" class="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
-                                <div>
-                                    <p class="font-semibold text-gray-800">{{ project.name }}</p>
-                                    <span class="text-sm text-gray-600 block capitalize">Status: {{ project.status }}</span>
-                                </div>
-                                <div>
-                                    <Link :href="route('projects.show', project.id)" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 shadow-sm">
-                                        <span v-if="hasPermission('assign tasks')">View / Assign Tasks</span>
-                                        <span v-else>View Progress</span>
-                                    </Link>
-                                </div>
+                                <div><p class="font-semibold text-gray-800">{{ project.name }}</p><span class="text-sm text-gray-600 block capitalize">Status: {{ project.status }}</span></div>
+                                <div><Link :href="route('projects.show', project.id)" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 shadow-sm"><span v-if="hasPermission('assign tasks')">View / Assign Tasks</span><span v-else>View Progress</span></Link></div>
                             </li>
                         </ul>
                     </div>
-
-                    <!-- Panel: My Assigned Tasks -->
-                     <div v-if="myTasks && myTasks.length > 0" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 flex items-center">My Assigned Tasks</h3>
-                            <span class="text-sm text-gray-500">{{ myTasks.length }} total tasks</span>
-                        </div>
+                    <div v-if="myTasks && myTasks.length > 0" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                         <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold text-gray-900 flex items-center">My Assigned Tasks</h3><span class="text-sm text-gray-500">{{ myTasks.length }} total tasks</span></div>
                         <div class="space-y-3 max-h-96 overflow-y-auto">
-                            <div v-for="task in myTasks" :key="task.id"
-                                 class="p-3 rounded-lg border transition-all duration-200 hover:shadow-sm"
-                                 :class="getTaskStatusColor(task.status)">
+                            <div v-for="task in myTasks" :key="task.id" class="p-3 rounded-lg border transition-all duration-200 hover:shadow-sm" :class="getTaskStatusColor(task.status)">
                                 <div class="flex justify-between items-center">
                                     <div class="flex-1">
-                                        <div class="flex items-center space-x-2">
-                                            <h4 class="text-sm font-medium text-gray-800">{{ task.name }}</h4>
-                                            <span class="px-1.5 py-0.5 text-xs font-medium rounded capitalize"
-                                                  :class="getStatusBadgeColor(task.status)">
-                                                {{ getStatusDisplayName(task.status) }}
-                                            </span>
-                                        </div>
+                                        <div class="flex items-center space-x-2"><h4 class="text-sm font-medium text-gray-800">{{ task.name }}</h4><span class="px-1.5 py-0.5 text-xs font-medium rounded capitalize" :class="getStatusBadgeColor(task.status)">{{ getStatusDisplayName(task.status) }}</span></div>
                                         <p class="text-xs text-gray-500 mt-1">{{ task.project?.name || 'No Project' }}</p>
                                     </div>
                                     <div class="flex gap-1 ml-3">
-                                        <button v-if="canStartTask(task.status)"
-                                                @click="updateTaskStatus(task, 'in_progress')"
-                                                class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors">
-                                            Start
-                                        </button>
-                                        <button v-if="canCompleteTask(task.status)"
-                                                @click="updateTaskStatus(task, 'completed')"
-                                                class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded hover:bg-green-600 transition-colors">
-                                            Done
-                                        </button>
+                                        <button v-if="canStartTask(task.status)" @click="updateTaskStatus(task, 'in_progress')" class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors">Start</button>
+                                        <button v-if="canCompleteTask(task.status)" @click="updateTaskStatus(task, 'completed')" class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded hover:bg-green-600 transition-colors">Done</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-
-                <!-- Calendar and Attendance Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Calendar Card -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200" :class="canViewAttendanceStats ? 'lg:col-span-2' : 'lg:col-span-3'">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-bold text-slate-900">My Calendar</h3>
-                            <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg">
-                                <button @click="changeCalendarView('dayGridMonth')" :class="[currentCalendarView === 'dayGridMonth' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900']" class="px-3 py-1 text-sm font-medium rounded-md transition-all">Month</button>
-                                <button @click="changeCalendarView('dayGridWeek')" :class="[currentCalendarView === 'dayGridWeek' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900']" class="px-3 py-1 text-sm font-medium rounded-md transition-all">Week</button>
-                                <button @click="changeCalendarView('dayGridDay')" :class="[currentCalendarView === 'dayGridDay' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900']" class="px-3 py-1 text-sm font-medium rounded-md transition-all">Day</button>
-                            </div>
-                        </div>
+                        <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold text-slate-900">My Calendar</h3><div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg"><button @click="changeCalendarView('dayGridMonth')" :class="[currentCalendarView === 'dayGridMonth' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900']" class="px-3 py-1 text-sm font-medium rounded-md transition-all">Month</button><button @click="changeCalendarView('dayGridWeek')" :class="[currentCalendarView === 'dayGridWeek' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900']" class="px-3 py-1 text-sm font-medium rounded-md transition-all">Week</button><button @click="changeCalendarView('dayGridDay')" :class="[currentCalendarView === 'dayGridDay' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900']" class="px-3 py-1 text-sm font-medium rounded-md transition-all">Day</button></div></div>
                         <FullCalendar :options="calendarOptions" ref="calendar" />
                     </div>
-
-                    <!-- Attendance Stats Card -->
                     <div v-if="canViewAttendanceStats" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h3 class="text-lg font-bold text-slate-900 mb-4">Team Attendance</h3>
-                        <div class="relative h-48 mb-4">
-                            <Doughnut :data="chartData" :options="chartOptions" />
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span class="text-4xl font-bold text-slate-900">{{ attendance.total }}</span></div>
-                        </div>
-                        <div class="flex items-center justify-center space-x-6 text-sm mb-6">
-                            <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>Present</div>
-                            <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-slate-800 mr-2"></span>Absent</div>
-                        </div>
-                        <div class="space-y-4 border-t border-slate-100 pt-4">
-                             <h4 class="font-semibold text-slate-800">Absent Today</h4>
-                             <div v-if="attendance.absent_list.length > 0" class="space-y-3">
-                                <div v-for="absentee in attendance.absent_list" :key="absentee.id" class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-3">
-                                        <img class="h-9 w-9 rounded-full" :src="absentee.avatar_url || `https://ui-avatars.com/api/?name=${absentee.name.replace(' ', '+')}&background=random`" :alt="absentee.name" />
-                                        <div><p class="text-sm font-medium text-slate-800">{{ absentee.name }}</p><p class="text-xs text-slate-500">{{ absentee.designation }}</p></div>
-                                    </div>
-                                    <span class="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">Fullday</span>
-                                </div>
-                             </div>
-                             <div v-else class="text-center text-sm text-slate-500 py-4">Everyone is present today! 🎉</div>
-                        </div>
+                        <div class="relative h-48 mb-4"><Doughnut :data="chartData" :options="chartOptions" /><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span class="text-4xl font-bold text-slate-900">{{ attendance.total }}</span></div></div>
+                        <div class="flex items-center justify-center space-x-6 text-sm mb-6"><div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>Present</div><div class="flex items-center"><span class="w-3 h-3 rounded-full bg-slate-800 mr-2"></span>Absent</div></div>
+                        <div class="space-y-4 border-t border-slate-100 pt-4"><h4 class="font-semibold text-slate-800">Absent Today</h4><div v-if="attendance.absent_list.length > 0" class="space-y-3"><div v-for="absentee in attendance.absent_list" :key="absentee.id" class="flex items-center justify-between"><div class="flex items-center space-x-3"><img class="h-9 w-9 rounded-full" :src="absentee.avatar_url || `https://ui-avatars.com/api/?name=${absentee.name.replace(' ', '+')}&background=random`" :alt="absentee.name" /><div><p class="text-sm font-medium text-slate-800">{{ absentee.name }}</p><p class="text-xs text-slate-500">{{ absentee.designation }}</p></div></div><span class="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">Fullday</span></div></div><div v-else class="text-center text-sm text-slate-500 py-4">Everyone is present today! 🎉</div></div>
                     </div>
                 </div>
             </div>
