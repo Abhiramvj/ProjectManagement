@@ -34,7 +34,6 @@ class UpdateUserRequest extends FormRequest
             'parent_id' => ['nullable', 'integer', Rule::exists('users', 'id')],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
 
-
             'work_mode' => [
                 'nullable', // Makes the field optional.
                 'string',   // It must be a string.

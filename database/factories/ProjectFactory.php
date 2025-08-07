@@ -19,7 +19,7 @@ class ProjectFactory extends Factory
     public function definition()
     {
         return [
-            'name' => 'Project ' . fake()->company(),
+            'name' => 'Project '.fake()->company(),
             'description' => fake()->paragraph(),
 
             // This line ensures a user is created for the project manager

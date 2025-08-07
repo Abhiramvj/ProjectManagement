@@ -21,7 +21,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-      protected $fillable = [
+    protected $fillable = [
         'name',
         'email',
         'password',
@@ -380,7 +380,7 @@ class User extends Authenticatable
             ->first();
 
         // If there are no tasks, the completion rate is 0.
-        if (!$stats || $stats->total_tasks == 0) {
+        if (! $stats || $stats->total_tasks == 0) {
             return 0;
         }
 
@@ -405,7 +405,7 @@ class User extends Authenticatable
     /**
      * Get user performance score
      */
-       public function getPerformanceScore(): int
+    public function getPerformanceScore(): int
     {
         $taskScore = $this->getTaskCompletionRate();
         $timeScore = min(100, ($this->getCurrentMonthHours() / 160) * 100);
@@ -462,7 +462,7 @@ class User extends Authenticatable
         );
     }
 
-     public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
+    public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
     {
         return $this->hasMany(Announcement::class);
     }

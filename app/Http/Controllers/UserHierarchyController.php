@@ -16,7 +16,7 @@ class UserHierarchyController extends Controller
     public function index()
     {
         $currentUser = Auth::user();
-        $usersToShow = new Collection();
+        $usersToShow = new Collection;
 
         // --- 1. DETERMINE THE SCOPE OF USERS TO DISPLAY ---
         if ($currentUser->hasRole('admin')) {
@@ -34,8 +34,8 @@ class UserHierarchyController extends Controller
             // Get peer IDs (others reporting to the same manager)
             if ($currentUser->parent_id) {
                 $peerIds = User::where('parent_id', $currentUser->parent_id)
-                                ->where('id', '!=', $currentUser->id) // Exclude self
-                                ->pluck('id')->all();
+                    ->where('id', '!=', $currentUser->id) // Exclude self
+                    ->pluck('id')->all();
                 $userIdsToShow = array_merge($userIdsToShow, $peerIds);
             }
 
@@ -48,7 +48,6 @@ class UserHierarchyController extends Controller
             $usersToShow = User::whereIn('id', $uniqueIds)->get();
         }
 
-
         // --- 2. GENERATE NODE DATA FOR BOTH CHARTS ---
 
         // The "Reporting Structure" chart always uses the direct parent_id relationship.
@@ -56,7 +55,6 @@ class UserHierarchyController extends Controller
 
         // The "Designation Hierarchy" chart uses the more complex grouping logic.
         $designationBasedNodes = $this->generateDesignationBasedNodes($usersToShow);
-
 
         // --- 3. RENDER THE VIEW ---
         return Inertia::render('Hierarchy/CompanyHierarchy', [
@@ -81,45 +79,46 @@ class UserHierarchyController extends Controller
 
             // If the user has no parent OR their parent is NOT in the allowed list,
             // they are a top-level node for this specific view.
-            if (is_null($user->parent_id) || !in_array($user->parent_id, $allowedUserIds)) {
-                $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name));
+            if (is_null($user->parent_id) || ! in_array($user->parent_id, $allowedUserIds)) {
+                $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name='.urlencode($user->name));
                 $nodes[] = [
-                    'id'    => $user->id,
-                    'pid'   => null, // Make them a root of the current chart view.
-                    'name'  => $user->name,
+                    'id' => $user->id,
+                    'pid' => null, // Make them a root of the current chart view.
+                    'name' => $user->name,
                     'title' => $user->designation,
                     'image' => $imageUrl,
-                    'tags'  => ['ceo', $user->id === Auth::id() ? 'is-logged-in-user' : ''],
+                    'tags' => ['ceo', $user->id === Auth::id() ? 'is-logged-in-user' : ''],
                 ];
+
                 continue;
             }
 
             // For all other users, apply the grouping logic.
             $directParentId = $user->parent_id;
 
-            if (!isset($createdDesignationGroups[$directParentId][$user->designation])) {
-                $groupNodeId = 'group_' . $directParentId . '_' . str_replace(' ', '_', $user->designation);
+            if (! isset($createdDesignationGroups[$directParentId][$user->designation])) {
+                $groupNodeId = 'group_'.$directParentId.'_'.str_replace(' ', '_', $user->designation);
                 $nodes[] = [
-                    'id'    => $groupNodeId,
-                    'pid'   => $directParentId,
-                    'name'  => $user->designation,
+                    'id' => $groupNodeId,
+                    'pid' => $directParentId,
+                    'name' => $user->designation,
                     'title' => 'Designation',
                     'image' => 'https://cdn-icons-png.flaticon.com/512/3715/3715202.png',
-                    'tags'  => ['role-category'],
+                    'tags' => ['role-category'],
                 ];
                 $createdDesignationGroups[$directParentId][$user->designation] = true;
             }
 
-            $groupNodeId = 'group_' . $directParentId . '_' . str_replace(' ', '_', $user->designation);
-            $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name));
+            $groupNodeId = 'group_'.$directParentId.'_'.str_replace(' ', '_', $user->designation);
+            $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name='.urlencode($user->name));
 
             $nodes[] = [
-                'id'    => $user->id,
-                'pid'   => $groupNodeId,
-                'name'  => $user->name,
+                'id' => $user->id,
+                'pid' => $groupNodeId,
+                'name' => $user->name,
                 'title' => $user->designation,
                 'image' => $imageUrl,
-                'tags'  => ['employee-node', $user->id === Auth::id() ? 'is-logged-in-user' : ''],
+                'tags' => ['employee-node', $user->id === Auth::id() ? 'is-logged-in-user' : ''],
             ];
         }
 
@@ -145,11 +144,11 @@ class UserHierarchyController extends Controller
 
             // A user is the top of the current view if their parent is null
             // OR if their parent is not in the list of users we're showing.
-            if (is_null($user->parent_id) || !in_array($user->parent_id, $allowedUserIds)) {
+            if (is_null($user->parent_id) || ! in_array($user->parent_id, $allowedUserIds)) {
                 $tags[] = 'ceo';
             }
 
-            $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name));
+            $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name='.urlencode($user->name));
 
             return [
                 'id' => $user->id,

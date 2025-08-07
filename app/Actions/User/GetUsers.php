@@ -23,7 +23,7 @@ class GetUsers
         $users = User::with('roles:id,name')
             ->when($request->input('search'), function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             })
             ->latest()
             ->paginate(10)

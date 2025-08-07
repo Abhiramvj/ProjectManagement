@@ -36,10 +36,11 @@ class ImportHierarchyCommand extends Command
 
         if (! file_exists($filePath)) {
             $this->error("File not found at: {$filePath}");
+
             return Command::FAILURE;
         }
 
-        $this->info("File found. Starting import...");
+        $this->info('File found. Starting import...');
 
         $reader = new Xlsx;
         $spreadsheet = $reader->load($filePath);
@@ -59,19 +60,22 @@ class ImportHierarchyCommand extends Command
                 $email = strtolower(str_replace(' ', '.', $name)).'@company.com';
                 if (User::where('email', $email)->exists()) {
                     $this->warn("User '{$name}' with email '{$email}' already exists. Skipping insertion.");
+
                     continue;
                 }
 
                 $parseDate = function ($dateString) {
-                    if (empty($dateString)) return null;
+                    if (empty($dateString)) {
+                        return null;
+                    }
                     // Try parsing as a standard date format first (e.g., from a proper export)
                     try {
                         return Carbon::parse($dateString)->format('Y-m-d');
                     } catch (Exception $e) {
                         // Fallback for Excel's integer date format
                         try {
-                           return Carbon::createFromTimestamp(strtotime('1900-01-01') + ($dateString - 2) * 86400)->format('Y-m-d');
-                        } catch(Exception $e2) {
+                            return Carbon::createFromTimestamp(strtotime('1900-01-01') + ($dateString - 2) * 86400)->format('Y-m-d');
+                        } catch (Exception $e2) {
                             return null; // Return null if all parsing fails
                         }
                     }
@@ -95,7 +99,7 @@ class ImportHierarchyCommand extends Command
 
                 // Role Assignment Logic now works correctly.
                 $processedRoleName = strtolower(trim($row[6] ?? ''));
-                if (!empty($processedRoleName)) {
+                if (! empty($processedRoleName)) {
                     // Using query caching for performance
                     $role = Role::query()->where('name', $processedRoleName)->first();
                     if ($role) {
@@ -105,7 +109,7 @@ class ImportHierarchyCommand extends Command
                         $this->warn(" -> WARNING: Role '{$processedRoleName}' was not found in the database.");
                     }
                 } else {
-                     $this->warn(" -> WARNING: No role specified in column G for {$user->name}.");
+                    $this->warn(" -> WARNING: No role specified in column G for {$user->name}.");
                 }
             }
 
@@ -125,7 +129,7 @@ class ImportHierarchyCommand extends Command
                 if ($employeeUser && $managerUser) {
                     $employeeUser->update(['parent_id' => $managerUser->id]);
                     $this->line("Linked {$employeeName} -> {$managerName}");
-                } else if (!$managerUser) {
+                } elseif (! $managerUser) {
                     $this->warn("Could not create link for '{$employeeName}'. Manager '{$managerName}' was not found.");
                 }
             }

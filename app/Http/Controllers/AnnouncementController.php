@@ -1,6 +1,7 @@
 <?php
 
 // app/Http/Controllers/AnnouncementController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;

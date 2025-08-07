@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Team;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection; // <-- Add or confirm this use statement
-use Illuminate\Support\Collection; // For the date range collection
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection; // <-- Add or confirm this use statement
+use Illuminate\Support\Facades\Validator; // For the date range collection
+use Inertia\Inertia;
 
 class LeaveCalendarController extends Controller
 {
@@ -29,7 +29,7 @@ class LeaveCalendarController extends Controller
                         ->overlapsWith($startDate, $endDate)
                         ->select('id', 'user_id', 'start_date', 'end_date', 'leave_type', 'day_type');
                 },
-                'teams:id,name'
+                'teams:id,name',
             ])
             ->select('id', 'name')
             ->orderBy('name');
@@ -80,12 +80,12 @@ class LeaveCalendarController extends Controller
 
     private function applyFilters($query, array $filters): void
     {
-        if (!empty($filters['employee_name'])) {
+        if (! empty($filters['employee_name'])) {
             $query->where('name', 'like', "%{$filters['employee_name']}%");
         }
 
-        if (!empty($filters['team_id'])) {
-            $query->whereHas('teams', function($teamQuery) use ($filters) {
+        if (! empty($filters['team_id'])) {
+            $query->whereHas('teams', function ($teamQuery) use ($filters) {
                 $teamQuery->where('teams.id', $filters['team_id']);
             });
         }
@@ -144,6 +144,7 @@ class LeaveCalendarController extends Controller
             'sick' => '#ff9800', 'annual' => '#EF5350', 'personal' => '#9C27B0',
             'emergency' => '#F44336', 'maternity' => '#E91E63', 'paternity' => '#3F51B5',
         ];
+
         return $colors[$leaveType] ?? '#607D8B';
     }
 }

@@ -13,7 +13,6 @@ use App\Services\LeaveStatsService;
 use App\Services\TaskStatsService;
 use App\Services\TimeStatsService;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -22,7 +21,9 @@ class DashboardController extends Controller
 {
     // Using the Service-based architecture from the second controller for better organization
     protected $taskStatsService;
+
     protected $timeStatsService;
+
     protected $leaveStatsService;
 
     public function __construct(
@@ -47,8 +48,8 @@ class DashboardController extends Controller
         $absentTodayUsers = User::whereHas('leaveApplications', function ($query) {
             $today = now()->toDateString();
             $query->where('status', 'approved')
-                  ->where('start_date', '<=', $today)
-                  ->where('end_date', '>=', $today);
+                ->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today);
         })->get();
 
         $attendanceData = [
@@ -146,7 +147,6 @@ class DashboardController extends Controller
         $taskStats = $this->taskStatsService->getStatsForUser($user->id);
         $timeStats = $this->timeStatsService->getStatsForUser($user->id);
         $leaveStats = $this->leaveStatsService->getStatsForUser($user->id);
-
 
         // --- RENDER VIEW (With all props combined) ---
         return Inertia::render('Dashboard', [

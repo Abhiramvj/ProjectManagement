@@ -165,13 +165,12 @@ class ShowPerformance
 
         $leaveStats = [
             'current_year' => $currentYearLeave,
-            'balance'      => $totalAllowance, // <-- THE FIX #1: Add the balance key
-            'remaining'    => max(0, $totalAllowance - $currentYearLeave), // <-- THE FIX #2: Use the variable
-            'total_days'   => $approvedLeave->sum(fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1),
+            'balance' => $totalAllowance, // <-- THE FIX #1: Add the balance key
+            'remaining' => max(0, $totalAllowance - $currentYearLeave), // <-- THE FIX #2: Use the variable
+            'total_days' => $approvedLeave->sum(fn ($leave) => Carbon::parse($leave->start_date)->diffInDays(Carbon::parse($leave->end_date)) + 1),
         ];
 
         // --- [END] CORRECTED LEAVE STATISTICS ---
-
 
         // Recent leave applications
         $recentLeave = LeaveApplication::where('user_id', $user->id)

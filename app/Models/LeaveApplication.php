@@ -92,10 +92,8 @@ class LeaveApplication extends Model
      *
      * This allows for clean queries like ->overlapsWith($startDate, $endDate).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  \Carbon\Carbon  $startDate The start of the period to check against.
-     * @param  \Carbon\Carbon  $endDate The end of the period to check against.
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  \Carbon\Carbon  $startDate  The start of the period to check against.
+     * @param  \Carbon\Carbon  $endDate  The end of the period to check against.
      */
     public function scopeOverlapsWith(Builder $query, Carbon $startDate, Carbon $endDate): Builder
     {
@@ -103,7 +101,7 @@ class LeaveApplication extends Model
         // Range A overlaps with Range B if A.start_date <= B.end_date AND A.end_date >= B.start_date.
         return $query->where(function ($q) use ($startDate, $endDate) {
             $q->where('start_date', '<=', $endDate->toDateString())
-              ->where('end_date', '>=', $startDate->toDateString());
+                ->where('end_date', '>=', $startDate->toDateString());
         });
     }
 }
