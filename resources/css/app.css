@@ -3,121 +3,148 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 2. Attractive & Modern Org Chart Styles */
 
-/* Main container for the chart */
-.chart-container .boc-light {
-    background: transparent !important;
+
+/* 2. Critical CSS - Load first */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased;
+  }
 }
 
-/* Base style for all employee node cards */
-.boc-isla .boc-node-rect {
-    fill: #ffffff;
-    stroke: #e5e7eb;
-    stroke-width: 1px;
-    rx: 16px;
-    transition: all 0.3s ease;
-}
+/* 3. Component styles */
+@layer components {
+  /* Form inputs */
+  input,
+  textarea,
+  select {
+    @apply bg-white text-black placeholder-gray-400 border border-gray-300 rounded;
+  }
 
-/* Add an interactive hover effect */
-.boc-node:hover .boc-node-rect {
-    stroke: #6366f1;
-    stroke-width: 2px;
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
-}
-
-/* Style for the node that has the 'highlighted-user' class */
-.boc-node.highlighted-user .boc-node-rect {
-    fill: rgba(255, 255, 255, 0.6);
-    stroke: rgba(255, 255, 255, 0.3);
-    stroke-width: 2px;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-}
-
-/* Style for nodes based on their level in the hierarchy */
-/* Level 0 - The Top Manager in the view */
-.boc-node-level-0 .boc-node-rect {
-    fill: #f5f3ff;
-    stroke: #818cf8;
-}
-
-/* --- THE CHANGES ARE HERE --- */
-
-/* 1. Increase the size of the user's profile picture/avatar */
-.boc-isla .boc-img-0 {
-    width: 80px; /* CHANGED from default */
-    height: 80px; /* CHANGED from default */
-    border-radius: 9999px;
-    border: 4px solid white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-/* 2. Adjust the node text fields to make room for the larger image */
-/* Name Field */
-.boc-isla .boc-field-0 {
-    font-size: 16px;
-    font-weight: 600;
-    fill: #1f2937;
-    /* Move text down to accommodate the larger image */
-    transform: translateY(15px);
-}
-/* Title Field */
-.boc-isla .boc-field-1 {
-    font-size: 14px;
-    fill: #6b7280;
-    /* Move text down to accommodate the larger image */
-    transform: translateY(15px);
-}
-
-/* --- END OF CHANGES --- */
-
-/* Style for the connecting lines */
-.boc-link {
-    stroke: #d1d5db;
-    stroke-width: 1.5px;
-    stroke-dasharray: 4;
-    animation: dash-flow 2s linear infinite;
-}
-
-/* Animation for the dashed lines */
-@keyframes dash-flow {
-    from {
-        stroke-dashoffset: 8;
-    }
-    to {
-        stroke-dashoffset: 0;
-    }
-}
-
-/* Style for the expand/collapse button */
-.boc-exp-coll {
-    stroke: #9ca3b0;
-    stroke-width: 2px;
-    fill: #f9fafb;
-    transition: all 0.3s ease;
-}
-.boc-exp-coll:hover {
-    stroke: #4f46e5;
-    transform: scale(1.1);
-}
-
-/* app.css */
-
-input,
-textarea,
-select {
-  @apply bg-white text-black placeholder-gray-400 border border-gray-300 rounded;
-}
-/* app.css */
-/*
- * A more targeted approach.
- * Apply this class to a parent container to set the default text color
- * for all divs and spans inside it.
- */
-.prose-style div,
-.prose-style span {
+  /* Prose styling */
+  .prose-style div,
+  .prose-style span {
     @apply text-gray-700;
+  }
+
+  /* Loading spinner */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-slate-200;
+  }
+
+  .card-header {
+    @apply p-6 border-b border-slate-100;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+}
+
+/* 4. Org Chart Styles - Only load when needed */
+.chart-container .boc-light {
+  background: transparent !important;
+}
+
+.boc-isla .boc-node-rect {
+  fill: #ffffff;
+  stroke: #e5e7eb;
+  stroke-width: 1px;
+  rx: 16px;
+  transition: all 0.3s ease;
+}
+
+.boc-node:hover .boc-node-rect {
+  stroke: #6366f1;
+  stroke-width: 2px;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+.boc-node.highlighted-user .boc-node-rect {
+  fill: rgba(255, 255, 255, 0.6);
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 2px;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+.boc-node-level-0 .boc-node-rect {
+  fill: #f5f3ff;
+  stroke: #818cf8;
+}
+
+.boc-isla .boc-img-0 {
+  width: 80px;
+  height: 80px;
+  border-radius: 9999px;
+  border: 4px solid white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.boc-isla .boc-field-0 {
+  font-size: 16px;
+  font-weight: 600;
+  fill: #1f2937;
+  transform: translateY(15px);
+}
+
+.boc-isla .boc-field-1 {
+  font-size: 14px;
+  fill: #6b7280;
+  transform: translateY(15px);
+}
+
+.boc-link {
+  stroke: #d1d5db;
+  stroke-width: 1.5px;
+  stroke-dasharray: 4;
+  animation: dash-flow 2s linear infinite;
+}
+
+@keyframes dash-flow {
+  from {
+    stroke-dashoffset: 8;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.boc-exp-coll {
+  stroke: #9ca3b0;
+  stroke-width: 2px;
+  fill: #f9fafb;
+  transition: all 0.3s ease;
+}
+
+.boc-exp-coll:hover {
+  stroke: #4f46e5;
+  transform: scale(1.1);
+}
+
+/* 5. Utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

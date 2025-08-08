@@ -7,7 +7,10 @@ use App\Actions\Leave\StoreLeave;
 use App\Actions\Leave\UpdateLeave;
 use App\Http\Requests\Leave\StoreLeaveRequest;
 use App\Http\Requests\Leave\UpdateLeaveRequest;
+use App\Mail\LeaveApplicationSubmitted;
+use Illuminate\Mail\Mailable;
 use App\Models\LeaveApplication;
+use App\Models\MailLog;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
@@ -15,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -26,13 +30,30 @@ class LeaveApplicationController extends Controller
         return Inertia::render('Leave/Index', $getLeaveRequests->handle());
     }
 
-    public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
+ public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
     {
-        $storeLeave->handle($request->validated());
+        $leave_application = $storeLeave->handle($request->validated());
+
+
+        $recipients = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['admin', 'hr']);
+        })->get();
+
+
+        if ($recipients->isNotEmpty()) {
+            foreach ($recipients as $recipient) {
+                $this->sendAndLogEmail(
+                    $leave_application,
+                    new LeaveApplicationSubmitted($leave_application),
+                    'leave_application_submitted',
+                    $recipient->email
+                );
+            }
+        }
+
 
         return redirect()->route('leave.index')->with('success', 'Leave application submitted.');
     }
-
     public function approveCompOff(Request $request, User $user)
     {
         $request->validate([
@@ -229,5 +250,48 @@ class LeaveApplicationController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
+    }
+
+        // --- ADD THIS HELPER FUNCTION AT THE END OF THE CLASS ---
+    /**
+     * Send an email and create a log entry in MongoDB.
+     *
+     * @param LeaveApplication $leaveApplication The leave application instance.
+     * @param Mailable $mailable The Mailable class instance to be sent.
+     * @param string $eventType A string representing the event (e.g., 'leave_application_approved').
+     * @param string $recipientEmail The email address of the recipient.
+     */
+    private function sendAndLogEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $eventType, string $recipientEmail)
+    {
+        // Assumes your Mailable class has a public 'subject' property.
+        $subject = $mailable->subject ?? 'Leave Application Notification';
+
+        try {
+            Mail::to($recipientEmail)->send($mailable);
+
+            MailLog::create([
+                'leave_application_id' => $leaveApplication->id,
+                'recipient_email' => $recipientEmail,
+                'subject' => $subject,
+                'status' => 'sent',
+                'event_type' => $eventType,
+                'sent_at' => now(),
+            ]);
+
+        } catch (\Exception $e) {
+            // Log the error to your default log file for immediate debugging
+            Log::error('Mail sending failed for leave application ' . $leaveApplication->id . ': ' . $e->getMessage());
+
+            // Create a record of the failure in MongoDB
+            MailLog::create([
+                'leave_application_id' => $leaveApplication->id,
+                'recipient_email' => $recipientEmail,
+                'subject' => $subject,
+                'status' => 'failed',
+                'event_type' => $eventType,
+                'error_message' => $e->getMessage(),
+                'sent_at' => now(),
+            ]);
+        }
     }
 }

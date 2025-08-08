@@ -4,11 +4,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Events\AnnouncementCreated; // 1. IMPORT THE EVENT CLASS
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AnnouncementController extends Controller
 {
+    /**
+     * Store a newly created announcement and broadcast it.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -16,15 +20,24 @@ class AnnouncementController extends Controller
             'content' => 'required|string',
         ]);
 
-        Auth::user()->announcements()->create([
+        // 2. CREATE the announcement and capture the new model in a variable.
+        $announcement = Auth::user()->announcements()->create([
             'title' => $request->title,
             'content' => $request->content,
             'published_at' => now(), // Publish immediately
         ]);
 
-        return redirect()->back()->with('success', 'Announcement created successfully.');
+        // 3. BROADCAST the event to all other connected users.
+        // The .toOthers() helper prevents the user who created the announcement
+        // from receiving the real-time notification themselves.
+        broadcast(new AnnouncementCreated($announcement))->toOthers();
+
+        return redirect()->back()->with('success', 'Announcement created and published successfully.');
     }
 
+    /**
+     * Update an existing announcement.
+     */
     public function update(Request $request, Announcement $announcement)
     {
         // Add authorization if needed, e.g., Gate::authorize('update', $announcement);
@@ -38,6 +51,9 @@ class AnnouncementController extends Controller
         return redirect()->back()->with('success', 'Announcement updated successfully.');
     }
 
+    /**
+     * Delete an announcement.
+     */
     public function destroy(Announcement $announcement)
     {
         // Add authorization if needed, e.g., Gate::authorize('delete', $announcement);

@@ -17,10 +17,10 @@ use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserHierarchyController;
 use App\Models\User;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 // Make login page the landing page for guests
 Route::get('/', function () {
@@ -35,9 +35,6 @@ Route::get('/', function () {
     ]);
 })->middleware('guest')->name('login');
 
-Route::get('/phpinfo', function () {
-    phpinfo();
-});
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

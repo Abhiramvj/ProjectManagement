@@ -3,26 +3,11 @@ import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 
-// Lazy load components for better performance
-const ApplicationLogo = shallowRef(null);
-const Dropdown = shallowRef(null);
-const DropdownLink = shallowRef(null);
-const NavLink = shallowRef(null);
-
-// Load components asynchronously
-onMounted(async () => {
-    const [logoModule, dropdownModule, dropdownLinkModule, navLinkModule] = await Promise.all([
-        import('@/Components/ApplicationLogo.vue'),
-        import('@/Components/Dropdown.vue'),
-        import('@/Components/DropdownLink.vue'),
-        import('@/Components/NavLink.vue')
-    ]);
-
-    ApplicationLogo.value = logoModule.default;
-    Dropdown.value = dropdownModule.default;
-    DropdownLink.value = dropdownLinkModule.default;
-    NavLink.value = navLinkModule.default;
-});
+// Import components directly for better reliability
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import Dropdown from '@/Components/Dropdown.vue';
+import DropdownLink from '@/Components/DropdownLink.vue';
+import NavLink from '@/Components/NavLink.vue';
 
 // --- NOTIFICATION LOGIC (OPTIMIZED) ---
 const showingNotificationDropdown = ref(false);
@@ -229,13 +214,12 @@ onUnmounted(() => {
             <div class="flex flex-grow flex-col overflow-y-auto border-r border-slate-200 bg-white pt-5">
                 <div class="flex flex-shrink-0 items-center px-4 space-x-2">
                     <Link :href="route('dashboard')">
-                        <component :is="ApplicationLogo" v-if="ApplicationLogo" class="block h-8 w-auto text-slate-800" />
+                        <ApplicationLogo class="block h-8 w-auto text-slate-800" />
                     </Link>
                     <span class="text-xl font-bold text-slate-800">WorkSphere</span>
                 </div>
-                <nav v-if="user && user.permissions && NavLink" class="mt-8 flex-1 space-y-1 px-3 pb-4">
-                    <component
-                        :is="NavLink"
+                <nav v-if="user && user.permissions" class="mt-8 flex-1 space-y-1 px-3 pb-4">
+                    <NavLink
                         v-for="item in navigationItems"
                         :key="item.name"
                         :href="route(item.route)"
@@ -247,7 +231,7 @@ onUnmounted(() => {
                             :class="[item.active ? 'text-slate-700' : 'text-slate-400 group-hover:text-slate-500']"
                         ></span>
                         {{ item.name }}
-                    </component>
+                    </NavLink>
                 </nav>
             </div>
         </div>
@@ -265,7 +249,7 @@ onUnmounted(() => {
                         <slot name="header" />
                     </div>
                     <div class="flex flex-1 items-center justify-end space-x-4">
-                        <template v-if="user && Dropdown">
+                        <template v-if="user">
                             <!-- Notification Dropdown -->
                             <div class="relative">
                                 <button
@@ -356,9 +340,9 @@ onUnmounted(() => {
                                 </template>
 
                                 <template #content>
-                                    <component :is="DropdownLink" v-if="DropdownLink" :href="route('profile.edit')"> Profile </component>
-                                    <component :is="DropdownLink" v-if="DropdownLink" :href="route('notifications.index')">Notifications</component>
-                                    <component :is="DropdownLink" v-if="DropdownLink" :href="route('logout')" method="post" as="button">Log Out</component>
+                                    <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
+                                    <DropdownLink :href="route('notifications.index')">Notifications</DropdownLink>
+                                    <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
                                 </template>
                             </component>
                         </template>
@@ -377,13 +361,12 @@ onUnmounted(() => {
                 <div class="flex flex-grow flex-col overflow-y-auto border-r border-slate-200 bg-white pt-5">
                     <div class="flex flex-shrink-0 items-center px-4 space-x-2">
                         <Link :href="route('dashboard')">
-                            <component :is="ApplicationLogo" v-if="ApplicationLogo" class="block h-8 w-auto text-slate-800" />
+                            <ApplicationLogo class="block h-8 w-auto text-slate-800" />
                         </Link>
                         <span class="text-xl font-bold text-slate-800">WorkSphere</span>
                     </div>
-                    <nav v-if="user && user.permissions && NavLink" class="mt-8 flex-1 space-y-1 px-3 pb-4">
-                        <component
-                            :is="NavLink"
+                    <nav v-if="user && user.permissions" class="mt-8 flex-1 space-y-1 px-3 pb-4">
+                        <NavLink
                             v-for="item in navigationItems"
                             :key="item.name"
                             :href="route(item.route)"
@@ -396,7 +379,7 @@ onUnmounted(() => {
                                 :class="[item.active ? 'text-slate-700' : 'text-slate-400 group-hover:text-slate-500']"
                             ></span>
                             {{ item.name }}
-                        </component>
+                        </NavLink>
                     </nav>
                 </div>
             </div>

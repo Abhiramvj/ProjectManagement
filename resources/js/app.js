@@ -21,5 +21,9 @@ createInertiaApp({
     },
     progress: {
         color: '#4B5563',
+        // Optimize progress bar
+        delay: 250,
+        includeCSS: true,
+        showSpinner: false,
     },
 });

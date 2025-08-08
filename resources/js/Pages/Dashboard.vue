@@ -1,21 +1,20 @@
 <script setup>
-// NO FullCalendar CSS imports are needed. The JS plugins handle style injection.
-
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import InputError from '@/Components/InputError.vue';
+import LazyChart from '@/Components/LazyChart.vue';
+import LazyCalendar from '@/Components/LazyCalendar.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue';
 import { formatDistanceToNowStrict, format } from 'date-fns';
+import axios from 'axios';
 
+// Import FullCalendar components directly for better reliability
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Doughnut } from 'vue-chartjs';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import axios from 'axios';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+
 
 // --- MODIFIED --- Add the new performance props
 const props = defineProps({
@@ -31,7 +30,6 @@ const props = defineProps({
     leaveStats: { type: Object, required: true },
     announcements: { type: Array, default: () => [] },
 });
-
 
 // --- [+] NEW --- Logic for Performance Score and AI Summary
 const performanceScore = computed(() => {
@@ -83,7 +81,6 @@ const closeSummaryModal = () => {
     isSummaryModalVisible.value = false;
 };
 // --- END NEW ---
-
 
 // --- ROLE-BASED VISIBILITY & HELPERS (Unchanged) ---
 const page = usePage();
@@ -518,7 +515,7 @@ const chartOptions = {
                     </div>
                     <div v-if="canViewAttendanceStats" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h3 class="text-lg font-bold text-slate-900 mb-4">Team Attendance</h3>
-                        <div class="relative h-48 mb-4"><Doughnut :data="chartData" :options="chartOptions" /><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span class="text-4xl font-bold text-slate-900">{{ attendance.total }}</span></div></div>
+                        <div class="relative h-48 mb-4"><LazyChart :data="chartData" :options="chartOptions" /><div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span class="text-4xl font-bold text-slate-900">{{ attendance.total }}</span></div></div>
                         <div class="flex items-center justify-center space-x-6 text-sm mb-6"><div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>Present</div><div class="flex items-center"><span class="w-3 h-3 rounded-full bg-slate-800 mr-2"></span>Absent</div></div>
                         <div class="space-y-4 border-t border-slate-100 pt-4"><h4 class="font-semibold text-slate-800">Absent Today</h4><div v-if="attendance.absent_list.length > 0" class="space-y-3"><div v-for="absentee in attendance.absent_list" :key="absentee.id" class="flex items-center justify-between"><div class="flex items-center space-x-3"><img class="h-9 w-9 rounded-full" :src="absentee.avatar_url || `https://ui-avatars.com/api/?name=${absentee.name.replace(' ', '+')}&background=random`" :alt="absentee.name" /><div><p class="text-sm font-medium text-slate-800">{{ absentee.name }}</p><p class="text-xs text-slate-500">{{ absentee.designation }}</p></div></div><span class="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">Fullday</span></div></div><div v-else class="text-center text-sm text-slate-500 py-4">Everyone is present today! 🎉</div></div>
                     </div>
@@ -540,5 +537,51 @@ const chartOptions = {
 }
 .fc .fc-event-main {
     white-space: normal !important; /* Allow event text to wrap */
+}
+
+/* Additional FullCalendar styles for better appearance */
+.fc {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.fc .fc-toolbar {
+  padding: 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fc .fc-button {
+  background-color: #6366f1;
+  border-color: #6366f1;
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+}
+
+.fc .fc-button:hover {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.fc .fc-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.fc .fc-daygrid-day {
+  min-height: 100px;
+}
+
+.fc .fc-daygrid-day-frame {
+  min-height: 100%;
+}
+
+.fc .fc-event {
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.125rem 0.25rem;
+  margin: 0.125rem;
 }
 </style>

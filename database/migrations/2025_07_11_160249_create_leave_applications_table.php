@@ -26,7 +26,7 @@ return new class extends Migration
             $table->text('reason');
             $table->string('supporting_document_path')->nullable();
             $table->string('status')->default('pending');
-            $table->text('reject_reason')->nullable();
+            $table->text('rejection_reason')->nullable();
             $table->text('comments')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
