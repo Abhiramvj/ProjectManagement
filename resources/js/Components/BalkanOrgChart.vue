@@ -13,39 +13,21 @@ const selectedEmployee = ref(null);
 const chartContainer = ref(null);
 let chartInstance = null;
 
-// Color constants
-const VIBRANT_COLORS = [
-  '#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff',
-  '#5f27cd', '#00d2d3', '#ff9f43', '#10ac84', '#ee5253',
-  '#8395a7', '#f368e0', '#3742fa', '#2f3542', '#ff3838',
-  '#ff6348', '#70a1ff', '#5352ed', '#747d8c', '#a4b0be',
-  '#6c5ce7', '#fd79a8', '#fdcb6e', '#6c5ce7', '#74b9ff'
-];
-
-const COLOR_COMPLEMENTS = {
-  '#ff6b6b': '#6bff6b',
-  '#feca57': '#57cafe',
-  '#48dbfb': '#fb48db',
-  '#ff9ff3': '#9fff9f',
-  '#54a0ff': '#ffa054',
-  '#5f27cd': '#cd5f27',
-  '#00d2d3': '#d30000',
-  '#ff9f43': '#43ff9f'
-};
-
-// Template creation functions
-const createCommonDefs = (id, color, secondaryColor) => `
-  <defs>
-    <linearGradient id="cardGradient${id}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${color}" stop-opacity="0.8" />
-      <stop offset="50%" stop-color="${color}" stop-opacity="0.6" />
-      <stop offset="100%" stop-color="${color}" stop-opacity="0.4" />
+// Enhanced colorful node templates
+OrgChart.templates.userNodeColorful = Object.assign({}, OrgChart.templates.base);
+OrgChart.templates.userNodeColorful.size = [300, 120];
+OrgChart.templates.userNodeColorful.node =
+  `<defs>
+    <linearGradient id="cardGradient{id}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="{binding.color}" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="{binding.color}" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="{binding.color}" stop-opacity="0.4" />
     </linearGradient>
-    <linearGradient id="borderGradient${id}" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="${color}" />
-      <stop offset="100%" stop-color="${secondaryColor}" />
+    <linearGradient id="borderGradient{id}" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="{binding.color}" />
+      <stop offset="100%" stop-color="{binding.secondaryColor}" />
     </linearGradient>
-    <filter id="glow${id}">
+    <filter id="glow{id}">
       <feMorphology operator="dilate" radius="1"/>
       <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
       <feMerge> 
@@ -53,175 +35,183 @@ const createCommonDefs = (id, color, secondaryColor) => `
         <feMergeNode in="SourceGraphic"/> 
       </feMerge>
     </filter>
-  </defs>`;
+  </defs>
+  <rect x="0" y="0" width="300" height="120" fill="url(#cardGradient{id})" rx="15" ry="15" stroke="url(#borderGradient{id})" stroke-width="3"></rect>
+  <rect x="5" y="5" width="8" height="110" fill="{binding.color}" rx="4" ry="4" filter="url(#glow{id})"></rect>
+  <circle cx="250" cy="60" r="38" fill="rgba(255,255,255,0.9)" stroke="{binding.color}" stroke-width="3"></circle>`;
 
-const createTextElement = (text, x, y, fontSize, fontWeight = '400', fill = '#ffffff', opacity = '1') => 
-  `<text style="font-size: ${fontSize}px; font-weight: ${fontWeight}; font-family: 'Inter', sans-serif;" 
-        fill="${fill}" fill-opacity="${opacity}" x="${x}" y="${y}" text-anchor="start">${text}</text>`;
+// FIX: Use a dark color for names and titles!
+OrgChart.templates.userNodeColorful.field_0 = 
+  `<text style="font-size: 18px; font-weight: 700; font-family: 'Inter', sans-serif;" 
+        fill="#222831" x="25" y="45" text-anchor="start">{val}</text>`;
 
-// Initialize templates
-const initializeTemplates = () => {
-  // User node template
-  OrgChart.templates.userNodeColorful = Object.assign({}, OrgChart.templates.base);
-  OrgChart.templates.userNodeColorful.size = [300, 120];
-  OrgChart.templates.userNodeColorful.node = 
-    createCommonDefs('{id}', '{binding.color}', '{binding.secondaryColor}') +
-    `<rect x="0" y="0" width="300" height="120" fill="url(#cardGradient{id})" rx="15" ry="15" stroke="url(#borderGradient{id})" stroke-width="3"></rect>
-     <rect x="5" y="5" width="8" height="110" fill="{binding.color}" rx="4" ry="4" filter="url(#glow{id})"></rect>
-     <circle cx="250" cy="60" r="38" fill="rgba(255,255,255,0.9)" stroke="{binding.color}" stroke-width="3"></circle>`;
+OrgChart.templates.userNodeColorful.field_1 = 
+  `<text style="font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 500;" 
+        fill="#444444" x="25" y="70" text-anchor="start">{val}</text>`;
 
-  // Text fields
-  OrgChart.templates.userNodeColorful.field_0 = createTextElement('{val}', 25, 45, 18, '700');
-  OrgChart.templates.userNodeColorful.field_1 = createTextElement('{val}', 25, 70, 14, '500', 'rgba(255,255,255,0.9)');
-  
-  // Department badge
-  OrgChart.templates.userNodeColorful.field_2 = 
-    `<rect x="20" y="85" width="120" height="20" fill="rgba(255,255,255,0.2)" rx="10" ry="10" stroke="rgba(255,255,255,0.3)" stroke-width="1"></rect>` +
-    createTextElement('{val}', 80, 97, 11, '600', 'rgba(255,255,255,0.95)').replace('text-anchor="start"', 'text-anchor="middle"').replace('font-weight: 600', 'font-weight: 600; text-transform: uppercase');
+OrgChart.templates.userNodeColorful.field_2 =
+  `<rect x="20" y="85" width="120" height="20" fill="rgba(255,255,255,0.2)" rx="10" ry="10" stroke="rgba(255,255,255,0.3)" stroke-width="1"></rect>
+   <text style="font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase;" 
+         fill="#393e46" x="80" y="97" text-anchor="middle">{val}</text>`;
 
-  // Image
-  OrgChart.templates.userNodeColorful.img_0 =
-    `<clipPath id="clipCircleColorful{id}">
-       <circle cx="250" cy="60" r="35"></circle>
-     </clipPath>
-     <image preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircleColorful{id})" 
-            xlink:href="{val}" x="215" y="25" width="70" height="70"></image>`;
+OrgChart.templates.userNodeColorful.img_0 =
+  `<clipPath id="clipCircleColorful{id}">
+      <circle cx="250" cy="60" r="35"></circle>
+    </clipPath>
+    <image preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircleColorful{id})" 
+          xlink:href="{val}" x="215" y="25" width="70" height="70"></image>`;
 
-  // Department node template
-  OrgChart.templates.departmentNodeColorful = Object.assign({}, OrgChart.templates.base);
-  OrgChart.templates.departmentNodeColorful.size = [320, 90];
-  OrgChart.templates.departmentNodeColorful.node =
-    `<defs>
-      <linearGradient id="deptGradient{id}" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="{binding.color}" />
-        <stop offset="25%" stop-color="{binding.color}" />
-        <stop offset="50%" stop-color="{binding.color}" />
-        <stop offset="75%" stop-color="{binding.color}" />
-        <stop offset="100%" stop-color="{binding.color}" />
-      </linearGradient>
-      <filter id="deptGlow{id}">
-        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-        <feMerge> 
-          <feMergeNode in="coloredBlur"/>
-          <feMergeNode in="SourceGraphic"/> 
-        </feMerge>
-      </filter>
-    </defs>
-    <rect x="0" y="0" width="320" height="90" fill="url(#deptGradient{id})" rx="15" ry="15" stroke="{binding.color}" stroke-width="2" filter="url(#deptGlow{id})"></rect>`;
+// Department node with rainbow gradient
+OrgChart.templates.departmentNodeColorful = Object.assign({}, OrgChart.templates.base);
+OrgChart.templates.departmentNodeColorful.size = [320, 90];
+OrgChart.templates.departmentNodeColorful.node =
+  `<defs>
+    <linearGradient id="deptGradient{id}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b6b" />
+      <stop offset="25%" stop-color="#feca57" />
+      <stop offset="50%" stop-color="#48dbfb" />
+      <stop offset="75%" stop-color="#ff9ff3" />
+      <stop offset="100%" stop-color="#54a0ff" />
+    </linearGradient>
+    <filter id="deptGlow{id}">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/> 
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="320" height="90" fill="url(#deptGradient{id})" rx="15" ry="15" stroke="#ffffff" stroke-width="2" filter="url(#deptGlow{id})"></rect>`;
 
-  OrgChart.templates.departmentNodeColorful.field_0 = 
-    `<g transform="translate(25, 25)">
-       <circle cx="20" cy="20" r="18" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.6)" stroke-width="2"></circle>
-       <path fill="#ffffff" d="M20,20A4,4 0 0,0 16,24A4,4 0 0,0 20,28A4,4 0 0,0 24,24A4,4 0 0,0 20,20M20,22A2,2 0 0,1 22,24A2,2 0 0,1 20,26A2,2 0 0,1 18,24A2,2 0 0,1 20,22M28,20C30.21,20 32,21.79 32,24V25H30V24C30,22.9 29.1,22 28,22M26,20C24.5,20 23.25,20.59 22.37,21.5C22.74,22.22 23,23.06 23,24V25H12V24C12,21.79 13.79,20 16,20M20,12A4,4 0 0,1 24,16A4,4 0 0,1 20,20A4,4 0 0,1 16,16A4,4 0 0,1 20,12M20,14A2,2 0 0,0 18,16A2,2 0 0,0 20,18A2,2 0 0,0 22,16A2,2 0 0,0 20,14Z" transform="scale(0.8) translate(5, 5)"></path>
-     </g>` + 
-    createTextElement('{val}', 80, 50, 18, '700').replace('font-weight: 700', 'font-weight: 700; text-transform: uppercase; letter-spacing: 1px');
+OrgChart.templates.departmentNodeColorful.field_0 = 
+  `<g transform="translate(25, 25)">
+     <circle cx="20" cy="20" r="18" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.6)" stroke-width="2"></circle>
+     <path fill="#ffffff" d="M20,20A4,4 0 0,0 16,24A4,4 0 0,0 20,28A4,4 0 0,0 24,24A4,4 0 0,0 20,20M20,22A2,2 0 0,1 22,24A2,2 0 0,1 20,26A2,2 0 0,1 18,24A2,2 0 0,1 20,22M28,20C30.21,20 32,21.79 32,24V25H30V24C30,22.9 29.1,22 28,22M26,20C24.5,20 23.25,20.59 22.37,21.5C22.74,22.22 23,23.06 23,24V25H12V24C12,21.79 13.79,20 16,20M20,12A4,4 0 0,1 24,16A4,4 0 0,1 20,20A4,4 0 0,1 16,16A4,4 0 0,1 20,12M20,14A2,2 0 0,0 18,16A2,2 0 0,0 20,18A2,2 0 0,0 22,16A2,2 0 0,0 20,14Z" transform="scale(0.8) translate(5, 5)"></path>
+   </g>
+   <text style="font-size: 18px; font-weight: 700; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 1px;" 
+        fill="#ffffff" x="80" y="50" text-anchor="start">{val}</text>`;
 
-  // Node bindings
-  const commonBinding = {
-    field_0: "name",
-    field_1: "title", 
-    field_2: "department",
-    img_0: "image",
-    color: "color",
-    secondaryColor: "secondaryColor"
-  };
-
-  OrgChart.templates.userNodeColorful.nodeBinding = commonBinding;
-  OrgChart.templates.departmentNodeColorful.nodeBinding = { field_0: "name", color: "color" };
+OrgChart.templates.userNodeColorful.nodeBinding = {
+  field_0: "name",
+  field_1: "title",
+  field_2: "department",
+  img_0: "image",
+  color: "color",
+  secondaryColor: "secondaryColor"
 };
 
-// Utility functions
-const getRandomVibrantColor = () => VIBRANT_COLORS[Math.floor(Math.random() * VIBRANT_COLORS.length)];
-const getComplementaryColor = (color) => COLOR_COMPLEMENTS[color] || '#ffffff';
+OrgChart.templates.departmentNodeColorful.nodeBinding = {
+  field_0: "name",
+  color: "color"
+};
 
-const enhanceNodesWithColors = (nodes) => 
-  nodes.map(node => ({
-    ...node,
-    color: node.color || getRandomVibrantColor(),
-    secondaryColor: node.secondaryColor || getComplementaryColor(node.color || getRandomVibrantColor())
-  }));
+const getRandomVibrantColor = () => {
+  const vibrantColors = [
+    '#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff',
+    '#5f27cd', '#00d2d3', '#ff9f43', '#10ac84', '#ee5253',
+    '#8395a7', '#f368e0', '#3742fa', '#2f3542', '#ff3838',
+    '#ff6348', '#70a1ff', '#5352ed', '#747d8c', '#a4b0be',
+    '#6c5ce7', '#fd79a8', '#fdcb6e', '#6c5ce7', '#74b9ff'
+  ];
+  return vibrantColors[Math.floor(Math.random() * vibrantColors.length)];
+};
 
-const getChartConfig = (enhancedNodes) => ({
-  nodes: enhancedNodes,
-  template: "userNodeColorful",
-  nodeMenu: {
-    details: { text: "👁️ View Details" },
-    edit: { text: "✏️ Edit" },
-    add: { text: "➕ Add" },
-    remove: { text: "🗑️ Remove" }
-  },
-  nodeMouseClick: OrgChart.action.none,
-  enableSearch: true,
-  searchFields: ["name", "title", "department"],
-  mouseScrool: OrgChart.action.zoom,
-  toolbar: {
-    zoom: true,
-    fit: true,
-    expandAll: true
-  },
-  connector: {
-    type: "curved",
-    style: {
-      stroke: "#ff6b6b",
-      "stroke-width": 3,
-      "stroke-dasharray": "5,5"
-    }
-  },
-  levelSeparation: 140,
-  siblingSeparation: 60,
-  subtreeSeparation: 40,
-  align: OrgChart.ORIENTATION,
-  orientation: OrgChart.orientation.top,
-  tags: {
-    "department": {
-      template: "departmentNodeColorful",
-      "node-class": "department-node-colorful"
-    },
-    "user": {
-      "node-class": "user-node-colorful"
-    }
-  },
-  nodeBinding: {
-    field_0: "name",
-    field_1: "title",
-    field_2: "department",
-    img_0: "image",
-    color: "color",
-    secondaryColor: "secondaryColor"
-  }
-});
-
-const initializeChart = () => {
-  if (!chartContainer.value || !props.nodes.length) return;
-
-  chartInstance?.destroy();
-  
-  const enhancedNodes = enhanceNodesWithColors(props.nodes);
-  chartInstance = new OrgChart(chartContainer.value, getChartConfig(enhancedNodes));
-  
-  chartInstance.on('click', (sender, args) => {
-    const nodeData = args.node.data;
-    if (nodeData.image) {
-      selectedEmployee.value = nodeData;
-    }
-  });
+const getComplementaryColor = (color) => {
+  const colorMap = {
+    '#ff6b6b': '#6bff6b',
+    '#feca57': '#57cafe',
+    '#48dbfb': '#fb48db',
+    '#ff9ff3': '#9fff9f',
+    '#54a0ff': '#ffa054',
+    '#5f27cd': '#cd5f27',
+    '#00d2d3': '#d30000',
+    '#ff9f43': '#43ff9f'
+  };
+  return colorMap[color] || '#ffffff';
 };
 
 const closeModal = () => {
   selectedEmployee.value = null;
 };
 
-const formatDate = (dateString) => 
-  dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
+const initializeChart = () => {
+  if (chartContainer.value && props.nodes.length) {
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
 
-const formatExperience = (years) => 
-  years ? `${years} years` : 'N/A';
+    const enhancedNodes = props.nodes.map(node => ({
+      ...node,
+      color: node.color || getRandomVibrantColor(),
+      secondaryColor: node.secondaryColor || getComplementaryColor(node.color || getRandomVibrantColor())
+    }));
 
-// Initialize templates once
-initializeTemplates();
+    chartInstance = new OrgChart(chartContainer.value, {
+      nodes: enhancedNodes,
+      template: "userNodeColorful",
+      nodeMenu: {
+        details: { text: "👁️ View Details" },
+        edit: { text: "✏️ Edit" },
+        add: { text: "➕ Add" },
+        remove: { text: "🗑️ Remove" }
+      },
+      nodeMouseClick: OrgChart.action.none,
+      enableSearch: true,
+      searchFields: ["name", "title", "department"],
+      mouseScrool: OrgChart.action.zoom,
+      toolbar: {
+        zoom: true,
+        fit: true,
+        expandAll: true
+      },
+      connector: {
+        type: "curved",
+        style: {
+          stroke: "#ff6b6b",
+          "stroke-width": 3,
+          "stroke-dasharray": "5,5"
+        }
+      },
+      levelSeparation: 140,
+      siblingSeparation: 60,
+      subtreeSeparation: 40,
+      align: OrgChart.ORIENTATION,
+      orientation: OrgChart.orientation.top,
+      tags: {
+        "department": {
+          template: "departmentNodeColorful",
+          "node-class": "department-node-colorful"
+        },
+        "user": {
+          "node-class": "user-node-colorful"
+        }
+      },
+      nodeBinding: {
+        field_0: "name",
+        field_1: "title",
+        field_2: "department",
+        img_0: "image",
+        color: "color",
+        secondaryColor: "secondaryColor"
+      }
+    });
 
-onMounted(initializeChart);
-watch(() => props.nodes, initializeChart, { deep: true });
+    chartInstance.on('click', (sender, args) => {
+      const nodeData = args.node.data;
+      if (nodeData.image) {
+        selectedEmployee.value = nodeData;
+      }
+    });
+  }
+};
+
+onMounted(() => {
+  initializeChart();
+});
+
+watch(() => props.nodes, () => {
+  initializeChart();
+}, { deep: true });
 </script>
 
 <template>
@@ -274,11 +264,11 @@ watch(() => props.nodes, initializeChart, { deep: true });
               </div>
               <div class="detail-item-colorful">
                 <span class="detail-label-colorful">Hire Date</span>
-                <span class="detail-value-colorful">{{ formatDate(selectedEmployee.hire_date) }}</span>
+                <span class="detail-value-colorful">{{ selectedEmployee.hire_date ? new Date(selectedEmployee.hire_date).toLocaleDateString() : 'N/A' }}</span>
               </div>
               <div class="detail-item-colorful">
                 <span class="detail-label-colorful">Experience</span>
-                <span class="detail-value-colorful">{{ formatExperience(selectedEmployee.total_experience_years) }}</span>
+                <span class="detail-value-colorful">{{ selectedEmployee.total_experience_years ? `${selectedEmployee.total_experience_years} years` : 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -297,6 +287,8 @@ watch(() => props.nodes, initializeChart, { deep: true });
     </div>
   </div>
 </template>
+
+
 
 <style>
 /* Base Colorful Styles */
@@ -629,5 +621,4 @@ watch(() => props.nodes, initializeChart, { deep: true });
     margin-right: 0;
     margin-bottom: 20px;
   }
-}
-</style>
+}</style>

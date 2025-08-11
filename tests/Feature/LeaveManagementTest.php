@@ -793,7 +793,7 @@ class LeaveManagementTest extends TestCase
             'leave_type' => 'personal',
             'reason' => 'Afternoon off',
             'start_half_session' => 'afternoon',
-            'end_half_session' => 'afternoon',
+            'end_half_session' => 'afternoon',  
         ]);
         $response2->assertStatus(302);
 

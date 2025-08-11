@@ -2,6 +2,7 @@
 
 namespace App\Actions\TimeLog;
 
+use App\Models\Holiday;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -21,10 +22,15 @@ class StoreTimeLogs
         $user->timeLogs()->create($validatedData);
 
         // Check if the work date is a weekend (Saturday or Sunday)
-        if ($workDate->isWeekend()) {
+        $isWeekend = $workDate->isWeekend();
+
+        // Check if the work date is a holiday in the holidays table
+        $isHoliday = Holiday::whereDate('date', $workDate->toDateString())->exists();
+
+        // If work date is weekend or holiday, calculate comp off entitlement
+        if ($isWeekend || $isHoliday) {
             $hoursWorked = $validatedData['hours_worked'] ?? 0;
 
-            // Calculate comp off entitlement based on hours worked
             $compOffToAdd = 0;
 
             if ($hoursWorked >= 7) {
