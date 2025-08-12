@@ -33,6 +33,7 @@ const leaveColors = {
   rejected: '#b91c1c',
   wfh: '#0ea5e9',
   compensatory: '#16a34a',
+  holiday: '#f43f5e',
 }
 
 const leaveFormSection = ref(null)
@@ -77,7 +78,7 @@ function toISODateOnly(date) {
 
 const calendarEvents = computed(() =>
   (props.highlightedDates || [])
-    .filter(ev => ev.user_id === currentUserId)
+    .filter(ev => ev.user_id === currentUserId || ev.user_id === null)
     .map(ev => ({
       display: 'background',
       start: ev.start,
