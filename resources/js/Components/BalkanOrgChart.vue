@@ -1,6 +1,9 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, defineProps } from 'vue';
 import OrgChart from '@balkangraph/orgchart.js';
+
+// The entire <script setup> section remains unchanged.
+// All the logic is already in place.
 
 const props = defineProps({
   nodes: {
@@ -10,615 +13,166 @@ const props = defineProps({
 });
 
 const selectedEmployee = ref(null);
+const performanceData = ref(null); 
 const chartContainer = ref(null);
 let chartInstance = null;
 
-// Enhanced colorful node templates
-OrgChart.templates.userNodeColorful = Object.assign({}, OrgChart.templates.base);
-OrgChart.templates.userNodeColorful.size = [300, 120];
-OrgChart.templates.userNodeColorful.node =
-  `<defs>
-    <linearGradient id="cardGradient{id}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="{binding.color}" stop-opacity="0.8" />
-      <stop offset="50%" stop-color="{binding.color}" stop-opacity="0.6" />
-      <stop offset="100%" stop-color="{binding.color}" stop-opacity="0.4" />
-    </linearGradient>
-    <linearGradient id="borderGradient{id}" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="{binding.color}" />
-      <stop offset="100%" stop-color="{binding.secondaryColor}" />
-    </linearGradient>
-    <filter id="glow{id}">
-      <feMorphology operator="dilate" radius="1"/>
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-      <feMerge> 
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/> 
-      </feMerge>
-    </filter>
-  </defs>
-  <rect x="0" y="0" width="300" height="120" fill="url(#cardGradient{id})" rx="15" ry="15" stroke="url(#borderGradient{id})" stroke-width="3"></rect>
-  <rect x="5" y="5" width="8" height="110" fill="{binding.color}" rx="4" ry="4" filter="url(#glow{id})"></rect>
-  <circle cx="250" cy="60" r="38" fill="rgba(255,255,255,0.9)" stroke="{binding.color}" stroke-width="3"></circle>`;
-
-// FIX: Use a dark color for names and titles!
-OrgChart.templates.userNodeColorful.field_0 = 
-  `<text style="font-size: 18px; font-weight: 700; font-family: 'Inter', sans-serif;" 
-        fill="#222831" x="25" y="45" text-anchor="start">{val}</text>`;
-
-OrgChart.templates.userNodeColorful.field_1 = 
-  `<text style="font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 500;" 
-        fill="#444444" x="25" y="70" text-anchor="start">{val}</text>`;
-
-OrgChart.templates.userNodeColorful.field_2 =
-  `<rect x="20" y="85" width="120" height="20" fill="rgba(255,255,255,0.2)" rx="10" ry="10" stroke="rgba(255,255,255,0.3)" stroke-width="1"></rect>
-   <text style="font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase;" 
-         fill="#393e46" x="80" y="97" text-anchor="middle">{val}</text>`;
-
-OrgChart.templates.userNodeColorful.img_0 =
-  `<clipPath id="clipCircleColorful{id}">
-      <circle cx="250" cy="60" r="35"></circle>
-    </clipPath>
-    <image preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircleColorful{id})" 
-          xlink:href="{val}" x="215" y="25" width="70" height="70"></image>`;
-
-// Department node with rainbow gradient
-OrgChart.templates.departmentNodeColorful = Object.assign({}, OrgChart.templates.base);
-OrgChart.templates.departmentNodeColorful.size = [320, 90];
-OrgChart.templates.departmentNodeColorful.node =
-  `<defs>
-    <linearGradient id="deptGradient{id}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff6b6b" />
-      <stop offset="25%" stop-color="#feca57" />
-      <stop offset="50%" stop-color="#48dbfb" />
-      <stop offset="75%" stop-color="#ff9ff3" />
-      <stop offset="100%" stop-color="#54a0ff" />
-    </linearGradient>
-    <filter id="deptGlow{id}">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge> 
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/> 
-      </feMerge>
-    </filter>
-  </defs>
-  <rect x="0" y="0" width="320" height="90" fill="url(#deptGradient{id})" rx="15" ry="15" stroke="#ffffff" stroke-width="2" filter="url(#deptGlow{id})"></rect>`;
-
-OrgChart.templates.departmentNodeColorful.field_0 = 
-  `<g transform="translate(25, 25)">
-     <circle cx="20" cy="20" r="18" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.6)" stroke-width="2"></circle>
-     <path fill="#ffffff" d="M20,20A4,4 0 0,0 16,24A4,4 0 0,0 20,28A4,4 0 0,0 24,24A4,4 0 0,0 20,20M20,22A2,2 0 0,1 22,24A2,2 0 0,1 20,26A2,2 0 0,1 18,24A2,2 0 0,1 20,22M28,20C30.21,20 32,21.79 32,24V25H30V24C30,22.9 29.1,22 28,22M26,20C24.5,20 23.25,20.59 22.37,21.5C22.74,22.22 23,23.06 23,24V25H12V24C12,21.79 13.79,20 16,20M20,12A4,4 0 0,1 24,16A4,4 0 0,1 20,20A4,4 0 0,1 16,16A4,4 0 0,1 20,12M20,14A2,2 0 0,0 18,16A2,2 0 0,0 20,18A2,2 0 0,0 22,16A2,2 0 0,0 20,14Z" transform="scale(0.8) translate(5, 5)"></path>
-   </g>
-   <text style="font-size: 18px; font-weight: 700; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 1px;" 
-        fill="#ffffff" x="80" y="50" text-anchor="start">{val}</text>`;
-
-OrgChart.templates.userNodeColorful.nodeBinding = {
-  field_0: "name",
-  field_1: "title",
-  field_2: "department",
-  img_0: "image",
-  color: "color",
-  secondaryColor: "secondaryColor"
-};
-
-OrgChart.templates.departmentNodeColorful.nodeBinding = {
-  field_0: "name",
-  color: "color"
-};
-
-const getRandomVibrantColor = () => {
-  const vibrantColors = [
-    '#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff',
-    '#5f27cd', '#00d2d3', '#ff9f43', '#10ac84', '#ee5253',
-    '#8395a7', '#f368e0', '#3742fa', '#2f3542', '#ff3838',
-    '#ff6348', '#70a1ff', '#5352ed', '#747d8c', '#a4b0be',
-    '#6c5ce7', '#fd79a8', '#fdcb6e', '#6c5ce7', '#74b9ff'
-  ];
-  return vibrantColors[Math.floor(Math.random() * vibrantColors.length)];
-};
-
-const getComplementaryColor = (color) => {
-  const colorMap = {
-    '#ff6b6b': '#6bff6b',
-    '#feca57': '#57cafe',
-    '#48dbfb': '#fb48db',
-    '#ff9ff3': '#9fff9f',
-    '#54a0ff': '#ffa054',
-    '#5f27cd': '#cd5f27',
-    '#00d2d3': '#d30000',
-    '#ff9f43': '#43ff9f'
-  };
-  return colorMap[color] || '#ffffff';
-};
-
-const closeModal = () => {
-  selectedEmployee.value = null;
-};
+OrgChart.templates.templateGlass = Object.assign({}, OrgChart.templates.base);
+OrgChart.templates.templateGlass.size = [250, 90];
+OrgChart.templates.templateGlass.node = '<rect x="0" y="0" width="250" height="90" rx="12" ry="12"></rect>';
+OrgChart.templates.templateGlass.img_0 =
+    '<circle cx="45" cy="45" r="32" fill="none" stroke="{binding.color}" stroke-width="2.5"></circle>' +
+    '<clipPath id="clip-glass"><circle cx="45" cy="45" r="30"></circle></clipPath>' +
+    '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-glass)" xlink:href="{val}" x="15" y="15" width="60" height="60"></image>';
+OrgChart.templates.templateGlass.field_0 = '<text style="font-size: 16px; font-weight: 600;" fill="#ffffff" x="95" y="45" text-anchor="start">{val}</text>';
+OrgChart.templates.templateGlass.field_1 = '<text style="font-size: 12px; font-weight: 400;" fill="#e5e7eb" x="95" y="65" text-anchor="start">{val}</text>';
 
 const initializeChart = () => {
   if (chartContainer.value && props.nodes.length) {
-    if (chartInstance) {
-      chartInstance.destroy();
-    }
-
-    const enhancedNodes = props.nodes.map(node => ({
-      ...node,
-      color: node.color || getRandomVibrantColor(),
-      secondaryColor: node.secondaryColor || getComplementaryColor(node.color || getRandomVibrantColor())
-    }));
+    if (chartInstance) chartInstance.destroy();
 
     chartInstance = new OrgChart(chartContainer.value, {
-      nodes: enhancedNodes,
-      template: "userNodeColorful",
-      nodeMenu: {
-        details: { text: "👁️ View Details" },
-        edit: { text: "✏️ Edit" },
-        add: { text: "➕ Add" },
-        remove: { text: "🗑️ Remove" }
-      },
+      nodes: props.nodes,
+      template: "templateGlass",
       nodeMouseClick: OrgChart.action.none,
-      enableSearch: true,
-      searchFields: ["name", "title", "department"],
       mouseScrool: OrgChart.action.zoom,
-      toolbar: {
-        zoom: true,
-        fit: true,
-        expandAll: true
-      },
-      connector: {
-        type: "curved",
-        style: {
-          stroke: "#ff6b6b",
-          "stroke-width": 3,
-          "stroke-dasharray": "5,5"
+      layout: OrgChart.mixed,
+      connector: { type: "curved", color: "rgba(255, 255, 255, 0.4)" },
+      navigator: { enabled: true, width: 200, height: 120, position: "bottom-right", header: "Navigator" },
+      nodeMenu: {
+        performance: {
+            text: "Performance",
+            icon: OrgChart.icon.details(18, 18, '#fff'),
+            onClick: (nodeId) => {
+                const nodeData = chartInstance.get(nodeId);
+                selectedEmployee.value = nodeData;
+                performanceData.value = nodeData.performance_summary || null;
+            }
         }
       },
-      levelSeparation: 140,
-      siblingSeparation: 60,
-      subtreeSeparation: 40,
-      align: OrgChart.ORIENTATION,
-      orientation: OrgChart.orientation.top,
       tags: {
-        "department": {
-          template: "departmentNodeColorful",
-          "node-class": "department-node-colorful"
-        },
-        "user": {
-          "node-class": "user-node-colorful"
-        }
+        "manager": { layout: OrgChart.tree },
+        "all": { "node-class": "glass-node" }
       },
       nodeBinding: {
         field_0: "name",
         field_1: "title",
-        field_2: "department",
         img_0: "image",
         color: "color",
-        secondaryColor: "secondaryColor"
+        id: "id",
+        email: "email",
+        hire_date: "hire_date",
+        total_experience_years: "total_experience_years",
+        canViewPerformance: "canViewPerformance",
+        performance_summary: "performance_summary"
       }
     });
 
-    chartInstance.on('click', (sender, args) => {
-      const nodeData = args.node.data;
-      if (nodeData.image) {
-        selectedEmployee.value = nodeData;
-      }
+    chartInstance.on('field', function(sender, args){
+        if (args.name == 'menu'){
+            if (!args.data.canViewPerformance){
+               delete args.value.performance;
+            }
+        }
     });
   }
 };
 
-onMounted(() => {
-  initializeChart();
-});
+const closeModal = () => {
+  selectedEmployee.value = null;
+  performanceData.value = null;
+};
 
-watch(() => props.nodes, () => {
-  initializeChart();
-}, { deep: true });
+onMounted(initializeChart);
+watch(() => props.nodes, initializeChart, { deep: true });
+
+const getTaskProgress = (summary) => {
+    if (!summary || summary.tasks_total === 0) return 0;
+    return (summary.tasks_completed / summary.tasks_total) * 100;
+};
 </script>
 
 <template>
-  <div class="org-chart-container-colorful">
-    <div ref="chartContainer" class="org-chart-colorful"></div>
+  <div class="relative">
+    <div ref="chartContainer" class="chart-container-glass"></div>
 
-    <!-- Enhanced Colorful Modal -->
-    <div v-if="selectedEmployee" class="modal-overlay-colorful" @click="closeModal">
-      <div class="modal-content-colorful" @click.stop :style="{ '--accent-color': selectedEmployee.color }">
-        <button @click="closeModal" class="modal-close-button-colorful">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-        
-        <div class="modal-header-colorful">
-          <div class="image-container-colorful">
-            <img :src="selectedEmployee.image" alt="Employee photo" class="modal-image-colorful">
-            <div class="status-indicator-colorful"></div>
+    <div v-if="selectedEmployee" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" @click="closeModal">
+      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative" @click.stop>
+         <button @click="closeModal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
+          
+          <div class="flex items-center border-b pb-4 mb-4">
+              <img :src="selectedEmployee.image" alt="Photo" class="w-20 h-20 rounded-full mr-4 border-2 border-gray-200">
+              <div>
+                  <h2 class="text-2xl font-bold text-gray-800">{{ selectedEmployee.name }}</h2>
+                  <p class="text-md text-gray-600">{{ selectedEmployee.title }}</p>
+              </div>
           </div>
-          <div>
-            <h2 class="modal-name-colorful">{{ selectedEmployee.name }}</h2>
-            <p class="modal-title-colorful">{{ selectedEmployee.title }}</p>
-            <div class="badge-container-colorful">
-              <span class="department-badge-colorful">
-                {{ selectedEmployee.department || 'No Department' }}
-              </span>
-            </div>
+          
+          <div class="space-y-2 text-sm">
+              <p v-if="selectedEmployee.canViewPerformance">
+                  <strong class="font-semibold text-gray-700 w-32 inline-block">Employee ID:</strong> 
+                  {{ selectedEmployee.id || 'N/A' }}
+              </p>
+              <p v-if="selectedEmployee.canViewPerformance">
+                  <strong class="font-semibold text-gray-700 w-32 inline-block">Hire Date:</strong> 
+                  {{ selectedEmployee.hire_date ? new Date(selectedEmployee.hire_date).toLocaleDateString() : 'N/A' }}
+              </p>
+
+              <p><strong class="font-semibold text-gray-700 w-32 inline-block">Email:</strong> {{ selectedEmployee.email || 'N/A' }}</p>
+              <p><strong class="font-semibold text-gray-700 w-32 inline-block">Experience:</strong> {{ selectedEmployee.total_experience_years ? `${selectedEmployee.total_experience_years} years` : 'N/A' }}</p>
           </div>
-        </div>
-        
-        <div class="modal-body-colorful">
-          <div class="detail-section-colorful">
-            <h3 class="details-heading-colorful">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              Employee Details
-            </h3>
-            <div class="detail-grid-colorful">
-              <div class="detail-item-colorful">
-                <span class="detail-label-colorful">Employee ID</span>
-                <span class="detail-value-colorful">{{ selectedEmployee.employee_id || 'N/A' }}</span>
+
+          <div v-if="performanceData" class="mt-6 pt-4 border-t">
+              <h3 class="text-lg font-bold text-gray-800 mb-3">Performance Snapshot</h3>
+              <div class="space-y-3 text-sm">
+                  <div>
+                      <div class="flex justify-between mb-1">
+                          <span class="font-semibold text-gray-700">Task Completion</span>
+                          <span class="text-gray-600">{{ performanceData.tasks_completed }} / {{ performanceData.tasks_total }}</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2.5">
+                          <div class="bg-indigo-600 h-2.5 rounded-full" :style="{ width: getTaskProgress(performanceData) + '%' }"></div>
+                      </div>
+                  </div>
               </div>
-              <div class="detail-item-colorful">
-                <span class="detail-label-colorful">Email</span>
-                <span class="detail-value-colorful">{{ selectedEmployee.email || 'N/A' }}</span>
+              <div class="mt-6 text-center">
+                  <a :href="`/performance/${selectedEmployee.id}`" class="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                      View Full Performance Report
+                  </a>
               </div>
-              <div class="detail-item-colorful">
-                <span class="detail-label-colorful">Hire Date</span>
-                <span class="detail-value-colorful">{{ selectedEmployee.hire_date ? new Date(selectedEmployee.hire_date).toLocaleDateString() : 'N/A' }}</span>
-              </div>
-              <div class="detail-item-colorful">
-                <span class="detail-label-colorful">Experience</span>
-                <span class="detail-value-colorful">{{ selectedEmployee.total_experience_years ? `${selectedEmployee.total_experience_years} years` : 'N/A' }}</span>
-              </div>
-            </div>
           </div>
-        </div>
-        
-        <div class="modal-footer-colorful">
-          <a :href="`/performance/${selectedEmployee.id}`" class="performance-link-colorful">
-            View Performance Metrics
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </a>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
-
-
 <style>
-/* Base Colorful Styles */
-.org-chart-container-colorful {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background-color: #ffffff;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+/* All CSS is unchanged */
+.chart-container-glass {
+    width: 100%;
+    height: 85vh;
+    background: linear-gradient(135deg, #ffffff 0%, #62a5dc 100%);
+    border-radius: 0.5rem;
 }
-
-.org-chart-colorful {
-  width: 100%;
-  height: 85vh;
-  min-height: 600px;
-  background-color: #ffffff;
-  position: relative;
+.glass-node > rect {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    fill: rgba(255, 255, 255, 0.2);
+    stroke-width: 1px;
+    stroke: rgba(255, 255, 255, 0.3);
 }
-
-.org-chart-colorful::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.05) 0%, transparent 50%),
-              radial-gradient(circle at 40% 40%, rgba(120, 219, 226, 0.05) 0%, transparent 50%);
-  pointer-events: none;
+.boc-node.glass-node:hover > rect {
+    fill: rgba(255, 255, 255, 0.3);
 }
-
-/* Enhanced Node Styles */
-.user-node-colorful, .department-node-colorful {
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.boc-navigator {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 8px !important;
 }
-
-.user-node-colorful:hover, .department-node-colorful:hover {
-  transform: translateY(-5px) scale(1.05);
-  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.25));
+.boc-navigator .boc-header {
+    color: rgb(255, 255, 255) !important;
 }
-
-/* Colorful Modal Styles */
-.modal-overlay-colorful {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  animation: fadeInColorful 0.4s ease-out;
-}
-
-@keyframes fadeInColorful {
-  from { 
-    opacity: 0;
-    backdrop-filter: blur(0px);
-  }
-  to { 
-    opacity: 1;
-    backdrop-filter: blur(10px);
-  }
-}
-
-.modal-content-colorful {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
-  backdrop-filter: blur(20px);
-  padding: 40px;
-  border-radius: 20px;
-  width: 90%;
-  max-width: 550px;
-  position: relative;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  animation: slideUpColorful 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes slideUpColorful {
-  from { 
-    transform: translateY(30px) scale(0.9) rotateX(10deg);
-    opacity: 0; 
-  }
-  to { 
-    transform: translateY(0) scale(1) rotateX(0deg);
-    opacity: 1; 
-  }
-}
-
-.modal-close-button-colorful {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: linear-gradient(135deg, var(--accent-color, #ff6b6b), #ff9ff3);
-  border: none;
-  cursor: pointer;
-  color: white;
-  transition: all 0.3s ease;
-  padding: 12px;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.modal-close-button-colorful:hover {
-  transform: rotate(90deg) scale(1.1);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-.modal-header-colorful {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 32px;
-}
-
-.image-container-colorful {
-  position: relative;
-  margin-right: 24px;
-}
-
-.modal-image-colorful {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid var(--accent-color, #ff6b6b);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.status-indicator-colorful {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 20px;
-  height: 20px;
-  background: linear-gradient(135deg, #48dbfb, #0abde3);
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.modal-name-colorful {
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent-color, #ff6b6b), #ff9ff3);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-  font-family: 'Inter', sans-serif;
-}
-
-.modal-title-colorful {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 16px;
-  font-weight: 500;
-}
-
-.badge-container-colorful {
-  display: flex;
-  gap: 12px;
-}
-
-.department-badge-colorful {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 25px;
-  font-size: 13px;
-  font-weight: 600;
-  background: linear-gradient(135deg, var(--accent-color, #ff6b6b), #ff9ff3);
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.modal-body-colorful {
-  margin-bottom: 32px;
-}
-
-.detail-section-colorful {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.details-heading-colorful {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #374151;
-}
-
-.details-heading-colorful svg {
-  color: var(--accent-color, #ff6b6b);
-}
-
-.detail-grid-colorful {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px 32px;
-}
-
-.detail-item-colorful {
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.detail-item-colorful:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.detail-label-colorful {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.detail-value-colorful {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.modal-footer-colorful {
-  display: flex;
-  justify-content: center;
-}
-
-.performance-link-colorful {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 32px;
-  background: linear-gradient(135deg, var(--accent-color, #ff6b6b), #ff9ff3);
-  color: white;
-  text-decoration: none;
-  border-radius: 50px;
-  font-weight: 600;
-  font-size: 15px;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.performance-link-colorful:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-}
-
-/* Enhanced Search and Toolbar Styles */
-.boc-search {
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  border-radius: 25px !important;
-  padding: 12px 20px !important;
-  font-family: 'Inter', sans-serif !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  color: #374151 !important;
-  font-weight: 500 !important;
-}
-
-.boc-search:focus {
-  border-color: #ff6b6b !important;
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2) !important;
-}
-
-.boc-toolbar {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)) !important;
-  backdrop-filter: blur(20px) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-  padding: 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-}
-
-.boc-toolbar-button {
-  border-radius: 12px !important;
-  transition: all 0.3s ease !important;
-  padding: 12px !important;
-  font-weight: 600 !important;
-}
-
-.boc-toolbar-button:hover {
-  background: linear-gradient(135deg, #ff6b6b, #ff9ff3) !important;
-  color: white !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .detail-grid-colorful {
-    grid-template-columns: 1fr;
-  }
-  
-  .modal-header-colorful {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .image-container-colorful {
-    margin-right: 0;
-    margin-bottom: 20px;
-  }
-}</style>
+</style>

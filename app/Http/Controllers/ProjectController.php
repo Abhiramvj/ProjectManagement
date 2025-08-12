@@ -25,7 +25,13 @@ class ProjectController extends Controller
     {
         $user = Auth::user();
 
-        $query = Project::with(['projectManager', 'team', 'tasks'])->latest();
+        // Eager load only required relations and use counts to avoid loading full collections
+        $query = Project::query()
+            ->with(['projectManager:id,name', 'team:id,name'])
+            ->withCount('tasks')
+            ->withSum('timeLogs', 'hours_worked')
+            ->select(['id', 'name', 'team_id', 'project_manager_id', 'status', 'end_date', 'total_hours_required', 'created_at', 'priority'])
+            ->latest();
 
         // Role-based scoping for viewing projects
         if ($user->hasRole('project-manager')) {
@@ -45,10 +51,18 @@ class ProjectController extends Controller
             'projects' => $projects->map(fn ($project) => [
                 'id' => $project->id,
                 'name' => $project->name,
+                'team_id' => $project->team_id,
                 'team' => $project->team,
                 'project_manager' => $project->projectManager,
-                'tasks_count' => $project->tasks->count(),
+                'tasks_count' => $project->tasks_count,
+                'status' => $project->status,
+                'priority' => $project->priority,
+                'total_hours_required' => $project->total_hours_required,
+                'hours_progress' => $project->total_hours_required > 0
+                    ? (int) round(min(100, (float) ($project->time_logs_sum_hours_worked ?? 0) / $project->total_hours_required * 100))
+                    : 0,
                 'end_date' => $project->end_date,
+                'created_at' => $project->created_at,
             ]),
             // The controller now correctly receives both keys from the action.
             'teams' => $creationData['teams'],
