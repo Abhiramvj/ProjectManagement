@@ -10,15 +10,21 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-// Import the Headers class
-use Illuminate\Mail\Mailables\Headers;
-
 class LeaveApplicationSubmitted extends Mailable
 {
     use Queueable, SerializesModels;
 
+    // --- 1. ADD THIS PUBLIC PROPERTY ---
+    /**
+     * A string identifier for the type of event this email represents.
+     * This is much easier to access than a header.
+     * @var string
+     */
+    public string $eventType = 'leave_submitted';
+
     /**
      * Create a new message instance.
+     * We keep the public property on the constructor for easy access.
      */
     public function __construct(
         public LeaveApplication $leaveApplication
@@ -39,7 +45,6 @@ class LeaveApplicationSubmitted extends Mailable
      */
     public function content(): Content
     {
-        // This points to the Blade template for the submission notification email.
         return new Content(
             markdown: 'emails.leave.submitted',
         );
@@ -53,17 +58,5 @@ class LeaveApplicationSubmitted extends Mailable
         return [];
     }
 
-    /**
-     * Get the message headers.
-     * This adds custom data for our event listener to log.
-     */
-    public function headers(): Headers
-    {
-        return new Headers(
-            text: [
-                'X-Leave-Application-ID' => $this->leaveApplication->id,
-                'X-Event-Type' => 'leave_submitted',
-            ],
-        );
-    }
+  
 }

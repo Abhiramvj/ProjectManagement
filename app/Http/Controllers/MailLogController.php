@@ -5,20 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\MailLog; // <-- Import your MongoDB model
 use Illuminate\Http\Request;
 use Inertia\Inertia;     // <-- Import Inertia
+use Inertia\Response;
 
 class MailLogController extends Controller
 {
     /**
      * Display a listing of the mail logs.
      */
-    public function index()
+    public function index(): Response
     {
 
         $mailLogs = MailLog::latest('sent_at')->paginate(15);
 
-        // Render the Inertia Vue component and pass the paginated logs as a prop.
+
         return Inertia::render('MailLogs/Index', [
             'mailLogs' => $mailLogs,
+        ]);
+    }
+
+    public function show(MailLog $mailLog): Response
+    {
+        // Because the route group is protected by the 'view mail logs' Gate,
+        // this method will only be reachable if the Gate returns true.
+        // No further authorization check is needed here.
+
+        return Inertia::render('MailLogs/Show', [
+            'mailLog' => $mailLog,
         ]);
     }
 }

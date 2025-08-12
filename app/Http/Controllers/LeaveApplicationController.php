@@ -251,51 +251,60 @@ foreach ($recipients as $recipient) {
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
     }
 
-        // --- ADD THIS HELPER FUNCTION AT THE END OF THE CLASS ---
-    /**
-     * Send an email and create a log entry in MongoDB.
-     *
-     * @param LeaveApplication $leaveApplication The leave application instance.
-     * @param Mailable $mailable The Mailable class instance to be sent.
-     * @param string $eventType A string representing the event (e.g., 'leave_application_approved').
-     * @param string $recipientEmail The email address of the recipient.
-     */
-      private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
+
+          private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
     {
+        // Get the event type directly from the mailable's public property.
+        // This is simple and reliable.
+        $eventType = $mailable->eventType ?? 'unknown_event';
+
+        $logData = [
+            'leave_application_id' => $leaveApplication->id,
+            'recipient_email'      => $recipientEmail,
+            'subject'              => $mailable->subject ?? 'Leave Application Notification',
+            'event_type'           => $eventType, // Use the new, simpler variable
+            'sent_at'              => now(),
+            'reason'               => $leaveApplication->reason,
+            'leave_period'         => $leaveApplication->start_date->format('M d, Y') . ' to ' . $leaveApplication->end_date->format('M d, Y'),
+        ];
+
         try {
-            // The only job in the 'try' block is to send the email.
             Mail::to($recipientEmail)->send($mailable);
 
-            // SUCCESS LOGGING IS NOW REMOVED FROM HERE.
-            // The LogSentMessage event listener will automatically create the 'sent' log.
+            // LOG SUCCESS
+            MailLog::create(array_merge($logData, [
+                'status'        => 'sent',
+                'error_message' => null,
+            ]));
 
         } catch (\Exception $e) {
-            // The 'catch' block is still very useful for logging failures.
-            // We can keep it to record failed attempts in MongoDB.
-
-            // 1. Log the full error to the main Laravel log for detailed debugging.
+            // LOG FAILURE
             Log::error(
                 'Mail sending failed for LeaveApplication ID ' . $leaveApplication->id .
                 ' to ' . $recipientEmail . ': ' . $e->getMessage()
             );
-
-            // 2. Create a record of the failure in our MongoDB collection.
-            // We need to figure out the event type from the mailable if possible.
-            $eventType = 'unknown_failure';
-            if (method_exists($mailable, 'headers')) {
-                $headers = $mailable->headers()->get('X-Event-Type');
-                $eventType = $headers[0] ?? 'unknown_failure';
-            }
-
-            MailLog::create([
-                'leave_application_id' => $leaveApplication->id,
-                'recipient_email' => $recipientEmail,
-                'subject' => $mailable->subject ?? 'Leave Application Notification',
-                'status' => 'failed',
-                'event_type' => $eventType,
+            MailLog::create(array_merge($logData, [
+                'status'        => 'failed',
                 'error_message' => $e->getMessage(),
-                'sent_at' => now(), // The time of the failed attempt
-            ]);
+            ]));
         }
+    }
+     private function getEventTypeFromMailable(Mailable $mailable): string
+    {
+        // This handles modern Laravel Mailables (Laravel 9+)
+        if (method_exists($mailable, 'headers')) {
+            // NEW, CORRECT WAY: get the header and check if the result is not null.
+            $header = $mailable->headers()->get('X-Event-Type');
+
+            if ($header) {
+                // The getBodyAsString() method safely returns the header's value.
+                return $header->getBodyAsString();
+            }
+        }
+
+        // Fallback if the header isn't set or for older mailables.
+        // It uses the Mailable's class name as the event type.
+        $path = explode('\\', get_class($mailable));
+        return array_pop($path);
     }
 }

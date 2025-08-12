@@ -46,11 +46,17 @@ const formatDate = (dateString) => {
                                     </tr>
                                     <tr v-for="log in mailLogs.data" :key="log._id">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.recipient_email }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log.subject }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <Link
+                                                    :href="route('mail-logs.show', log.id)"
+                                                     class="text-blue-600 hover:underline" >
+                                            {{ log.subject }}
+                                            </Link>
+                                            </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                {{ log.event_type }}
-                                            </span>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                                 {{ log.event_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
+                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">

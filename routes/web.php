@@ -72,6 +72,8 @@ Route::middleware('auth')->group(function () {
         ->name('mail-logs.index')
         ->middleware(['can:view mail logs']);
 
+    Route::get('/mail-logs/{mailLog}', [MailLogController::class, 'show'])->name('mail-logs.show')->middleware(['can:view mail logs']);
+
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
@@ -120,7 +122,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('announcements', AnnouncementController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:manage announcements');
-    // -----------------------------------------
 
 
 });
