@@ -11,46 +11,69 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     /**
      * This seeder is responsible ONLY for creating roles and permissions.
-     * All other data (users, teams, projects) is seeded in other files.
      */
     public function run(): void
     {
-        // Reset cached roles and permissions
+        // Force a fresh database connection to prevent state issues.
+        app('db')->reconnect();
+
+        // Reset cached roles and permissions.
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create Permissions
+        // --- Create Permissions ---
         $permissions = [
-            'log working hours', 'apply for leave', 'assign tasks', 'view team progress',
-            'assign projects', 'view all projects progress', 'view all working hours',
-            'manage leave applications', 'manage employees', 'manage roles', 'view leaves',
-            'manage announcements', // NEW: Add the permission for announcements
+            'log working hours',
+            'apply for leave',
+            'assign tasks',
+            'view team progress',
+            'assign projects',
+            'view all projects progress',
+            'view all working hours',
+            'manage leave applications',
+            'manage employees',
+            'manage roles',
+            'view leaves',
+            'manage announcements',
+            'view mail logs', // ✅ ADDED: The new permission for viewing mail logs.
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create Roles and Assign Permissions
-        $employeeRole = Role::firstOrCreate(['name' => 'employee']);
-        $employeeRole->givePermissionTo(['log working hours', 'apply for leave']);
+        // --- Create Roles and Assign Permissions ---
 
+        // Employee Role
+        $employeeRole = Role::firstOrCreate(['name' => 'employee']);
+        $employeeRole->syncPermissions(['log working hours', 'apply for leave']);
+
+        // Team Lead Role
         $teamLeadRole = Role::firstOrCreate(['name' => 'team-lead']);
-        $teamLeadRole->givePermissionTo([
+        $teamLeadRole->syncPermissions([
             'assign tasks', 'view team progress', 'log working hours', 'apply for leave', 'view leaves',
         ]);
 
+        // Project Manager Role
         $pmRole = Role::firstOrCreate(['name' => 'project-manager']);
-        $pmRole->givePermissionTo(['assign projects', 'view all projects progress']);
+        $pmRole->syncPermissions(['assign projects', 'view all projects progress']);
 
+        // HR Role
         $hrRole = Role::firstOrCreate(['name' => 'hr']);
-        $hrRole->givePermissionTo([
-            'view all working hours', 'manage leave applications', 'manage employees',
-            'manage roles', 'apply for leave', 'view leaves',
-            'manage announcements', // NEW: Give HR the ability to manage announcements
+        $hrRole->syncPermissions([
+            'view all working hours',
+            'manage leave applications',
+            'manage employees',
+            'manage roles',
+            'apply for leave',
+            'view leaves',
+            'manage announcements',
+            'view mail logs', // ✅ ASSIGNED: Grant the new permission to the 'hr' role.
         ]);
 
+        // Admin Role
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        // The admin role automatically gets the new permission because it uses Permission::all()
-        $adminRole->givePermissionTo(Permission::all());
+        // The admin role automatically gets the new 'view mail logs' permission
+        // because we use Permission::all(), which fetches every permission that exists.
+        $adminRole->syncPermissions(Permission::all());
     }
 }

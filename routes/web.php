@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\MailLogController; // ✅ 1. IMPORT THE NEW CONTROLLER
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
@@ -17,10 +18,10 @@ use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserHierarchyController;
 use App\Models\User;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
 
 // Make login page the landing page for guests
 Route::get('/', function () {
@@ -34,6 +35,7 @@ Route::get('/', function () {
         'status' => session('status'),
     ]);
 })->middleware('guest')->name('login');
+
 
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -52,18 +54,23 @@ Route::middleware('auth')->group(function () {
         ->name('performance.show')
         ->middleware(['can:manage employees']);
 
-        Route::post('/performance/{user}/generate-summary', [PerformanceReportController::class, 'generateSummary'])
-    ->name('performance.generateSummary')
-    ->middleware(['can:manage employees']);
+    Route::post('/performance/{user}/generate-summary', [PerformanceReportController::class, 'generateSummary'])
+        ->name('performance.generateSummary')
+        ->middleware(['can:manage employees']);
 
     Route::post('/my-performance/generate-summary', [PerformanceReportController::class, 'generateMySummary'])
-    ->middleware(['auth'])
-    ->name('my-performance.generateSummary');
+        ->middleware(['auth'])
+        ->name('my-performance.generateSummary');
 
     // Role management routes
     Route::resource('roles', RoleController::class)
         ->only(['index', 'store', 'edit', 'update'])
         ->middleware(['can:manage roles']);
+
+
+  Route::get('/mail-logs', [MailLogController::class, 'index'])
+        ->name('mail-logs.index')
+        ->middleware(['can:view mail logs']);
 
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
@@ -72,9 +79,6 @@ Route::middleware('auth')->group(function () {
     // Task routes
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
-
-    // --- THIS IS THE FIX ---
-    // Add the specific route for updating only the status
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
 
     // Leave application routes
@@ -113,7 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'update'])->name('calendar-notes.update');
     Route::delete('/calendar-notes/{calendarNote}', [CalendarNoteController::class, 'destroy'])->name('calendar-notes.destroy');
 
-     Route::resource('announcements', AnnouncementController::class)
+    Route::resource('announcements', AnnouncementController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:manage announcements');
     // -----------------------------------------
@@ -132,6 +136,3 @@ Route::get('/dev-login/{role}', function ($role) {
 })->name('dev.login');
 
 require __DIR__.'/auth.php';
-
-
-

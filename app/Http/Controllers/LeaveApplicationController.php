@@ -41,14 +41,13 @@ class LeaveApplicationController extends Controller
 
 
         if ($recipients->isNotEmpty()) {
-            foreach ($recipients as $recipient) {
-                $this->sendAndLogEmail(
-                    $leave_application,
-                    new LeaveApplicationSubmitted($leave_application),
-                    'leave_application_submitted',
-                    $recipient->email
-                );
-            }
+foreach ($recipients as $recipient) {
+    $this->sendEmail(
+        $leave_application,
+        new LeaveApplicationSubmitted($leave_application),
+        $recipient->email
+    );
+}
         }
 
 
@@ -261,36 +260,41 @@ class LeaveApplicationController extends Controller
      * @param string $eventType A string representing the event (e.g., 'leave_application_approved').
      * @param string $recipientEmail The email address of the recipient.
      */
-    private function sendAndLogEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $eventType, string $recipientEmail)
+      private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
     {
-        // Assumes your Mailable class has a public 'subject' property.
-        $subject = $mailable->subject ?? 'Leave Application Notification';
-
         try {
+            // The only job in the 'try' block is to send the email.
             Mail::to($recipientEmail)->send($mailable);
 
-            MailLog::create([
-                'leave_application_id' => $leaveApplication->id,
-                'recipient_email' => $recipientEmail,
-                'subject' => $subject,
-                'status' => 'sent',
-                'event_type' => $eventType,
-                'sent_at' => now(),
-            ]);
+            // SUCCESS LOGGING IS NOW REMOVED FROM HERE.
+            // The LogSentMessage event listener will automatically create the 'sent' log.
 
         } catch (\Exception $e) {
-            // Log the error to your default log file for immediate debugging
-            Log::error('Mail sending failed for leave application ' . $leaveApplication->id . ': ' . $e->getMessage());
+            // The 'catch' block is still very useful for logging failures.
+            // We can keep it to record failed attempts in MongoDB.
 
-            // Create a record of the failure in MongoDB
+            // 1. Log the full error to the main Laravel log for detailed debugging.
+            Log::error(
+                'Mail sending failed for LeaveApplication ID ' . $leaveApplication->id .
+                ' to ' . $recipientEmail . ': ' . $e->getMessage()
+            );
+
+            // 2. Create a record of the failure in our MongoDB collection.
+            // We need to figure out the event type from the mailable if possible.
+            $eventType = 'unknown_failure';
+            if (method_exists($mailable, 'headers')) {
+                $headers = $mailable->headers()->get('X-Event-Type');
+                $eventType = $headers[0] ?? 'unknown_failure';
+            }
+
             MailLog::create([
                 'leave_application_id' => $leaveApplication->id,
                 'recipient_email' => $recipientEmail,
-                'subject' => $subject,
+                'subject' => $mailable->subject ?? 'Leave Application Notification',
                 'status' => 'failed',
                 'event_type' => $eventType,
                 'error_message' => $e->getMessage(),
-                'sent_at' => now(),
+                'sent_at' => now(), // The time of the failed attempt
             ]);
         }
     }
