@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->foreignId('assigned_to_id')->constrained('users');
+            // Unified statuses: todo|in_progress|completed
             $table->string('status')->default('todo');
             $table->date('due_date')->nullable();
             $table->timestamps();

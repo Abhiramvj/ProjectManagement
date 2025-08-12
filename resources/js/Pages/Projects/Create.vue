@@ -14,6 +14,7 @@ const form = useForm({
     team_id: '',
     end_date: '',
     total_hours_required: 100,
+    priority: 'medium',
 });
 
 const submit = () => {
@@ -58,8 +59,8 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <!-- Row 2: End Date & Hours -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Row 2: End Date, Hours & Priority -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label for="end_date" class="block text-sm font-medium text-slate-700">Expected End Date</label>
                                 <input v-model="form.end_date" id="end_date" type="date" required
@@ -71,6 +72,17 @@ const submit = () => {
                                 <input v-model="form.total_hours_required" id="total_hours_required" type="number" min="1" required
                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                                 <InputError class="mt-2" :message="form.errors.total_hours_required" />
+                            </div>
+                            <div>
+                                <label for="priority" class="block text-sm font-medium text-slate-700">Priority</label>
+                                <select v-model="form.priority" id="priority"
+                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                                <InputError class="mt-2" :message="form.errors.priority" />
                             </div>
                         </div>
 

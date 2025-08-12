@@ -279,6 +279,12 @@ class User extends Authenticatable
     {
         return $this->getAllSubordinates()->contains('id', $user->id);
     }
+    public function tasks(): HasMany
+    {
+        // This defines that a User can have many Tasks.
+        // It correctly points to the 'assigned_to_id' foreign key on the 'tasks' table.
+        return $this->hasMany(Task::class, 'assigned_to_id');
+    }
 
     /**
      * Get the hierarchy path (from top to current user)

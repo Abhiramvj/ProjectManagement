@@ -22,7 +22,6 @@ const activeTab = ref('reporting');
       <div class="max-w-full mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
 
-          <!-- Tab Navigation -->
           <div class="border-b border-gray-200">
             <nav class="-mb-px flex" aria-label="Tabs">
               <button @click="activeTab = 'reporting'" :class="[activeTab === 'reporting' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']" class="w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200">
@@ -35,22 +34,18 @@ const activeTab = ref('reporting');
           </div>
 
           <div class="p-6">
-            <!-- Reporting Chart Container -->
             <div v-show="activeTab === 'reporting'">
-              <div v-if="props.reportingNodes && props.reportingNodes.length">
+              <div v-if="props.reportingNodes && props.reportingNodes.length > 0">
                 <BalkanOrgChart :nodes="props.reportingNodes" />
               </div>
               <div v-else class="text-center text-gray-500 py-10">No reporting structure to display.</div>
             </div>
 
-            <!-- Designation Hierarchy Chart Container -->
             <div v-show="activeTab === 'designation'">
-              <div v-if="props.designationBasedNodes && props.designationBasedNodes.length">
+              <div v-if="props.designationBasedNodes && props.designationBasedNodes.length > 0">
                 <BalkanOrgChart :nodes="props.designationBasedNodes" />
               </div>
-              <div v-else class="text-center text-gray-500 py-10">
-                Designation hierarchy is only available for administrators or has no data.
-              </div>
+              <div v-else class="text-center text-gray-500 py-10">No designation hierarchy to display.</div>
             </div>
           </div>
 

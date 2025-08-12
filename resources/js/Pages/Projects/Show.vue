@@ -33,8 +33,8 @@ const submitTask = () => {
                         <h3 class="text-lg font-medium text-gray-900">Progress (Based on Hours)</h3>
                         <p class="text-sm text-gray-500">Compares hours logged vs. total hours required.</p>
                         <div class="mt-2 flex items-center">
-                            <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-blue-600 h-4 rounded-full" :style="{ width: project.hours_progress + '%' }"></div></div>
-                            <span class="ml-4 font-semibold text-gray-700">{{ project.hours_progress }}%</span>
+                            <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-blue-600 h-4 rounded-full" :style="{ width: (project.hours_progress || 0) + '%' }"></div></div>
+                            <span class="ml-4 font-semibold text-gray-700">{{ project.hours_progress || 0 }}%</span>
                         </div>
                     </div>
                      <div>
