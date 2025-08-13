@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MailLog; // <-- Import your MongoDB model
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;     // <-- Import Inertia
 use Inertia\Response;
@@ -33,4 +34,15 @@ class MailLogController extends Controller
             'mailLog' => $mailLog,
         ]);
     }
+
+    //  public function showSnapshot(MailLog $mailLog): View
+    // {
+    //     // Laravel automatically finds the $mailLog from the ID in the URL via Route Model Binding.
+
+    //     // The view() helper renders a Blade template from 'resources/views/',
+    //     // not an Inertia/Vue component.
+    //     return view('mail_logs.snapshot', [
+    //         'mailLog' => $mailLog
+    //     ]);
+    // }
 }

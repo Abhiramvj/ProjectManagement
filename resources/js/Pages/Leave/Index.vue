@@ -307,7 +307,7 @@ paternity: {
     "Protected under employment law"
   ],
 },
-workfromhome: {
+wfh: {
   title: "Work From Home",
   summary: "Remote work arrangements without leaving leave balance",
   details: [
@@ -857,4 +857,3 @@ function submitEditReason() {
 .fc .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-number { @apply text-gray-400; }
 select option { position: relative; }
 </style>
- 

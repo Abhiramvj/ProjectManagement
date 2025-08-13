@@ -73,6 +73,10 @@ Route::middleware('auth')->group(function () {
         ->middleware(['can:view mail logs']);
 
     Route::get('/mail-logs/{mailLog}', [MailLogController::class, 'show'])->name('mail-logs.show')->middleware(['can:view mail logs']);
+    // In routes/web.php
+Route::get('/mail-logs/snapshot/{mailLog}', [App\Http\Controllers\MailLogController::class, 'showSnapshot'])
+      ->name('mail-logs.snapshot')
+      ->middleware('can:view mail logs');
 
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
