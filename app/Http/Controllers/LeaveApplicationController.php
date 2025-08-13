@@ -54,11 +54,20 @@ class LeaveApplicationController extends Controller
 
         $updateLeaveStatus->handle($leave_application, $status, $rejectReason);
 
-        if ($status === 'approved' && $leave_application->leave_type === 'compensatory') {
+        // If rejected → restore balance back to DB
+        if ($status === 'rejected') {
             $user = $leave_application->user;
-            $user->decrement('comp_off_balance', $leave_application->leave_days);
+
+            if (in_array($leave_application->leave_type, ['annual', 'casual'])) {
+                $user->leave_balance += $leave_application->leave_days;
+            } elseif ($leave_application->leave_type === 'compensatory') {
+                $user->comp_off_balance += $leave_application->leave_days;
+            }
+
             $user->save();
         }
+
+        // Approval = no change, because deduction happened at request time in StoreLeave
 
         return Redirect::back()->with('success', 'Application status updated.');
     }

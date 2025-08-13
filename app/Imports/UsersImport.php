@@ -3,9 +3,9 @@
 namespace App\Imports;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Carbon\Carbon;
 
 class UsersImport implements ToModel, WithHeadingRow
 {
@@ -34,11 +34,12 @@ class UsersImport implements ToModel, WithHeadingRow
 
     private function findManagerId($managerName)
     {
-        if (!$managerName) {
+        if (! $managerName) {
             return null;
         }
 
         $manager = User::where('name', $managerName)->first();
+
         return $manager ? $manager->id : null;
     }
 }

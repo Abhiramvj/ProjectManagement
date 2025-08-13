@@ -214,8 +214,14 @@ const statusConfig = {
 const updateStatus = (request, newStatus) => {
   router.patch(route('leave.update', { leave_application: request.id }), {
     status: newStatus,
-  }, { preserveScroll: true })
+  }, { 
+    preserveScroll: true,
+    onSuccess: () => {
+      router.reload({ only: ['leaveRequests', 'remainingLeaveBalance', 'compOffBalance'] })
+    }
+  })
 }
+
 
 const cancelLeave = (request) => {
   if (confirm('Are you sure you want to cancel this leave request?')) {
@@ -310,7 +316,7 @@ paternity: {
 },
 wfh: {
   title: "Work From Home",
-  summary: "Remote work arrangements without leaving leave balance",
+  summary: "Remote work arrangements without reducing leave balance",
   details: [
     "Allows employees to work remotely for full or partial days",
     "Usually does not deduct from leave balance",
@@ -322,7 +328,7 @@ compensatory: {
   title: "Compensatory Leave",
   summary: "Leave earned by working extra hours or on holidays",
   details: [
-    "Credited when working during official holidays or overtime",
+    "Credited when working during official holidays",
     "Used as paid time off in lieu of extra hours worked",
     "Requires manager approval to grant and to use",
     "Usually tracked separately to enforce usage policies"
@@ -571,6 +577,7 @@ const approvedUpcomingRequests = computed(() =>
             <div class="border border-gray-200 rounded-lg overflow-hidden">
               <FullCalendar :options="calendarOptions" />
             </div>
+            
             <InputError :message="form.errors.start_date" />
           </div>
           <div class="space-y-4">

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-// All necessary imports from both files, deduplicated
 use App\Models\Announcement;
+// All necessary imports from both files, deduplicated
 use App\Models\CalendarNote;
+use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\Project;
 use App\Models\Task;
@@ -113,7 +114,24 @@ class DashboardController extends Controller
                 ];
             });
 
-        $allCalendarEvents = (new Collection($leaveEvents))->merge($noteEvents);
+        $holidayEvents = Holiday::all()->map(function ($holiday) {
+            return [
+                'id' => 'holiday_'.$holiday->id,
+                'title' => $holiday->name,
+                'start' => $holiday->date->toDateString(),
+                'allDay' => true,
+                'backgroundColor' => '#10B981', // Tailwind Emerald for example
+                'borderColor' => '#059669',
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'type' => 'holiday',
+                ],
+            ];
+        });
+
+        $allCalendarEvents = (new Collection($leaveEvents))
+            ->merge($noteEvents)
+            ->merge($holidayEvents);
 
         // --- PROJECTS AND TASKS (Using the more concise logic) ---
         $projects = collect();

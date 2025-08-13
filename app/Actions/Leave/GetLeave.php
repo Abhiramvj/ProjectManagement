@@ -2,10 +2,9 @@
 
 namespace App\Actions\Leave;
 
+use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Holiday;
-
 
 class GetLeave
 {
@@ -43,53 +42,62 @@ class GetLeave
      * and return data for frontend consumption.
      */
     public function handle(): array
-{
-    $user = Auth::user();
-    $remainingLeaveBalance = $user->getRemainingLeaveBalance();
-    $compOffBalance = $user->comp_off_balance ?? 0;
+    {
+        $user = Auth::user();
 
-    $requests = LeaveApplication::with(['user:id,name'])
-        ->where('user_id', $user->id)
-        ->orderByRaw("CASE status
+        // Subtract pending leaves for UI display only
+        // $remainingLeaveBalance = $user->getRemainingLeaveBalance();
+
+        // $pendingLeaveDays = $user->leaveApplications()
+        //     ->where('status', 'pending')
+        //     ->whereIn('leave_type', ['annual', 'casual']) // only those that will deduct in DB
+        //     ->sum('leave_days');
+
+        // $uiDisplayedBalance = max(0, $remainingLeaveBalance - $pendingLeaveDays);
+
+        $compOffBalance = $user->comp_off_balance ?? 0;
+
+        $requests = LeaveApplication::with(['user:id,name'])
+            ->where('user_id', $user->id)
+            ->orderByRaw("CASE status
             WHEN 'pending' THEN 1
             WHEN 'approved' THEN 2
             WHEN 'rejected' THEN 3
             ELSE 4
         END")
-        ->latest()
-        ->paginate(15);
+            ->latest()
+            ->paginate(15);
 
-    $leaveEvents = $requests->getCollection()
-        ->filter(fn ($request) => in_array($request->status, ['pending', 'approved']))
-        ->map(fn ($request) => [
-            'start' => $request->start_date->toDateString(),
-            'end' => $request->end_date ? $request->end_date->toDateString() : null,
-            'title' => ucfirst($request->leave_type).' Leave',
-            'class' => $request->status,
-            'color_category' => $this->getLeaveColorCategory($request),
-            'user_id' => $request->user_id,
-        ]);
+        $leaveEvents = $requests->getCollection()
+            ->filter(fn ($request) => in_array($request->status, ['pending', 'approved']))
+            ->map(fn ($request) => [
+                'start' => $request->start_date->toDateString(),
+                'end' => $request->end_date ? $request->end_date->toDateString() : null,
+                'title' => ucfirst($request->leave_type).' Leave',
+                'class' => $request->status,
+                'color_category' => $this->getLeaveColorCategory($request),
+                'user_id' => $request->user_id,
+            ]);
 
-    $holidayEvents = Holiday::all()->map(function ($holiday) {
-    return [
-        'start' => $holiday->date->toDateString(),
-        'end' => null,
-        'title' => $holiday->name,
-        'class' => 'holiday',
-        'color_category' => 'holiday', // match this with your Vue color map
-        'user_id' => null, // so they’re visible to all
-    ];
-});
+        $holidayEvents = Holiday::all()->map(function ($holiday) {
+            return [
+                'start' => $holiday->date->toDateString(),
+                'end' => null,
+                'title' => $holiday->name,
+                'class' => 'holiday',
+                'color_category' => 'holiday', // match this with your Vue color map
+                'user_id' => null, // so they’re visible to all
+            ];
+        });
 
-    $highlighted = $leaveEvents->merge($holidayEvents)->values()->all();
+        $highlighted = $leaveEvents->merge($holidayEvents)->values()->all();
 
-    return [
-        'leaveRequests' => $requests,
-        'canManage' => false,
-        'highlightedDates' => $highlighted,
-        'remainingLeaveBalance' => $remainingLeaveBalance,
-        'compOffBalance' => $compOffBalance,
-    ];
-}
-
+        return [
+            'leaveRequests' => $requests,
+            'canManage' => false,
+            'highlightedDates' => $highlighted,
+            'remainingLeaveBalance' => $user->leave_balance,
+            'compOffBalance' => $compOffBalance,
+        ];
+    }
 }

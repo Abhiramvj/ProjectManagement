@@ -279,6 +279,7 @@ class User extends Authenticatable
     {
         return $this->getAllSubordinates()->contains('id', $user->id);
     }
+
     public function tasks(): HasMany
     {
         // This defines that a User can have many Tasks.

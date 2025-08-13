@@ -2,8 +2,8 @@
 
 namespace App\Actions\Leave;
 
-use App\Models\LeaveApplication;
 use App\Models\Holiday;
+use App\Models\LeaveApplication;
 use App\Notifications\LeaveRequestSubmitted;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -27,14 +27,14 @@ class StoreLeave
         }
 
         $start = Carbon::parse($data['start_date']);
-        $end   = Carbon::parse($data['end_date']);
+        $end = Carbon::parse($data['end_date']);
 
         $startSession = $data['start_half_session'] ?? null;
-        $endSession   = $data['end_half_session'] ?? null;
+        $endSession = $data['end_half_session'] ?? null;
 
         // Normalize empty string sessions to null
         $startSession = $startSession === '' ? null : $startSession;
-        $endSession   = $endSession === '' ? null : $endSession;
+        $endSession = $endSession === '' ? null : $endSession;
 
         if ($start->gt($end)) {
             throw ValidationException::withMessages([
@@ -86,15 +86,15 @@ class StoreLeave
 
             // First day value
             $firstDayValue = 0.0;
-            if (!in_array($start->dayOfWeekIso, [6, 7]) &&
-                !Holiday::whereDate('date', $start->toDateString())->exists()) {
+            if (! in_array($start->dayOfWeekIso, [6, 7]) &&
+                ! Holiday::whereDate('date', $start->toDateString())->exists()) {
                 $firstDayValue = ($startSession === 'afternoon') ? 0.5 : 1.0;
             }
 
             // Last day value
             $lastDayValue = 0.0;
-            if (!in_array($end->dayOfWeekIso, [6, 7]) &&
-                !Holiday::whereDate('date', $end->toDateString())->exists()) {
+            if (! in_array($end->dayOfWeekIso, [6, 7]) &&
+                ! Holiday::whereDate('date', $end->toDateString())->exists()) {
                 $lastDayValue = ($endSession === 'morning') ? 0.5 : 1.0;
             }
 
@@ -118,11 +118,11 @@ class StoreLeave
         }
 
         \Log::info('Calculated leave days', [
-            'start_date'        => $start->toDateString(),
-            'end_date'          => $end->toDateString(),
-            'start_half_session'=> $startSession,
-            'end_half_session'  => $endSession,
-            'leave_days'        => $leaveDays,
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'start_half_session' => $startSession,
+            'end_half_session' => $endSession,
+            'leave_days' => $leaveDays,
         ]);
 
         // Validate leave balance except for exempt leave types
@@ -146,7 +146,7 @@ class StoreLeave
         $supportingDocumentPath = null;
         if (isset($data['supporting_document']) && $data['supporting_document'] instanceof UploadedFile) {
             $supportingDocumentPath = $data['supporting_document']->store(
-                'leave_documents/' . $user->id,
+                'leave_documents/'.$user->id,
                 'public'
             );
         }
@@ -154,18 +154,26 @@ class StoreLeave
         \Log::info('Starting leave creation');
 
         $leaveApplication = LeaveApplication::create([
-            'user_id'                  => $user->id,
-            'start_date'               => $start,
-            'end_date'                 => $end,
-            'start_half_session'       => $startSession,
-            'end_half_session'         => $endSession,
-            'reason'                   => $data['reason'],
-            'leave_type'               => $leaveType,
-            'leave_days'               => $leaveDays,
-            'salary_deduction_days'    => 0,
-            'status'                   => 'pending',
+            'user_id' => $user->id,
+            'start_date' => $start,
+            'end_date' => $end,
+            'start_half_session' => $startSession,
+            'end_half_session' => $endSession,
+            'reason' => $data['reason'],
+            'leave_type' => $leaveType,
+            'leave_days' => $leaveDays,
+            'salary_deduction_days' => 0,
+            'status' => 'pending',
             'supporting_document_path' => $supportingDocumentPath,
         ]);
+
+        // Deduct from DB immediately
+        if (in_array($leaveType, ['annual', 'casual'])) {
+            $user->leave_balance = max(0, $user->leave_balance - $leaveDays);
+        } elseif ($leaveType === 'compensatory') {
+            $user->comp_off_balance = max(0, $user->comp_off_balance - $leaveDays);
+        }
+        $user->save();
 
         $this->sendNotifications($leaveApplication);
 
@@ -185,7 +193,7 @@ class StoreLeave
             }
         } catch (\Exception $e) {
             \Log::error('Failed to send leave request notifications', [
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'leave_id' => $leaveApplication->id,
             ]);
         }
