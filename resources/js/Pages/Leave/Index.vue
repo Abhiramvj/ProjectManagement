@@ -308,7 +308,7 @@ paternity: {
     "Protected under employment law"
   ],
 },
-workfromhome: {
+wfh: {
   title: "Work From Home",
   summary: "Remote work arrangements without leaving leave balance",
   details: [
