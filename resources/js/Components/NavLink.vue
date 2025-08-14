@@ -15,8 +15,8 @@ const props = defineProps({
 // These classes are purpose-built for the Orgnice vertical sidebar
 const classes = computed(() =>
     props.active
-        ? 'group flex items-center rounded-md px-3 py-2.5 text-sm font-semibold bg-slate-100 text-slate-900'
-        : 'group flex items-center rounded-md px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+        ? 'nav-link aria-[current=page]:bg-slate-100 aria-[current=page]:text-slate-900 group'
+        : 'nav-link group'
 );
 </script>
 

@@ -7,6 +7,7 @@ import { ref } from 'vue'
 // Props: Paginator object of leaveRequests, no canManage as always admin/HR view
 const props = defineProps({
   leaveRequests: Object,
+  highlightId: [Number, String],
 })
 
 // Status display config
@@ -166,7 +167,11 @@ function submitRejection() {
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr v-for="request in leaveRequests.data" :key="request.id" class="hover:bg-gray-50">
+            <tr
+              v-for="request in leaveRequests.data"
+              :key="request.id"
+              :class="[ 'hover:bg-gray-50', String(request.id) === String(highlightId) ? 'ring-2 ring-primary/40 bg-indigo-50' : '' ]"
+            >
               <td class="px-4 py-3 whitespace-nowrap">
                 <div class="flex items-center space-x-3">
                   <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-semibold">

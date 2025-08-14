@@ -27,10 +27,29 @@ export default {
     },
   },
 
-  plugins: [require('daisyui')],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('daisyui'),
+  ],
 
-  // ✅ Force DaisyUI to use light theme
+  // ✅ DaisyUI theme tuned for the app brand
   daisyui: {
-    themes: ['light'],
+    themes: [
+      {
+        worksphere: {
+          primary: '#4F46E5',
+          'primary-content': '#ffffff',
+          secondary: '#22c55e',
+          accent: '#f59e0b',
+          neutral: '#1f2937',
+          'base-100': '#f8fafc',
+          info: '#0ea5e9',
+          success: '#10b981',
+          warning: '#f59e0b',
+          error: '#ef4444',
+        },
+      },
+      'light',
+    ],
   },
 };

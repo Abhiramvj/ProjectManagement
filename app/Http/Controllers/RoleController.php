@@ -10,6 +10,7 @@ use App\Http\Requests\Role\StoreRoleRequest;
 use App\Http\Requests\Role\UpdateRoleRequest;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use Illuminate\Http\RedirectResponse;
 
 class RoleController extends Controller
 {
@@ -36,5 +37,16 @@ class RoleController extends Controller
         $updateRole->handle($request->validated(), $role);
 
         return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
+    }
+
+    public function destroy(Role $role): RedirectResponse
+    {
+        if ($role->name === 'admin') {
+            return redirect()->route('roles.index')->with('error', 'Cannot delete the admin role.');
+        }
+
+        $role->delete();
+
+        return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');
     }
 }

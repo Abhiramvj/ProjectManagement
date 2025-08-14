@@ -35,13 +35,18 @@ class LeaveRequestSubmitted extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        // Send managers to the approval/logs page, others to their leave index
+        $targetUrl = $notifiable->can('manage leave applications')
+            ? route('leave.logs', ['highlight' => $this->leaveApplication->id])
+            : route('leave.index');
+
         return [
             'title' => 'New Leave Request',
             'message' => 'A new leave application from '.$this->leaveApplication->user->name.' requires your approval.',
-            'type' => 'leave_request', // For the frontend icon
+            'type' => 'leave_request',
             'leave_id' => $this->leaveApplication->id,
             'user_name' => $this->leaveApplication->user->name,
-            'url' => route('leave.index'), // Link to the leave management page for admins/hr
+            'url' => $targetUrl,
         ];
     }
 }

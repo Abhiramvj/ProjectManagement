@@ -12,17 +12,16 @@ class UserHierarchyController extends Controller
 {
     public function index()
     {
-        // Fetch users with their teams and task counts efficiently.
         $allUsers = User::with('teams')->withCount([
-            'tasks', // total tasks assigned
+            'tasks',
             'tasks as tasks_completed_count' => function ($query) {
-                $query->where('status', 'completed'); // completed tasks
+                $query->where('status', 'completed');
             }
         ])->get();
 
         $managerIds = $allUsers->whereNotNull('parent_id')->pluck('parent_id')->unique()->all();
         $reportingNodes = $this->formatForCompactChart($allUsers, $managerIds);
-        $designationBasedNodes = $this->generateDesignationBasedNodes($allUsers); // This remains for the other tab
+        $designationBasedNodes = $this->generateDesignationBasedNodes($allUsers);
 
         return Inertia::render('Hierarchy/CompanyHierarchy', [
             'reportingNodes' => $reportingNodes,
@@ -41,9 +40,11 @@ class UserHierarchyController extends Controller
 
             $teamName = $user->teams->first()->name ?? $user->designation ?? 'Unassigned';
             $color = $this->generateColorForText($teamName);
-
-            // Permission & Performance Logic
-            $canViewPerformance = $loggedInUser->hasRole('admin') || $loggedInUser->id === $user->parent_id;
+            
+            // --- UPDATED PERMISSION LOGIC ---
+            $canViewPerformance = $loggedInUser->hasRole('admin') ||    // Is admin?
+                                  $loggedInUser->id === $user->parent_id || // Is their manager?
+                                  $loggedInUser->id === $user->id;         // Is it their own node?
             
             $performanceSummary = null;
             if ($canViewPerformance) {
@@ -54,36 +55,46 @@ class UserHierarchyController extends Controller
             }
 
             return [
-                'id'    => $user->id,
-                'pid'   => $user->parent_id,
-                'name'  => $user->name,
+                'id'    => $user->id, 'pid'   => $user->parent_id, 'name'  => $user->name,
                 'title' => $user->designation,
                 'image' => $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?background=random&name=' . urlencode($user->name)),
-                'color' => $color,
-                'tags'  => $tags,
-                'employee_id' => $user->employee_id,
-                'email' => $user->email,
-                'hire_date' => $user->hire_date,
-                'total_experience_years' => $user->total_experience_years,
-                'canViewPerformance' => $canViewPerformance,
-                'performance_summary' => $performanceSummary,
+                'color' => $color, 'tags'  => $tags, 'employee_id' => $user->employee_id, 'email' => $user->email,
+                'hire_date' => $user->hire_date, 'total_experience_years' => $user->total_experience_years,
+                'canViewPerformance' => $canViewPerformance, 'performance_summary' => $performanceSummary,
             ];
         })->all();
     }
 
     private function generateDesignationBasedNodes(Collection $users): array
     {
-        // This function for the second tab remains unchanged
         $nodes = [];
         $createdDesignationGroups = [];
-        $allowedUserIds = $users->pluck('id')->all(); 
+        $allowedUserIds = $users->pluck('id')->all();
+        $loggedInUser = Auth::user();
 
         foreach ($users as $user) {
+            // --- UPDATED PERMISSION LOGIC ---
+            $canViewPerformance = $loggedInUser->hasRole('admin') ||    // Is admin?
+                                  $loggedInUser->id === $user->parent_id || // Is their manager?
+                                  $loggedInUser->id === $user->id;         // Is it their own node?
+            
+            $performanceSummary = null;
+            if ($canViewPerformance) {
+                $performanceSummary = [
+                    'tasks_total' => $user->tasks_count,
+                    'tasks_completed' => $user->tasks_completed_count,
+                ];
+            }
+            $teamName = $user->teams->first()->name ?? $user->designation ?? 'Unassigned';
+            $color = $this->generateColorForText($teamName);
+            $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name));
+
             if (is_null($user->parent_id) || !in_array($user->parent_id, $allowedUserIds)) {
-                $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name));
                 $nodes[] = [
                     'id'    => $user->id, 'pid'   => null, 'name'  => $user->name, 'title' => $user->designation, 'image' => $imageUrl,
-                    'tags'  => ['employee-node', $user->id === Auth::id() ? 'is-logged-in-user' : ''],
+                    'color' => $color,
+                    'tags'  => ['employee-node', $user->id === $loggedInUser->id ? 'is-logged-in-user' : ''],
+                    'canViewPerformance' => $canViewPerformance, 'performance_summary' => $performanceSummary,
                 ];
                 continue;
             }
@@ -94,17 +105,20 @@ class UserHierarchyController extends Controller
             if (!isset($createdDesignationGroups[$directParentId][$designation])) {
                 $groupNodeId = 'group_' . $directParentId . '_' . str_replace(' ', '_', $designation);
                 $nodes[] = [
-                    'id'    => $groupNodeId, 'pid'   => $directParentId, 'name'  => $designation, 'title' => 'Designation Group',
-                    'image' => 'https://cdn-icons-png.flaticon.com/512/3715/3715202.png', 'tags'  => ['role-category'],
+                    'id'    => $groupNodeId, 'pid'   => $directParentId, 'name'  => $designation,
+                    'title' => 'Designation Group', 'tags'  => ['role-category'],
+                    'color' => $this->generateColorForText($designation),
                 ];
                 $createdDesignationGroups[$directParentId][$designation] = true;
             }
-
-            $groupNodeId = 'group_' . $directParentId . '_' . str_replace(' ', '_', $designation);
-            $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name));
             
-            $nodes[] = [ 'id'    => $user->id, 'pid'   => $groupNodeId, 'name'  => $user->name, 'title' => $user->designation,
-                'image' => $imageUrl, 'tags'  => ['employee-node', $user->id === Auth::id() ? 'is-logged-in-user' : ''],
+            $groupNodeId = 'group_' . $directParentId . '_' . str_replace(' ', '_', $designation);
+            
+            $nodes[] = [
+                'id'    => $user->id, 'pid'   => $groupNodeId, 'name'  => $user->name, 'title' => $user->designation, 'image' => $imageUrl,
+                'color' => $color,
+                'tags'  => ['employee-node', $user->id === $loggedInUser->id ? 'is-logged-in-user' : ''],
+                'canViewPerformance' => $canViewPerformance, 'performance_summary' => $performanceSummary,
             ];
         }
         return $nodes;

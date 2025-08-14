@@ -41,6 +41,7 @@ class LeaveController extends Controller
         return Inertia::render('Leave/LeaveLogs', [
             'leaveRequests' => $leaveRequests,
             'canManage' => true,
+            'highlightId' => $request->query('highlight'),
         ]);
     }
 

@@ -36,13 +36,17 @@ class LeaveRequestRejected extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $targetUrl = $notifiable->can('manage leave applications')
+            ? route('leave.logs', ['highlight' => $this->leaveApplication->id])
+            : route('leave.index');
+
         return [
             'title' => 'Leave Request Rejected',
             'message' => 'Your leave request from '.$this->leaveApplication->start_date.' to '.$this->leaveApplication->end_date.' has been rejected.',
-            'type' => 'leave_rejected', // For the frontend to pick an icon
+            'type' => 'leave_rejected',
             'leave_id' => $this->leaveApplication->id,
             'rejected_by' => Auth::user()->name,
-            'url' => route('leave.index'),
+            'url' => $targetUrl,
         ];
     }
 }

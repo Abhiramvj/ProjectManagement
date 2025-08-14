@@ -46,16 +46,20 @@ const fetchNotifications = async () => {
     }
 };
 
-const handleNotificationClick = async (notification) => {
+const handleNotificationClick = (notification) => {
+    // Always direct users to Leave Logs (approvers) or Leave Index (others)
+    const canManageLeaves = user.value?.permissions?.includes('manage leave applications');
+    const targetUrl = canManageLeaves ? route('leave.logs') : route('leave.index');
+
     try {
-        await axios.post(route('notifications.read', notification.id));
-        if (notification.data.url) {
-            router.visit(notification.data.url);
-        }
-        closeNotificationDropdown();
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
+        router.visit(targetUrl);
+    } catch (e) {
+        window.location.href = targetUrl;
     }
+
+    // Fire-and-forget mark-as-read; errors are non-blocking
+    axios.post(route('notifications.read', notification.id)).catch(() => {});
+    closeNotificationDropdown();
 };
 
 const markAllAsRead = async () => {
@@ -223,13 +227,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 font-sans">
+    <div class="min-h-screen bg-base-100 font-sans">
         <!-- Static sidebar for desktop -->
         <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
             <div class="flex flex-grow flex-col overflow-y-auto border-r border-slate-200 bg-white pt-5">
                 <div class="flex flex-shrink-0 items-center px-4 space-x-2">
                     <Link :href="route('dashboard')">
-                        <component :is="ApplicationLogo" v-if="ApplicationLogo" class="block h-8 w-auto text-slate-800" />
+                        <component :is="ApplicationLogo" v-if="ApplicationLogo" class="block h-8 w-auto text-primary" />
                     </Link>
                     <span class="text-xl font-bold text-slate-800">WorkSphere</span>
                 </div>
@@ -254,9 +258,9 @@ onUnmounted(() => {
 
         <!-- Main content area -->
         <div class="md:pl-64">
-            <div class="mx-auto flex max-w-7xl flex-col min-h-screen">
+            <div class="page-container flex flex-col min-h-screen">
                 <!-- Top bar -->
-                <header class="sticky top-0 z-20 flex h-16 flex-shrink-0 justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8">
+                <header class="sticky top-0 z-20 flex h-16 flex-shrink-0 justify-between border-b border-slate-200 bg-white/70 backdrop-blur px-4 sm:px-6 lg:px-8">
                     <button @click="showingSidebar = true" type="button" class="border-r border-slate-200 px-4 text-slate-500 focus:outline-none md:hidden">
                         <span class="sr-only">Open sidebar</span>
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
@@ -288,7 +292,7 @@ onUnmounted(() => {
                                 ></div>
                                 <div
                                     v-if="showingNotificationDropdown"
-                                    class="absolute right-0 z-50 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-lg"
+                                    class="absolute right-0 z-50 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl"
                                 >
                                     <div class="p-4 border-b border-slate-200">
                                         <div class="flex items-center justify-between">
@@ -297,7 +301,7 @@ onUnmounted(() => {
                                                 v-if="notifications.length > 0"
                                                 @click="markAllAsRead"
                                                 :disabled="loading"
-                                                class="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                                                class="text-xs text-primary hover:underline disabled:opacity-50"
                                             >
                                                 Mark all as read
                                             </button>

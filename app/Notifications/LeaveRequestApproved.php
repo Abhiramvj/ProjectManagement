@@ -36,13 +36,18 @@ class LeaveRequestApproved extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        // Employees should go to their leave index; managers can be routed to logs for context
+        $targetUrl = $notifiable->can('manage leave applications')
+            ? route('leave.logs', ['highlight' => $this->leaveApplication->id])
+            : route('leave.index');
+
         return [
             'title' => 'Leave Request Approved',
             'message' => 'Your leave request from '.$this->leaveApplication->start_date.' to '.$this->leaveApplication->end_date.' has been approved.',
-            'type' => 'leave_approved', // For the frontend to pick an icon
+            'type' => 'leave_approved',
             'leave_id' => $this->leaveApplication->id,
             'approved_by' => Auth::user()->name,
-            'url' => route('leave.index'), // Link to the leave page
+            'url' => $targetUrl,
         ];
     }
 }
