@@ -17,23 +17,26 @@ class StoreLeaveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_date' => ['required', 'date', 'after_or_equal:today', function ($attribute, $value, $fail) {
-                $leaveType = $this->input('leave_type');
-                $startDate = Carbon::parse($value);
-                $today = Carbon::today();
-
-                // Adjust the leave types and advance days as per your business logic
-                if ($leaveType === 'annual') {
-                    if ($startDate->lt($today->copy()->addDays(7))) {
-                        $fail('Annual leave must be applied at least 7 days in advance.');
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    $leaveType = $this->input('leave_type');
+                    try {
+                        $startDate = Carbon::parse($value);
+                    } catch (\Exception $e) {
+                        // Do NOT run further checks if invalid date—let Laravel's 'date' rule handle it
+                        return;
                     }
-                } elseif ($leaveType === 'personal') {
-                    if ($startDate->lt($today->copy()->addDays(3))) {
+                    $today = Carbon::today();
+                    if ($leaveType === 'annual' && $startDate->lt($today->copy()->addDays(7))) {
+                        $fail('Annual leave must be applied at least 7 days in advance.');
+                    } elseif ($leaveType === 'personal' && $startDate->lt($today->copy()->addDays(3))) {
                         $fail('Personal leave must be applied at least 3 days in advance.');
                     }
-                }
-                // Add other leave type advance checks here if needed
-            }],
+                },
+            ],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'reason' => ['required', 'string', 'min:10'],
             'leave_type' => ['required', 'string', 'in:annual,sick,personal,emergency,maternity,paternity,wfh,compensatory'],
@@ -51,20 +54,23 @@ class StoreLeaveRequest extends FormRequest
             $start = $this->input('start_date');
             $end = $this->input('end_date');
 
-            $hasOverlap = LeaveApplication::where('user_id', $userId)
-                ->where(function ($query) use ($start, $end) {
-                    $query->whereBetween('start_date', [$start, $end])
-                        ->orWhereBetween('end_date', [$start, $end])
-                        ->orWhere(function ($query) use ($start, $end) {
-                            $query->where('start_date', '<=', $start)
-                                ->where('end_date', '>=', $end);
-                        });
-                })
-                ->whereIn('status', ['pending', 'approved'])
-                ->exists();
+            // Only check overlap if both dates exist and are not empty
+            if (! empty($start) && ! empty($end)) {
+                $hasOverlap = LeaveApplication::where('user_id', $userId)
+                    ->where(function ($query) use ($start, $end) {
+                        $query->whereBetween('start_date', [$start, $end])
+                            ->orWhereBetween('end_date', [$start, $end])
+                            ->orWhere(function ($query) use ($start, $end) {
+                                $query->where('start_date', '<=', $start)
+                                    ->where('end_date', '>=', $end);
+                            });
+                    })
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->exists();
 
-            if ($hasOverlap) {
-                $validator->errors()->add('start_date', 'These dates overlap with an existing leave request.');
+                if ($hasOverlap) {
+                    $validator->errors()->add('start_date', 'These dates overlap with an existing leave request.');
+                }
             }
         });
     }

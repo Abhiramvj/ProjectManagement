@@ -8,7 +8,8 @@ use App\Models\Task;
 
 class UpdateTaskStatus
 {
-    private const VALID_STATUSES = ['pending', 'in_progress', 'completed'];
+    // Unified task statuses across backend and frontend
+    private const VALID_STATUSES = ['todo', 'in_progress', 'completed'];
 
     public function handle(Task $task, string $status)
     {

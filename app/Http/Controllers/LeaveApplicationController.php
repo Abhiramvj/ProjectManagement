@@ -7,6 +7,8 @@ use App\Actions\Leave\StoreLeave;
 use App\Actions\Leave\UpdateLeave;
 use App\Http\Requests\Leave\StoreLeaveRequest;
 use App\Http\Requests\Leave\UpdateLeaveRequest;
+use App\Mail\LeaveApplicationApproved;
+use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
 use Illuminate\Mail\Mailable;
 use App\Models\LeaveApplication;
@@ -70,23 +72,60 @@ foreach ($recipients as $recipient) {
         return redirect()->back()->with('success', "Compensatory off of {$daysToCredit} days credited to user.");
     }
 
-    public function update(UpdateLeaveRequest $request, LeaveApplication $leave_application, UpdateLeave $updateLeaveStatus)
-    {
-        $data = $request->validated();
-        $status = $data['status'];
-        $rejectReason = $data['rejection_reason'] ?? null;
+ public function update(UpdateLeaveRequest $request, LeaveApplication $leave_application, UpdateLeave $updateLeaveStatus)
+{
+    // 1. Get validated data. This is correct.
+    $validatedData = $request->validated();
+    $status = $validatedData['status'];
 
-        $updateLeaveStatus->handle($leave_application, $status, $rejectReason);
+    // --- THIS IS THE KEY CHANGE ---
+    // We now handle everything based on the status.
+    if ($status === 'approved') {
+        // --- APPROVAL LOGIC ---
 
-        // Deduct comp_off_balance on approval if leave type is compensatory
-        if ($status === 'approved' && $leave_application->leave_type === 'compensatory') {
-            $user = $leave_application->user;
-            $user->decrement('comp_off_balance', $leave_application->leave_days);
+        // A. Update the status in the database.
+        $updateLeaveStatus->handle($leave_application, 'approved');
+
+        // B. Prepare and send the approval email.
+        $employee = $leave_application->user;
+        if ($employee) {
+            $mailable = new LeaveApplicationApproved($leave_application);
+            $this->sendEmail($leave_application, $mailable, $employee->email);
+        }
+
+    } elseif ($status === 'rejected') {
+        // --- REJECTION LOGIC ---
+
+        // A. Get the rejection reason from the validated data.
+        // We only access it here, where we know it's safe.
+        $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
+
+        // B. Update the status in the database.
+        $updateLeaveStatus->handle($leave_application, 'rejected', $rejectReason);
+
+        // C. Restore the user's leave balance.
+        $user = $leave_application->user;
+        if ($user) {
+            if (in_array($leave_application->leave_type, ['annual', 'casual'])) {
+                $user->leave_balance += $leave_application->leave_days;
+            } elseif ($leave_application->leave_type === 'compensatory') {
+                $user->comp_off_balance += $leave_application->leave_days;
+            }
             $user->save();
         }
 
-        return Redirect::back()->with('success', 'Application status updated.');
+        // D. Prepare and send the rejection email.
+        if ($user) {
+            $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+            $this->sendEmail($leave_application, $mailable, $user->email);
+        }
     }
+
+    // --- REDIRECT BACK ---
+    return Redirect::back()->with('success', 'Application status updated.');
+}
+
+
 
     public function updateReason(Request $request, LeaveApplication $leave_application)
     {
@@ -252,43 +291,54 @@ foreach ($recipients as $recipient) {
     }
 
 
-          private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
-    {
-        // Get the event type directly from the mailable's public property.
-        // This is simple and reliable.
-        $eventType = $mailable->eventType ?? 'unknown_event';
+        private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
+{
+    // --- STEP 1: RENDER THE MAIL TO HTML ---
+    // This is the most important new line. It takes your Markdown template
+    // and converts it into a complete HTML string, exactly as it will be sent.
+    $emailHtmlContent = $mailable->render();
 
-        $logData = [
-            'leave_application_id' => $leaveApplication->id,
-            'recipient_email'      => $recipientEmail,
-            'subject'              => $mailable->subject ?? 'Leave Application Notification',
-            'event_type'           => $eventType, // Use the new, simpler variable
-            'sent_at'              => now(),
-            'reason'               => $leaveApplication->reason,
-            'leave_period'         => $leaveApplication->start_date->format('M d, Y') . ' to ' . $leaveApplication->end_date->format('M d, Y'),
-        ];
+    // Get the event type directly from the mailable's public property.
+    $eventType = $mailable->eventType ?? 'unknown_event';
 
-        try {
-            Mail::to($recipientEmail)->send($mailable);
+    // --- STEP 2: PREPARE DATA FOR MONGODB ---
+    // Now we prepare the data array that will be saved to your database.
+    $logData = [
+        'leave_application_id' => $leaveApplication->id,
+        'recipient_email'      => $recipientEmail,
+        'subject'              => $mailable->subject ?? 'Leave Application Notification',
+        'event_type'           => $eventType,
+        'sent_at'              => now(),
+        'reason'               => $leaveApplication->reason,
+        'leave_period'         => $leaveApplication->start_date->format('M d, Y') . ' to ' . $leaveApplication->end_date->format('M d, Y'),
 
-            // LOG SUCCESS
-            MailLog::create(array_merge($logData, [
-                'status'        => 'sent',
-                'error_message' => null,
-            ]));
+        // --- Add the rendered HTML to the log data ---
+        'body_html'            => $emailHtmlContent,
+    ];
 
-        } catch (\Exception $e) {
-            // LOG FAILURE
-            Log::error(
-                'Mail sending failed for LeaveApplication ID ' . $leaveApplication->id .
-                ' to ' . $recipientEmail . ': ' . $e->getMessage()
-            );
-            MailLog::create(array_merge($logData, [
-                'status'        => 'failed',
-                'error_message' => $e->getMessage(),
-            ]));
-        }
+    try {
+        // Send the actual email.
+        Mail::to($recipientEmail)->send($mailable);
+
+        // LOG SUCCESS: The $logData array now includes the 'body_html'
+        MailLog::create(array_merge($logData, [
+            'status'        => 'sent',
+            'error_message' => null,
+        ]));
+
+    } catch (\Exception $e) {
+        // LOG FAILURE
+        Log::error(
+            'Mail sending failed for LeaveApplication ID ' . $leaveApplication->id .
+            ' to ' . $recipientEmail . ': ' . $e->getMessage()
+        );
+        // The log data still includes the HTML, so you can see what was supposed to be sent.
+        MailLog::create(array_merge($logData, [
+            'status'        => 'failed',
+            'error_message' => $e->getMessage(),
+        ]));
     }
+}
      private function getEventTypeFromMailable(Mailable $mailable): string
     {
         // This handles modern Laravel Mailables (Laravel 9+)

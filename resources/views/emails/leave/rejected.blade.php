@@ -15,8 +15,12 @@ We have reviewed your recent leave application. Unfortunately, we are unable to 
 - **Reason for Request:** {{ $leaveApplication->reason }}
 
 ## Reason for Rejection
-{{-- It's important to ensure the 'remarks' field contains the reason --}}
-{{ $leaveApplication->remarks ?? 'No reason provided.' }}
+
+{{--
+  This is the key change. We now use the $rejectionReason variable passed
+  directly from our Mailable class.
+--}}
+**{{ $rejection_reason ?? 'No specific reason was provided.' }}**
 
 If you have any questions or would like to discuss this further, please contact your manager.
 
@@ -26,4 +30,5 @@ View Application Status
 
 Thanks,<br>
 {{ config('app.name') }}
+
 @endcomponent

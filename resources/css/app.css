@@ -10,7 +10,7 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply antialiased;
   }
@@ -133,17 +133,34 @@
   transform: scale(1.1);
 }
 
+/* app.css */
+
+input,
+textarea,
+select {
+  @apply bg-white text-black placeholder-gray-400 border border-gray-300 rounded;
+}
+/* app.css */
+/*
+ * A more targeted approach.
+ * Apply this class to a parent container to set the default text color
+ * for all divs and spans inside it.
+ */
+.prose-style div,
+.prose-style span {
+    @apply text-gray-700;
+}
 /* 5. Utility classes */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }

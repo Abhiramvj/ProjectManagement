@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Providers;
-
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Gemini\Client; // This is the class we want to override
 use GuzzleHttp\Client as GuzzleClient; // We need to create a Guzzle client
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,5 +40,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+        JsonResource::withoutWrapping();
     }
 }

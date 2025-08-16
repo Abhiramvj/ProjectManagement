@@ -47,7 +47,7 @@ const form = useForm({
     end_date: '',
     total_hours_required: 100,
     priority: 'medium',
-    status: 'active',
+    status: 'pending',
 });
 
 const submit = () => {
@@ -102,9 +102,9 @@ const filteredProjects = computed(() => {
 
 const projectStats = computed(() => {
     const total = props.projects.length;
-    const active = props.projects.filter(p => p.status === 'active').length;
+    const active = props.projects.filter(p => p.status !== 'completed' && (!p.end_date || new Date(p.end_date) >= new Date())).length;
     const completed = props.projects.filter(p => p.status === 'completed').length;
-    const overdue = props.projects.filter(p => new Date(p.end_date) < new Date() && p.status !== 'completed').length;
+    const overdue = props.projects.filter(p => p.end_date && new Date(p.end_date) < new Date() && p.status !== 'completed').length;
     
     return { total, active, completed, overdue };
 });
@@ -139,6 +139,10 @@ const formatDate = (date) => {
 };
 
 const getProgressPercentage = (project) => {
+    // Use backend-provided computed field when available
+    if (typeof project.hours_progress === 'number') {
+        return project.hours_progress;
+    }
     if (project.total_hours_required === 0) return 0;
     return Math.min(Math.round((project.hours_logged || 0) / project.total_hours_required * 100), 100);
 };
@@ -256,8 +260,8 @@ const clearFilters = () => {
 
                             <select v-model="selectedStatus" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="">All Status</option>
-                                <option value="active">Active</option>
                                 <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
                                 <option value="on-hold">On Hold</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
@@ -314,10 +318,10 @@ const clearFilters = () => {
                                 <p class="text-sm text-gray-600">{{ project.team.name }}</p>
                             </div>
                             <div class="flex space-x-2">
-                                <span :class="getStatusColor(project.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                                <span :class="getStatusColor(project.status)" class="px-2 py-1 text-xs font-medium rounded-full capitalize">
                                     {{ project.status }}
                                 </span>
-                                <span v-if="project.priority" :class="getPriorityColor(project.priority)" class="px-2 py-1 text-xs font-medium rounded-full">
+                                <span v-if="project.priority" :class="getPriorityColor(project.priority)" class="px-2 py-1 text-xs font-medium rounded-full capitalize">
                                     {{ project.priority }}
                                 </span>
                             </div>

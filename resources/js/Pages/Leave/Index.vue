@@ -33,6 +33,7 @@ const leaveColors = {
   rejected: '#b91c1c',
   wfh: '#0ea5e9',
   compensatory: '#16a34a',
+  holiday: '#f43f5e',
 }
 
 const leaveFormSection = ref(null)
@@ -77,7 +78,7 @@ function toISODateOnly(date) {
 
 const calendarEvents = computed(() =>
   (props.highlightedDates || [])
-    .filter(ev => ev.user_id === currentUserId)
+    .filter(ev => ev.user_id === currentUserId || ev.user_id === null)
     .map(ev => ({
       display: 'background',
       start: ev.start,
@@ -213,8 +214,14 @@ const statusConfig = {
 const updateStatus = (request, newStatus) => {
   router.patch(route('leave.update', { leave_application: request.id }), {
     status: newStatus,
-  }, { preserveScroll: true })
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      router.reload({ only: ['leaveRequests', 'remainingLeaveBalance', 'compOffBalance'] })
+    }
+  })
 }
+
 
 const cancelLeave = (request) => {
   if (confirm('Are you sure you want to cancel this leave request?')) {
@@ -309,7 +316,7 @@ paternity: {
 },
 wfh: {
   title: "Work From Home",
-  summary: "Remote work arrangements without leaving leave balance",
+  summary: "Remote work arrangements without reducing leave balance",
   details: [
     "Allows employees to work remotely for full or partial days",
     "Usually does not deduct from leave balance",
@@ -321,7 +328,7 @@ compensatory: {
   title: "Compensatory Leave",
   summary: "Leave earned by working extra hours or on holidays",
   details: [
-    "Credited when working during official holidays or overtime",
+    "Credited when working during official holidays",
     "Used as paid time off in lieu of extra hours worked",
     "Requires manager approval to grant and to use",
     "Usually tracked separately to enforce usage policies"
@@ -453,6 +460,14 @@ function submitEditReason() {
   )
 }
 
+const approvedUpcomingRequests = computed(() =>
+  (props.leaveRequests.data || [])
+    .filter(lr =>
+      lr.status === 'approved' &&
+      new Date(lr.end_date) >= new Date()
+    )
+    .slice(0, 3)
+)
 
 
 </script>
@@ -465,32 +480,42 @@ function submitEditReason() {
 
       <!-- Controls -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
-          <h2 class="text-lg font-semibold text-gray-700 mb-4">Upcoming/Pending leave requests</h2>
-          <div class="space-y-3">
-            <!-- Your existing placeholder or real upcoming requests -->
-            <div v-for="i in 2" :key="i" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div class="flex items-center gap-4">
-                <div class="bg-blue-100 text-blue-600 p-3 rounded-full">
-                  <!-- SVG icon -->
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-semibold text-gray-800">06 Apr 2025</p>
-                  <p class="text-sm text-gray-500">Casual Leave</p>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600 hidden md:block">Personal Emergency</p>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full"></span>
-                <p class="text-sm font-medium text-yellow-500">Pending</p>
-              </div>
-            </div>
-          </div>
+        <!-- Upcoming/Pending leave requests -->
+<div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
+  <h2 class="text-lg font-semibold text-gray-700 mb-4">Upcoming Approved Leave</h2>
+  <div class="space-y-3" v-if="approvedUpcomingRequests.length">
+    <div
+      v-for="request in approvedUpcomingRequests"
+      :key="request.id"
+      class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+    >
+      <div class="flex items-center gap-4">
+        <div class="p-3 rounded-full"
+             :class="getTagClass(request.leave_type)">
         </div>
+        <div>
+          <p class="font-semibold text-gray-800">
+            {{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
+            <span v-if="request.start_date !== request.end_date">
+              - {{ new Date(request.end_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
+            </span>
+          </p>
+          <p class="text-sm text-gray-500 capitalize">{{ request.leave_type }}</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-600 hidden md:block truncate max-w-[180px]">{{ request.reason }}</p>
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+        <p class="text-sm font-medium text-green-500">Approved</p>
+      </div>
+    </div>
+  </div>
+  <div v-else class="text-gray-500 text-sm">
+    No approved upcoming leave requests.
+  </div>
+</div>
+
+
 
         <div class="space-y-3 flex flex-col justify-between">
 
@@ -552,6 +577,7 @@ function submitEditReason() {
             <div class="border border-gray-200 rounded-lg overflow-hidden">
               <FullCalendar :options="calendarOptions" />
             </div>
+
             <InputError :message="form.errors.start_date" />
           </div>
           <div class="space-y-4">
@@ -857,3 +883,4 @@ function submitEditReason() {
 .fc .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-number { @apply text-gray-400; }
 select option { position: relative; }
 </style>
+ 

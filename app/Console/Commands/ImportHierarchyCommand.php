@@ -25,6 +25,7 @@ class ImportHierarchyCommand extends Command
      *
      * @var string
      */
+
     protected $description = 'Imports users, roles, and manager relationships from an Excel file.';
 
     /**

@@ -62,6 +62,14 @@ Route::middleware('auth')->group(function () {
         ->middleware(['auth'])
         ->name('my-performance.generateSummary');
 
+    Route::post('/performance/{user}/generate-summary', [PerformanceReportController::class, 'generateSummary'])
+        ->name('performance.generateSummary')
+        ->middleware(['can:manage employees']);
+
+    Route::post('/my-performance/generate-summary', [PerformanceReportController::class, 'generateMySummary'])
+        ->middleware(['auth'])
+        ->name('my-performance.generateSummary');
+
     // Role management routes
     Route::resource('roles', RoleController::class)
         ->only(['index', 'store', 'edit', 'update'])

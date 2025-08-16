@@ -12,9 +12,7 @@ class LeaveStatsService
 
     /**
      * Get leave statistics for a specific user.
-     *
-     * @param int $userId
-     * @return array
+
      */
     public function getStatsForUser(int $userId): array
     {
@@ -30,7 +28,9 @@ class LeaveStatsService
 
         return [
             'balance' => $balance,
+
             'current_year' => (float)$currentYearTaken, // Cast to float for consistency
+
             'remaining' => $remaining,
         ];
     }

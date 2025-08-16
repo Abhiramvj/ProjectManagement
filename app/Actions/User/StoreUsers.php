@@ -33,7 +33,7 @@ class StoreUsers
 
         // --- NEW LOGIC TO HANDLE THE PIVOT TABLE ---
         // If a team_id is provided, attach the user to that team.
-        if (!empty($data['team_id'])) {
+        if (! empty($data['team_id'])) {
             $user->teams()->attach($data['team_id']);
         }
 

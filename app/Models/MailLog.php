@@ -34,8 +34,9 @@ class MailLog extends Model
         'event_type',
         'error_message',
         'sent_at',
-        'reason',       
+        'reason',
         'leave_period',
+        'body_html', // <-- ADD THIS LINE HERE
     ];
 
     /**

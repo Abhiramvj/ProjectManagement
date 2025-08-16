@@ -10,8 +10,12 @@ class UpdateUserRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
+        return true; // Or your specific authorization logic
         return true; // Or your specific authorization logic
     }
 
@@ -20,8 +24,14 @@ class UpdateUserRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
      */
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
+     */
     public function rules(): array
     {
+        // Get the user ID from the route to ignore their own email address during unique check
         // Get the user ID from the route to ignore their own email address during unique check
         $userId = $this->route('user')->id;
 

@@ -34,7 +34,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage roles',
             'view leaves',
             'manage announcements',
-            'view mail logs', // ✅ ADDED: The new permission for viewing mail logs.
+            'view mail logs',
+
         ];
 
         foreach ($permissions as $permission) {
@@ -67,13 +68,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'apply for leave',
             'view leaves',
             'manage announcements',
-            'view mail logs', // ✅ ASSIGNED: Grant the new permission to the 'hr' role.
+            'view mail logs', 
+
         ]);
 
         // Admin Role
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        // The admin role automatically gets the new 'view mail logs' permission
-        // because we use Permission::all(), which fetches every permission that exists.
+
         $adminRole->syncPermissions(Permission::all());
+
+
     }
 }

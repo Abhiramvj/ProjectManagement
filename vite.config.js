@@ -81,4 +81,13 @@ export default defineConfig({
             ],
         },
     },
+
+    // --- ADDED THIS BLOCK TO FIX THE TEST ERROR ---
+    // This configures the testing environment for Vitest.
+    test: {
+        // Use 'jsdom' to simulate a browser environment (adds the 'document' object)
+        environment: 'jsdom',
+        // Make test globals like `describe` and `it` available without imports
+        globals: true,
+    },
 });

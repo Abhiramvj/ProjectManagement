@@ -32,7 +32,7 @@ class TaskController extends Controller
     public function updateStatus(Request $request, Task $task, UpdateTaskStatus $updateTaskStatus): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:todo,in_progress,completed', // Use your actual status names
+            'status' => 'required|in:todo,in_progress,completed',
         ]);
 
         $updateTaskStatus->handle($task, $validated['status']);
