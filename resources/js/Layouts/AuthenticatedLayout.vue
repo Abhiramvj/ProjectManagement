@@ -47,18 +47,21 @@ const fetchNotifications = async () => {
     }
 };
 
-const handleNotificationClick = async (notification) => {
-    try {
-        await axios.post(route('notifications.read', notification.id));
-        if (notification.data.url) {
-            router.visit(notification.data.url);
-        }
-        closeNotificationDropdown();
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
-    }
-};
+const handleNotificationClick = (notification) => {
+    // Always direct users to Leave Logs (approvers) or Leave Index (others)
+    const canManageLeaves = user.value?.permissions?.includes('manage leave applications');
+    const targetUrl = canManageLeaves ? route('leave.logs') : route('leave.index');
 
+    try {
+        router.visit(targetUrl);
+    } catch (e) {
+        window.location.href = targetUrl;
+    }
+
+    // Fire-and-forget mark-as-read; errors are non-blocking
+    axios.post(route('notifications.read', notification.id)).catch(() => {});
+    closeNotificationDropdown();
+};
 const markAllAsRead = async () => {
     if (loading.value) return;
     loading.value = true;
