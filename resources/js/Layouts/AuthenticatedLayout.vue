@@ -25,6 +25,7 @@ onMounted(async () => {
 });
 
 // --- NOTIFICATION LOGIC (OPTIMIZED) ---
+// ... (Your notification logic remains unchanged) ...
 const showingNotificationDropdown = ref(false);
 const unreadNotificationCount = ref(0);
 const notifications = ref([]);
@@ -46,16 +47,20 @@ const fetchNotifications = async () => {
     }
 };
 
-const handleNotificationClick = async (notification) => {
+const handleNotificationClick = (notification) => {
+    // Always direct users to Leave Logs (approvers) or Leave Index (others)
+    const canManageLeaves = user.value?.permissions?.includes('manage leave applications');
+    const targetUrl = canManageLeaves ? route('leave.logs') : route('leave.index');
+
     try {
-        await axios.post(route('notifications.read', notification.id));
-        if (notification.data.url) {
-            router.visit(notification.data.url);
-        }
-        closeNotificationDropdown();
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
+        router.visit(targetUrl);
+    } catch (e) {
+        window.location.href = targetUrl;
     }
+
+    // Fire-and-forget mark-as-read; errors are non-blocking
+    axios.post(route('notifications.read', notification.id)).catch(() => {});
+    closeNotificationDropdown();
 };
 
 const markAllAsRead = async () => {
@@ -101,100 +106,46 @@ const getNotificationIcon = (type) => {
     return iconMap[type] || '📢';
 };
 
+
 // --- OPTIMIZED LAYOUT LOGIC ---
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const userDesignation = computed(() => user.value?.designation || 'Employee');
 const showingSidebar = ref(false);
 
-// Memoized navigation items for better performance
+// ✅ THIS SECTION IS CLEANED UP AND CORRECTED
 const navigationItems = computed(() => {
     if (!user.value?.permissions) return [];
 
     const items = [
+        { name: 'Dashboard', route: 'dashboard', active: route().current('dashboard'), show: true, icon: 'Dashboard' },
+        { name: 'Projects', route: 'projects.index', active: route().current('projects.*'), show: user.value.permissions.includes('assign projects') || user.value.permissions.includes('view all projects progress'), icon: 'Projects' },
+        { name: 'Company Hierarchy', route: 'company.hierarchy', active: route().current('company.hierarchy'), show: true, icon: 'Company Hierarchy' },
+        { name: 'Working Hours', route: 'hours.index', active: route().current('hours.index'), show: true, icon: 'Working Hours' },
+        { name: 'Apply for Leave', route: 'leave.index', active: route().current('leave.*'), show: user.value.permissions.includes('apply for leave'), icon: 'Apply for Leave' },
+        { name: 'Leave Calendar', route: 'leaves.calendar', active: route().current('leaves.calendar'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Calendar' },
+        { name: 'Leave Logs', route: 'leave.logs', active: route().current('leave.logs'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Logs' },
+        { name: 'Manage Users', route: 'users.index', active: route().current('users.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Users' },
+        { name: 'Manage Teams', route: 'teams.index', active: route().current('teams.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Teams' },
+        { name: 'Manage Roles', route: 'roles.index', active: route().current('roles.index'), show: user.value.permissions.includes('manage roles'), icon: 'Manage Roles' },
+        // This is our new, single Mail Logs link, properly secured.
         {
-            name: 'Dashboard',
-            route: 'dashboard',
-            active: route().current('dashboard'),
-            show: true,
-            icon: 'Dashboard'
+            name: 'Mail Logs',
+            route: 'mail-logs.index',
+            active: route().current('mail-logs.index'),
+            // Show this if the user is an admin OR an hr user.
+            // We check for permissions that these roles have.
+            show: user.value.permissions.includes('view mail logs'),
+            icon: 'Mail Logs'
         },
-        {
-            name: 'Leave Calendar',
-            route: 'leaves.calendar',
-            active: route().current('leaves.calendar'),
-            show: user.value.permissions.includes('manage leave applications'),
-            icon: 'Leave Calendar'
-        },
-        {
-            name: 'Manage Roles',
-            route: 'roles.index',
-            active: route().current('roles.index'),
-            show: user.value.permissions.includes('manage roles'),
-            icon: 'Manage Roles'
-        },
-
-        {
-            // ✅ NEW: Added the Leave Logs item
-            name: 'Leave Logs',
-            route: 'leave.logs',
-            active: route().current('leave.logs'),
-            // Show this to anyone who can apply for leave or manage leaves
-            show: user.value.permissions.includes('manage employees') || user.value.permissions.includes('manage leave applications'),
-            icon: 'Leave Logs' // You might need a corresponding icon component
-        },
-
-        {
-            name: 'Projects',
-            route: 'projects.index',
-            active: route().current('projects.*'),
-            show: user.value.permissions.includes('assign projects') || user.value.permissions.includes('view all projects progress'),
-            icon: 'Projects'
-        },
-        {
-            name: 'Apply for Leave',
-            route: 'leave.index',
-            active: route().current('leave.*'),
-            show: user.value.permissions.includes('apply for leave'),
-            icon: 'Apply for Leave'
-        },
-
-        {
-            name: 'Working Hours',
-            route: 'hours.index',
-            active: route().current('hours.index'),
-            show: true,
-            icon: 'Working Hours'
-        },
-        {
-            name: 'Manage Users',
-            route: 'users.index',
-            active: route().current('users.index'),
-            show: user.value.permissions.includes('manage employees'),
-            icon: 'Manage Users'
-        },
-        {
-            name: 'Manage Teams',
-            route: 'teams.index',
-            active: route().current('teams.index'),
-            show: user.value.permissions.includes('manage employees'),
-            icon: 'Manage Teams'
-        },
-        {
-            name: 'Company Hierarchy',
-            route: 'company.hierarchy',
-            active: route().current('company.hierarchy'),
-            show: true,
-            icon: 'Company Hierarchy'
-        }
     ];
 
     return items.filter(item => item.show);
 });
 
-// --- OPTIMIZED SVG ICONS ---
 const icons = {
     Dashboard: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>`,
+    'Mail Logs': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
     'Leave Calendar': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`,
     'Manage Roles': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 20.944A12.02 12.02 0 0012 22a12.02 12.02 0 009-1.056c.343-.344.664-.714.944-1.123l-2.432-2.432z" /></svg>`,
     'Leave Logs': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
@@ -206,12 +157,11 @@ const icons = {
     'Company Hierarchy': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
 };
 
-// Lifecycle management
+// ... (Your lifecycle hooks onMounted and onUnmounted remain unchanged) ...
 onMounted(() => {
     if (user.value) {
         fetchNotifications();
-        // Use more conservative polling interval
-        notificationInterval = setInterval(fetchNotifications, 60000); // 1 minute instead of 30 seconds
+        notificationInterval = setInterval(fetchNotifications, 60000);
     }
 });
 
@@ -221,7 +171,6 @@ onUnmounted(() => {
     }
 });
 </script>
-
 <template>
     <div class="min-h-screen bg-slate-50 font-sans">
         <!-- Static sidebar for desktop -->
