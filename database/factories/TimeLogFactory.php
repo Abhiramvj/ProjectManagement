@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Factories;
 
 use App\Models\Project;
@@ -13,12 +14,11 @@ class TimeLogFactory extends Factory
         $projectIds = Project::pluck('id')->toArray();
 
         return [
-            'user_id' => !empty($userIds) ? $this->faker->randomElement($userIds) : User::factory(),
-            'project_id' => !empty($projectIds) ? $this->faker->randomElement($projectIds) : Project::factory(),
+            'user_id' => ! empty($userIds) ? $this->faker->randomElement($userIds) : User::factory(),
+            'project_id' => ! empty($projectIds) ? $this->faker->randomElement($projectIds) : Project::factory(),
             'work_date' => $this->faker->dateTimeThisMonth(),
             'hours_worked' => $this->faker->randomFloat(2, 1, 8),
             'description' => $this->faker->sentence(),
         ];
     }
 }
-

@@ -17,18 +17,18 @@ class ProjectFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition()
-{
-    $pmUserIds = \App\Models\User::pluck('id')->toArray();
-    $teamIds = \App\Models\Team::pluck('id')->toArray();
+    {
+        $pmUserIds = \App\Models\User::pluck('id')->toArray();
+        $teamIds = \App\Models\Team::pluck('id')->toArray();
 
-    return [
-        'name' => 'Project '.fake()->company(),
-        'description' => fake()->paragraph(),
-        'project_manager_id' => !empty($pmUserIds) ? fake()->randomElement($pmUserIds) : User::factory(),
-        'team_id' => !empty($teamIds) ? fake()->randomElement($teamIds) : Team::factory(),
-        'status' => fake()->randomElement(['pending', 'in-progress', 'on-hold']),
-        'end_date' => fake()->dateTimeBetween('+1 month', '+6 months'),
-        'total_hours_required' => fake()->numberBetween(100, 500),
-    ];
-}
+        return [
+            'name' => 'Project '.fake()->company(),
+            'description' => fake()->paragraph(),
+            'project_manager_id' => ! empty($pmUserIds) ? fake()->randomElement($pmUserIds) : User::factory(),
+            'team_id' => ! empty($teamIds) ? fake()->randomElement($teamIds) : Team::factory(),
+            'status' => fake()->randomElement(['pending', 'in-progress', 'on-hold']),
+            'end_date' => fake()->dateTimeBetween('+1 month', '+6 months'),
+            'total_hours_required' => fake()->numberBetween(100, 500),
+        ];
+    }
 }

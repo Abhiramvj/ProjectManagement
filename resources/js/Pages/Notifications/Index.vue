@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { computed } from 'vue';
 
@@ -52,6 +52,12 @@ const formatDate = (dateString) => {
 
 const paginationLinks = computed(() => props.notifications.links);
 const hasUnreadNotifications = computed(() => props.notifications.data.some(n => !n.read_at));
+
+// Determine where to route when clicking Details
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const canManageLeaves = computed(() => user.value?.permissions?.includes('manage leave applications'));
+const getDetailsRoute = () => canManageLeaves.value ? route('leave.logs') : route('leave.index');
 </script>
 
 <template>
@@ -114,7 +120,7 @@ const hasUnreadNotifications = computed(() => props.notifications.data.some(n =>
                                                 class="text-sm text-blue-600 hover:text-blue-800 font-semibold">
                                             Mark as read
                                         </button>
-                                        <Link v-if="notification.data.url" :href="notification.data.url"
+                                        <Link :href="getDetailsRoute()"
                                               class="text-sm text-slate-600 hover:text-slate-800 font-semibold flex items-center">
                                             View Details <span class="ml-1">→</span>
                                         </Link>

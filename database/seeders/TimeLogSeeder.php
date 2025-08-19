@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Project;
 use App\Models\TimeLog;
+use Illuminate\Database\Seeder;
 
 class TimeLogSeeder extends Seeder
 {
@@ -12,7 +12,7 @@ class TimeLogSeeder extends Seeder
     {
         // Loop through each project
         Project::all()->each(function ($project) {
-            
+
             // Get user IDs assigned to this project
             $userIds = $project->members()->pluck('users.id')->toArray();
 
@@ -23,7 +23,7 @@ class TimeLogSeeder extends Seeder
 
             // For each project, create 5 time logs with random assigned users
             for ($i = 0; $i < 5; $i++) {
-                
+
                 TimeLog::factory()->create([
                     'project_id' => $project->id,
                     'user_id' => fake()->randomElement($userIds),
