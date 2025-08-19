@@ -5,7 +5,6 @@ namespace App\Actions\User;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Arr;
 
 class StoreUsers
 {

@@ -7,12 +7,11 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
-use Spatie\Permission\Exceptions\RoleDoesNotExist;
 
 class EmployeeLifecycleTest extends TestCase
 {
@@ -47,7 +46,7 @@ class EmployeeLifecycleTest extends TestCase
         ];
 
         // 2. Act
-        $action = new StoreUsers();
+        $action = new StoreUsers;
         $user = $action->handle($data);
 
         // 3. Assert
@@ -87,7 +86,7 @@ class EmployeeLifecycleTest extends TestCase
         ];
 
         // 2. Act
-        $action = new StoreUsers();
+        $action = new StoreUsers;
         $user = $action->handle($data);
 
         // 3. Assert
@@ -104,7 +103,7 @@ class EmployeeLifecycleTest extends TestCase
 
     // In tests/Unit/Actions/User/StoreUsersTest.php
 
-  #[Test]
+    #[Test]
     public function the_image_field_is_null_in_the_database_if_image_is_not_a_valid_file(): void
     {
         // 1. Arrange: Prepare two data sets with invalid image data.
@@ -125,13 +124,13 @@ class EmployeeLifecycleTest extends TestCase
         ];
 
         // 2. Act: Execute the action for each case.
-        $action = new StoreUsers();
+        $action = new StoreUsers;
         $user1 = $action->handle($dataWithNullImage);
         $user2 = $action->handle($dataWithStringImage);
 
         // 3. Assert: Check that the 'image' column is null for both created users.
-        $this->assertNull($user1->refresh()->image, "User image column should be null when image is null.");
-        $this->assertNull($user2->refresh()->image, "User image column should be null when image is a string.");
+        $this->assertNull($user1->refresh()->image, 'User image column should be null when image is null.');
+        $this->assertNull($user2->refresh()->image, 'User image column should be null when image is a string.');
     }
 
     // --- REVISED TEST 2: Check the file system ---
@@ -148,45 +147,45 @@ class EmployeeLifecycleTest extends TestCase
             'image' => 'just-a-string.jpg',
         ];
 
-        $action = new StoreUsers();
+        $action = new StoreUsers;
         $action->handle($data);
         $this->assertCount(0, Storage::disk('public')->files());
     }
 
-#[Test]
-public function it_throws_an_exception_when_assigning_a_non_existent_role(): void
-{
-    $data = [
-        'name' => 'No Role User',
-        'email' => 'norole@example.com',
-        'password' => 'password123',
-        'role' => 'non-existent-role',
-    ];
+    #[Test]
+    public function it_throws_an_exception_when_assigning_a_non_existent_role(): void
+    {
+        $data = [
+            'name' => 'No Role User',
+            'email' => 'norole@example.com',
+            'password' => 'password123',
+            'role' => 'non-existent-role',
+        ];
 
-    $this->expectException(RoleDoesNotExist::class);
-    $action = new StoreUsers();
-    $action->handle($data);
-}
+        $this->expectException(RoleDoesNotExist::class);
+        $action = new StoreUsers;
+        $action->handle($data);
+    }
 
-#[Test]
-public function it_does_not_assign_a_role_if_the_role_key_is_empty_or_null(): void
-{
-    // Arrange
-    $data = [
-        'name' => 'Empty Role User',
-        'email' => 'emptyrole@example.com',
-        'password' => 'password123',
-        'role' => '', // Empty string
-    ];
+    #[Test]
+    public function it_does_not_assign_a_role_if_the_role_key_is_empty_or_null(): void
+    {
+        // Arrange
+        $data = [
+            'name' => 'Empty Role User',
+            'email' => 'emptyrole@example.com',
+            'password' => 'password123',
+            'role' => '', // Empty string
+        ];
 
-    // Act
-    $action = new StoreUsers();
-    $user = $action->handle($data);
+        // Act
+        $action = new StoreUsers;
+        $user = $action->handle($data);
 
-    // Assert
-    // The user should have been created successfully.
-    $this->assertNotNull($user->id);
-    // The user should have no roles assigned.
-    $this->assertCount(0, $user->getRoleNames());
-}
+        // Assert
+        // The user should have been created successfully.
+        $this->assertNotNull($user->id);
+        // The user should have no roles assigned.
+        $this->assertCount(0, $user->getRoleNames());
+    }
 }

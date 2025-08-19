@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Providers;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Vite;
-use Illuminate\Support\ServiceProvider;
-use Gemini\Client; // This is the class we want to override
-use GuzzleHttp\Client as GuzzleClient; // We need to create a Guzzle client
 
+use Gemini\Client;
+use GuzzleHttp\Client as GuzzleClient;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Vite; // This is the class we want to override
+use Illuminate\Support\ServiceProvider; // We need to create a Guzzle client
 
 class AppServiceProvider extends ServiceProvider
 {

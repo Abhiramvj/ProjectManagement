@@ -32,17 +32,17 @@ class PerformanceMonitor
             Log::warning('Slow request detected', [
                 'url' => $request->fullUrl(),
                 'method' => $request->method(),
-                'execution_time' => round($executionTime, 2) . 'ms',
-                'memory_used' => round($memoryUsed / 1024 / 1024, 2) . 'MB',
+                'execution_time' => round($executionTime, 2).'ms',
+                'memory_used' => round($memoryUsed / 1024 / 1024, 2).'MB',
                 'user_agent' => $request->userAgent(),
                 'ip' => $request->ip(),
             ]);
         }
 
         // Add performance headers
-        $response->headers->set('X-Execution-Time', round($executionTime, 2) . 'ms');
-        $response->headers->set('X-Memory-Used', round($memoryUsed / 1024 / 1024, 2) . 'MB');
+        $response->headers->set('X-Execution-Time', round($executionTime, 2).'ms');
+        $response->headers->set('X-Memory-Used', round($memoryUsed / 1024 / 1024, 2).'MB');
 
         return $response;
     }
-} 
+}

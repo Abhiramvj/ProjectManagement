@@ -21,7 +21,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-      protected $fillable = [
+    protected $fillable = [
         'name',
         'email',
         'password',
@@ -414,7 +414,7 @@ class User extends Authenticatable
     /**
      * Get user performance score
      */
-       public function getPerformanceScore(): int
+    public function getPerformanceScore(): int
     {
         $taskScore = $this->getTaskCompletionRate();
         $timeScore = min(100, ($this->getCurrentMonthHours() / 160) * 100);
@@ -470,8 +470,6 @@ class User extends Authenticatable
             }
         );
     }
-
-
 
     public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
     {

@@ -17,20 +17,18 @@ class ProjectFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition()
-    {
-        return [
-            'name' => 'Project ' . fake()->company(),
-            'description' => fake()->paragraph(),
+{
+    $pmUserIds = \App\Models\User::pluck('id')->toArray();
+    $teamIds = \App\Models\Team::pluck('id')->toArray();
 
-            // This line ensures a user is created for the project manager
-            'project_manager_id' => User::factory(),
-
-            // This line ensures a team is created for the project
-            'team_id' => Team::factory(),
-
-            'status' => fake()->randomElement(['pending', 'in-progress', 'on-hold']),
-            'end_date' => fake()->dateTimeBetween('+1 month', '+6 months'),
-            'total_hours_required' => fake()->numberBetween(100, 500),
-        ];
-    }
+    return [
+        'name' => 'Project '.fake()->company(),
+        'description' => fake()->paragraph(),
+        'project_manager_id' => !empty($pmUserIds) ? fake()->randomElement($pmUserIds) : User::factory(),
+        'team_id' => !empty($teamIds) ? fake()->randomElement($teamIds) : Team::factory(),
+        'status' => fake()->randomElement(['pending', 'in-progress', 'on-hold']),
+        'end_date' => fake()->dateTimeBetween('+1 month', '+6 months'),
+        'total_hours_required' => fake()->numberBetween(100, 500),
+    ];
+}
 }

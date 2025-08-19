@@ -1,10 +1,11 @@
 <?php
 
 // app/Http/Controllers/AnnouncementController.php
+
 namespace App\Http\Controllers;
 
-use App\Models\Announcement;
-use App\Events\AnnouncementCreated; // 1. IMPORT THE EVENT CLASS
+use App\Events\AnnouncementCreated;
+use App\Models\Announcement; // 1. IMPORT THE EVENT CLASS
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 

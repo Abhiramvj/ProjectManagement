@@ -42,4 +42,4 @@ return [
         'enabled' => env('COMPRESSION_ENABLED', true),
         'level' => env('COMPRESSION_LEVEL', 6),
     ],
-]; 
+];

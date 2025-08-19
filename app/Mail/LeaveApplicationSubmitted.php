@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\LeaveApplication;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -18,7 +17,6 @@ class LeaveApplicationSubmitted extends Mailable
     /**
      * A string identifier for the type of event this email represents.
      * This is much easier to access than a header.
-     * @var string
      */
     public string $eventType = 'leave_submitted';
 
@@ -57,6 +55,4 @@ class LeaveApplicationSubmitted extends Mailable
     {
         return [];
     }
-
-  
 }

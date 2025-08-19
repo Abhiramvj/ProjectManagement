@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
             TaskSeeder::class,
             CalendarNoteSeeder::class,
             HolidaySeeder::class,
+            ProjectSeeder::class,
+            TimeLogSeeder::class,
         ]);
     }
 }

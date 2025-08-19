@@ -16,6 +16,7 @@ class UpdateUserRequest extends FormRequest
     public function authorize(): bool
     {
         return true; // Or your specific authorization logic
+
         return true; // Or your specific authorization logic
     }
 
@@ -43,7 +44,6 @@ class UpdateUserRequest extends FormRequest
             'team_id' => ['nullable', 'integer', Rule::exists('teams', 'id')],
             'parent_id' => ['nullable', 'integer', Rule::exists('users', 'id')],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-
 
             'work_mode' => [
                 'nullable', // Makes the field optional.

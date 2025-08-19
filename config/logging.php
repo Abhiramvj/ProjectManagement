@@ -127,14 +127,14 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
-         'maillog' => [
-        'driver' => 'monolog',
-        'handler' => Monolog\Handler\MongoDBHandler::class,
-        'with' => [
-            'database' => env('DB_DATABASE_MONGO', 'projectmanagement'),
-            'collection' => 'email_logs', 
+        'maillog' => [
+            'driver' => 'monolog',
+            'handler' => Monolog\Handler\MongoDBHandler::class,
+            'with' => [
+                'database' => env('DB_DATABASE_MONGO', 'projectmanagement'),
+                'collection' => 'email_logs',
+            ],
         ],
-    ],
 
     ],
 
