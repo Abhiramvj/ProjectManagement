@@ -62,6 +62,7 @@ const handleNotificationClick = (notification) => {
     axios.post(route('notifications.read', notification.id)).catch(() => {});
     closeNotificationDropdown();
 };
+
 const markAllAsRead = async () => {
     if (loading.value) return;
     loading.value = true;
