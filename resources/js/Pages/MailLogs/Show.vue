@@ -2,8 +2,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
-// The 'mailLog' prop now arrives perfectly formatted from our MailLogResource.
-// This component has no internal logic, it just displays what it's given.
 const props = defineProps({
     mailLog: Object,
 });
@@ -29,7 +27,7 @@ const props = defineProps({
                             </Link>
                         </div>
 
-                        <!-- Subject Section -->
+                        <!-- Subject as the main title -->
                         <div class="border-b pb-4 mb-6">
                             <h3 class="text-2xl font-bold text-gray-900 leading-tight">{{ mailLog.subject }}</h3>
                             <p class="mt-2 text-sm text-gray-600">
@@ -37,51 +35,18 @@ const props = defineProps({
                             </p>
                         </div>
 
-                        <!-- Details from Mail Section -->
-                        <div class="prose max-w-none">
-                            <h4 class="font-bold text-lg mb-2 text-gray-400">Details from Mail</h4>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
-                                <div>
-                                    <strong class="text-gray-600 font-medium">Leave Period:</strong>
-                                    <p class="mt-1 text-gray-900">{{ mailLog.details.leave_period }}</p>
-                                </div>
-                                <div>
-                                    <strong class="text-gray-600 font-medium">Reason Provided:</strong>
-                                    <p class="mt-1 text-gray-900">{{ mailLog.details.reason }}</p>
-                                </div>
-                            </div>
+                        <!-- This section now directly renders the full HTML email body -->
+                        <div
+                            class="prose max-w-none text-black"
+                            v-if="mailLog.body_html"
+                            v-html="mailLog.body_html"
+                        ></div>
+
+                        <!-- Fallback message if no HTML body is found -->
+                         <div v-else class="text-center text-gray-500 p-6 border rounded-lg">
+                            No email body preview available.
                         </div>
 
-                        <!-- Log Information Section -->
-                        <div class="mt-6 pt-4 border-t">
-                            <h4 class="font-bold text-lg mb-4 text-gray-400">Log Information</h4>
-                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                                <div class="sm:col-span-2">
-                                    <dt class="font-medium text-gray-500">Associated Leave Application ID</dt>
-                                    <dd class="mt-1 text-gray-900 font-mono">{{ mailLog.log_info.application_id }}</dd>
-                                </div>
-                                <div class="sm:col-span-1">
-                                    <dt class="font-medium text-gray-500">Event Type</dt>
-                                    <dd class="mt-1 text-gray-900">
-                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            {{ mailLog.log_info.event_type }}
-                                        </span>
-                                    </dd>
-                                </div>
-                                <div class="sm:col-span-1">
-                                    <dt class="font-medium text-gray-500">Status</dt>
-                                    <dd class="mt-1 text-gray-900">
-                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" :class="mailLog.log_info.status_class">
-                                            {{ mailLog.log_info.status }}
-                                        </span>
-                                    </dd>
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <dt class="font-medium text-gray-500">Sent At</dt>
-                                    <dd class="mt-1 text-gray-900">{{ mailLog.log_info.sent_at }}</dd>
-                                </div>
-                            </dl>
-                        </div>
                     </div>
                 </div>
             </div>

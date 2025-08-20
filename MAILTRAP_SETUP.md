@@ -75,3 +75,4 @@ The email now shows:
 - Action button to review the application
 
 The template is now properly formatted and should display correctly in Mailtrap once SMTP is configured.
+

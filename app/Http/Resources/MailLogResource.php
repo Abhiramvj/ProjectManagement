@@ -17,12 +17,17 @@ class MailLogResource extends JsonResource
         // 'this' refers to the MailLog model instance passed to the resource.
         // We are transforming the raw model data into a clean, frontend-ready structure.
 
-        // This is the "response" you want to keep consistent.
         return [
             // Top-level information
             'id'                  => $this->id, // or $this->_id
             'recipient_email'     => $this->recipient_email,
             'subject'             => $this->subject,
+
+            // =======================================================================
+            //                             THE FIX
+            // This line adds the raw HTML body to the data sent to the frontend.
+            // =======================================================================
+            'body_html'           => $this->body_html,
 
             // A dedicated object for the details shown in the gray box
             'details' => [

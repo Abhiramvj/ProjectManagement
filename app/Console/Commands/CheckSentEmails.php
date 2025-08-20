@@ -61,3 +61,4 @@ class CheckSentEmails extends Command
         }
     }
 }
+

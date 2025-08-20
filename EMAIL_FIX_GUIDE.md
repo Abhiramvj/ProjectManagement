@@ -156,3 +156,4 @@ The email template is now properly structured and should render correctly once t
 - Valid route links
 - Professional layout
 - Complete application details
+
