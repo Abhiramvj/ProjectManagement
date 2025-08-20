@@ -9,9 +9,7 @@ class TimeStatsService
 {
     /**
      * Get general time logging stats for a user.
-     *
-     * @param int $userId
-     * @return array
+
      */
     public function getStatsForUser(int $userId): array
     {
@@ -41,10 +39,7 @@ class TimeStatsService
 
     /**
      * Get hours logged per week for the last X weeks.
-     *
-     * @param int $userId
-     * @param int $weekCount
-     * @return array
+
      */
     public function getWeeklyHoursForUser(int $userId, int $weekCount = 8): array
     {
@@ -63,18 +58,23 @@ class TimeStatsService
             ->orderBy('week', 'asc')
             ->get()->keyBy(fn($item) => $item->year . '-' . $item->week);
 
+
         $weeklyHours = [];
         for ($i = 0; $i < $weekCount; $i++) {
             $date = now()->subWeeks($i);
             $year = $date->year;
             $week = $date->weekOfYear;
+
             $key = $year . '-' . $week;
+
 
             $hours = $logs->has($key) ? $logs[$key]->total_hours : 0;
 
             $weeklyHours[] = [
+
                 'week' => 'Week ' . $week,
                 'hours' => round((float)$hours, 2),
+
             ];
         }
 

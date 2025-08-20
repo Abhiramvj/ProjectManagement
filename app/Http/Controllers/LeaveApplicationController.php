@@ -7,6 +7,10 @@ use App\Actions\Leave\StoreLeave;
 use App\Actions\Leave\UpdateLeave;
 use App\Http\Requests\Leave\StoreLeaveRequest;
 use App\Http\Requests\Leave\UpdateLeaveRequest;
+use App\Jobs\SendLeaveEmail; // Import the job for queuing emails
+use App\Mail\LeaveApplicationApproved;
+use App\Mail\LeaveApplicationRejected;
+use App\Mail\LeaveApplicationSubmitted;
 use App\Models\LeaveApplication;
 use App\Models\Team;
 use App\Models\User;
@@ -28,7 +32,22 @@ class LeaveApplicationController extends Controller
 
     public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
     {
-        $storeLeave->handle($request->validated());
+        $leave_application = $storeLeave->handle($request->validated());
+
+        $recipients = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['admin', 'hr']);
+        })->get();
+
+        if ($recipients->isNotEmpty()) {
+            foreach ($recipients as $recipient) {
+                // Dispatch the email job to the queue instead of sending it synchronously
+                SendLeaveEmail::dispatch(
+                    $leave_application,
+                    new LeaveApplicationSubmitted($leave_application),
+                    $recipient->email
+                );
+            }
+        }
 
         return redirect()->route('leave.index')->with('success', 'Leave application submitted.');
     }
@@ -44,25 +63,47 @@ class LeaveApplicationController extends Controller
         // Increment user's comp_off_balance
         $user->increment('comp_off_balance', $daysToCredit);
 
-        // Optionally notify user of new comp off balance (implement notification if desired)
-        // $user->notify(new CompOffApprovedNotification($daysToCredit));
-
         return redirect()->back()->with('success', "Compensatory off of {$daysToCredit} days credited to user.");
     }
 
     public function update(UpdateLeaveRequest $request, LeaveApplication $leave_application, UpdateLeave $updateLeaveStatus)
     {
-        $data = $request->validated();
-        $status = $data['status'];
-        $rejectReason = $data['rejection_reason'] ?? null;
+        $validatedData = $request->validated();
+        $status = $validatedData['status'];
 
-        $updateLeaveStatus->handle($leave_application, $status, $rejectReason);
+        if ($status === 'approved') {
+            // --- APPROVAL LOGIC ---
+            $updateLeaveStatus->handle($leave_application, 'approved');
 
-        // Deduct comp_off_balance on approval if leave type is compensatory
-        if ($status === 'approved' && $leave_application->leave_type === 'compensatory') {
+            $employee = $leave_application->user;
+            if ($employee) {
+                $mailable = new LeaveApplicationApproved($leave_application);
+                // Dispatch the approval email to the queue
+                SendLeaveEmail::dispatch($leave_application, $mailable, $employee->email);
+            }
+
+        } elseif ($status === 'rejected') {
+            // --- REJECTION LOGIC ---
+            $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
+            $updateLeaveStatus->handle($leave_application, 'rejected', $rejectReason);
+
+            // Restore the user's leave balance
             $user = $leave_application->user;
-            $user->decrement('comp_off_balance', $leave_application->leave_days);
-            $user->save();
+            if ($user) {
+                if (in_array($leave_application->leave_type, ['annual', 'casual'])) {
+                    $user->leave_balance += $leave_application->leave_days;
+                } elseif ($leave_application->leave_type === 'compensatory') {
+                    $user->comp_off_balance += $leave_application->leave_days;
+                }
+                $user->save();
+            }
+
+            // Prepare and send the rejection email
+            if ($user) {
+                $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+                // Dispatch the rejection email to the queue
+                SendLeaveEmail::dispatch($leave_application, $mailable, $user->email);
+            }
         }
 
         return Redirect::back()->with('success', 'Application status updated.');
@@ -80,11 +121,7 @@ class LeaveApplicationController extends Controller
 
     public function calendar(Request $request)
     {
-        // Log incoming request for debugging
-        Log::info('Calendar request received', [
-            'query_params' => $request->all(),
-            'user_id' => Auth::id(),
-        ]);
+        Log::info('Calendar request received', ['query_params' => $request->all(), 'user_id' => Auth::id()]);
 
         $validated = $request->validate([
             'start_date' => 'nullable|date_format:Y-m-d',
@@ -94,87 +131,59 @@ class LeaveApplicationController extends Controller
             'absent_only' => 'nullable|in:1,true',
         ]);
 
-        // Better date handling with logging
-        $startDate = isset($validated['start_date']) && ! empty($validated['start_date'])
+        $startDate = !empty($validated['start_date'])
             ? Carbon::parse($validated['start_date'])->startOfDay()
             : Carbon::now()->startOfMonth();
 
-        $endDate = isset($validated['end_date']) && ! empty($validated['end_date'])
+        $endDate = !empty($validated['end_date'])
             ? Carbon::parse($validated['end_date'])->endOfDay()
-            : (isset($validated['start_date']) && ! empty($validated['start_date'])
-                ? Carbon::parse($validated['start_date'])->endOfDay()  // Same day if only start_date provided
+            : (!empty($validated['start_date'])
+                ? Carbon::parse($validated['start_date'])->endOfDay()
                 : Carbon::now()->endOfMonth());
 
-        // Ensure end date is not before start date
         if ($endDate->lt($startDate)) {
             $endDate = $startDate->copy()->endOfDay();
         }
 
-        Log::info('Date range calculated', [
-            'start_date' => $startDate->toDateString(),
-            'end_date' => $endDate->toDateString(),
-            'validated' => $validated,
-        ]);
-
-        // Build users query
         $usersQuery = User::query()
             ->whereHas('roles', fn ($q) => $q->whereIn('name', ['employee', 'team-lead', 'project-manager']));
 
-        // Apply team filter - using many-to-many relationship
-        if (! empty($validated['team_id'])) {
+        if (!empty($validated['team_id'])) {
             $usersQuery->whereHas('teams', function ($q) use ($validated) {
                 $q->where('teams.id', $validated['team_id']);
             });
-            Log::info('Applied team filter', ['team_id' => $validated['team_id']]);
         }
 
-        // Apply search filter
-        if (! empty($validated['search'])) {
-            $usersQuery->where('name', 'like', '%'.$validated['search'].'%');
-            Log::info('Applied search filter', ['search' => $validated['search']]);
+        if (!empty($validated['search'])) {
+            $usersQuery->where('name', 'like', '%' . $validated['search'] . '%');
         }
 
-        // Apply absent only filter
-        if (! empty($validated['absent_only'])) {
+        if (!empty($validated['absent_only'])) {
             $usersQuery->whereHas('leaveApplications', function ($q) use ($startDate, $endDate) {
                 $q->where('status', 'approved')
                     ->where(function ($query) use ($startDate, $endDate) {
-                        // Leave overlaps with date range
-                        $query->where(function ($q) use ($startDate, $endDate) {
-                            $q->where('start_date', '<=', $endDate->toDateString())
-                                ->where('end_date', '>=', $startDate->toDateString());
-                        });
+                        $query->where('start_date', '<=', $endDate->toDateString())
+                              ->where('end_date', '>=', $startDate->toDateString());
                     });
             });
-            Log::info('Applied absent only filter');
         }
 
-        // Get users with their leave applications
         $usersWithLeaves = $usersQuery
             ->select('id', 'name')
             ->with([
-                'teams:id,name', // Load team relationship
+                'teams:id,name',
                 'leaveApplications' => function ($query) use ($startDate, $endDate) {
                     $query->select('id', 'user_id', 'start_date', 'end_date', 'reason', 'status')
                         ->where('status', 'approved')
                         ->where(function ($q) use ($startDate, $endDate) {
-                            // Leave overlaps with date range
                             $q->where('start_date', '<=', $endDate->toDateString())
-                                ->where('end_date', '>=', $startDate->toDateString());
+                              ->where('end_date', '>=', $startDate->toDateString());
                         });
                 },
             ])
             ->orderBy('name')
             ->get();
 
-        Log::info('Query results', [
-            'users_count' => $usersWithLeaves->count(),
-            'users_with_leaves' => $usersWithLeaves->filter(function ($user) {
-                return $user->leaveApplications->count() > 0;
-            })->count(),
-        ]);
-
-        // Get all teams for filter dropdown
         $teams = Team::select('id', 'name')->orderBy('name')->get();
 
         $response = [
@@ -186,12 +195,6 @@ class LeaveApplicationController extends Controller
                 'end' => $endDate->toDateString(),
             ],
         ];
-
-        Log::info('Sending response', [
-            'date_range' => $response['dateRange'],
-            'filters' => $response['filters'],
-            'users_count' => $usersWithLeaves->count(),
-        ]);
 
         return Inertia::render('Leave/Calendar', $response);
     }
@@ -217,9 +220,9 @@ class LeaveApplicationController extends Controller
             'supporting_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
 
-        $path = $request->file('supporting_document')->store('leave_documents/'.auth()->id(), 'public');
+        $path = $request->file('supporting_document')->store('leave_documents/' . auth()->id(), 'public');
 
-        // Delete old file if exists
+        // Delete old file if it exists
         if ($leave_application->supporting_document_path) {
             Storage::disk('public')->delete($leave_application->supporting_document_path);
         }
@@ -230,4 +233,6 @@ class LeaveApplicationController extends Controller
 
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
     }
+
+
 }

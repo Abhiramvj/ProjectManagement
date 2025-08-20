@@ -1,7 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue';
-import { Link, usePage, router } from '@inertiajs/vue3';
+import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
+
+defineProps({
+    title: String,
+});
 
 // Lazy load components for better performance
 const ApplicationLogo = shallowRef(null);
@@ -24,8 +28,7 @@ onMounted(async () => {
     NavLink.value = navLinkModule.default;
 });
 
-// --- NOTIFICATION LOGIC (OPTIMIZED) ---
-// ... (Your notification logic remains unchanged) ...
+// ... (Notification logic remains the same) ...
 const showingNotificationDropdown = ref(false);
 const unreadNotificationCount = ref(0);
 const notifications = ref([]);
@@ -48,7 +51,6 @@ const fetchNotifications = async () => {
 };
 
 const handleNotificationClick = (notification) => {
-    // Always direct users to Leave Logs (approvers) or Leave Index (others)
     const canManageLeaves = user.value?.permissions?.includes('manage leave applications');
     const targetUrl = canManageLeaves ? route('leave.logs') : route('leave.index');
 
@@ -58,11 +60,9 @@ const handleNotificationClick = (notification) => {
         window.location.href = targetUrl;
     }
 
-    // Fire-and-forget mark-as-read; errors are non-blocking
     axios.post(route('notifications.read', notification.id)).catch(() => {});
     closeNotificationDropdown();
 };
-
 const markAllAsRead = async () => {
     if (loading.value) return;
     loading.value = true;
@@ -113,7 +113,6 @@ const user = computed(() => page.props.auth.user);
 const userDesignation = computed(() => user.value?.designation || 'Employee');
 const showingSidebar = ref(false);
 
-// ✅ THIS SECTION IS CLEANED UP AND CORRECTED
 const navigationItems = computed(() => {
     if (!user.value?.permissions) return [];
 
@@ -122,19 +121,29 @@ const navigationItems = computed(() => {
         { name: 'Projects', route: 'projects.index', active: route().current('projects.*'), show: user.value.permissions.includes('assign projects') || user.value.permissions.includes('view all projects progress'), icon: 'Projects' },
         { name: 'Company Hierarchy', route: 'company.hierarchy', active: route().current('company.hierarchy'), show: true, icon: 'Company Hierarchy' },
         { name: 'Working Hours', route: 'hours.index', active: route().current('hours.index'), show: true, icon: 'Working Hours' },
-        { name: 'Apply for Leave', route: 'leave.index', active: route().current('leave.*'), show: user.value.permissions.includes('apply for leave'), icon: 'Apply for Leave' },
+
+        // =========================================================================
+        //                              THE FIX
+        // We add an exclusion to the `active` check to prevent it from matching
+        // the 'leave.logs' route, which was causing the overlap.
+        // =========================================================================
+        {
+            name: 'Apply for Leave',
+            route: 'leave.index',
+            active: route().current('leave.*') && !route().current('leave.logs*'), // <-- THIS LINE IS CHANGED
+            show: user.value.permissions.includes('apply for leave'),
+            icon: 'Apply for Leave'
+        },
+
         { name: 'Leave Calendar', route: 'leaves.calendar', active: route().current('leaves.calendar'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Calendar' },
         { name: 'Leave Logs', route: 'leave.logs', active: route().current('leave.logs'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Logs' },
         { name: 'Manage Users', route: 'users.index', active: route().current('users.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Users' },
         { name: 'Manage Teams', route: 'teams.index', active: route().current('teams.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Teams' },
         { name: 'Manage Roles', route: 'roles.index', active: route().current('roles.index'), show: user.value.permissions.includes('manage roles'), icon: 'Manage Roles' },
-        // This is our new, single Mail Logs link, properly secured.
         {
             name: 'Mail Logs',
             route: 'mail-logs.index',
             active: route().current('mail-logs.index'),
-            // Show this if the user is an admin OR an hr user.
-            // We check for permissions that these roles have.
             show: user.value.permissions.includes('view mail logs'),
             icon: 'Mail Logs'
         },
@@ -157,7 +166,6 @@ const icons = {
     'Company Hierarchy': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
 };
 
-// ... (Your lifecycle hooks onMounted and onUnmounted remain unchanged) ...
 onMounted(() => {
     if (user.value) {
         fetchNotifications();
@@ -172,6 +180,7 @@ onUnmounted(() => {
 });
 </script>
 <template>
+    <Head :title="title" />
     <div class="min-h-screen bg-slate-50 font-sans">
         <!-- Static sidebar for desktop -->
         <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">

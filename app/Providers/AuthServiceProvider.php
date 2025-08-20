@@ -3,9 +3,12 @@
 namespace App\Providers;
 
 use App\Models\LeaveApplication;
+use App\Models\MailLog;
 use App\Models\Project;
 use App\Models\Task; // <-- IMPORT TASK MODEL
+use App\Models\User;
 use App\Policies\LeaveApplicationPolicy;
+use App\Policies\MailLogPolicy;
 use App\Policies\ProjectPolicy; // <-- IMPORT TASK POLICY
 use App\Policies\TaskPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -17,6 +20,7 @@ class AuthServiceProvider extends ServiceProvider
         Project::class => ProjectPolicy::class,
         Task::class => TaskPolicy::class, // <-- ADD THIS LINE
         LeaveApplication::class => LeaveApplicationPolicy::class,
+        // MailLog::class => MailLogPolicy::class
     ];
 
     public function boot(): void
@@ -24,5 +28,6 @@ class AuthServiceProvider extends ServiceProvider
         Gate::before(function ($user, $ability) {
             return $user->hasRole('admin') ? true : null;
         });
+
     }
 }

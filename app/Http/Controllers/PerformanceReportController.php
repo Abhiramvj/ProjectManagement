@@ -58,14 +58,14 @@ class PerformanceReportController extends Controller
         // We'll specify the model to use, e.g., 'llama3'
         $summary = $ollamaAiService->generateText($prompt, 'llama3');
 
-        if (!$summary) {
+        if (! $summary) {
             Log::error("Failed to generate performance summary for employee: {$user->id}");
+
             return response()->json(['error' => 'The AI summary could not be generated at this time.'], 500);
         }
 
         return response()->json(['summary' => $summary]);
     }
-
 
     /**
      * Generate an AI performance summary for the currently authenticated user.
@@ -103,8 +103,9 @@ class PerformanceReportController extends Controller
         // 5. --- CALL THE OLLAMA SERVICE HERE TOO ---
         $summary = $ollamaAiService->generateText($prompt, 'llama3');
 
-        if (!$summary) {
+        if (! $summary) {
             Log::error("Failed to generate 'my summary' for user: {$user->id}");
+
             return response()->json(['error' => 'The AI summary could not be generated at this time.'], 500);
         }
 

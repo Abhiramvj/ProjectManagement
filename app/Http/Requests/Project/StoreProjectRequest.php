@@ -29,6 +29,7 @@ class StoreProjectRequest extends FormRequest
             'team_id' => 'required|exists:teams,id',
             'end_date' => 'required|date|after_or_equal:today',
             'total_hours_required' => 'required|integer|min:1',
+            'priority' => 'nullable|in:low,medium,high,urgent',
 
         ];
     }

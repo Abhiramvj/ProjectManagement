@@ -159,8 +159,13 @@ class LeaveService
             } else {
                 $totalDays = $startDate->diffInDaysFiltered(fn ($date) => ! $date->isWeekend(), $endDate) + 1;
                 $deduction = 0;
-                if (($data['start_half_session'] ?? null) === 'afternoon') $deduction += 0.5;
-                if (($data['end_half_session'] ?? null) === 'morning') $deduction += 0.5;
+                if (($data['start_half_session'] ?? null) === 'afternoon') {
+                    $deduction += 0.5;
+                }
+                if (($data['end_half_session'] ?? null) === 'morning') {
+                    $deduction += 0.5;
+                }
+
                 return max(0.5, $totalDays - $deduction);
             }
         }

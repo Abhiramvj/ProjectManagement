@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             LeaveApplicationSeeder::class,
             TaskSeeder::class,
             CalendarNoteSeeder::class,
+            HolidaySeeder::class,
         ]);
     }
 }

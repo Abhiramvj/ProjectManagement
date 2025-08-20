@@ -18,7 +18,9 @@ class TeamFactory extends Factory
     public function definition(): array
     {
         return [
+
             'name' => $this->faker->words(2, true) . ' Team',
+
             'team_lead_id' => User::factory(),
         ];
     }

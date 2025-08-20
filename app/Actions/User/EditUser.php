@@ -25,16 +25,14 @@ class EditUser
     /**
      * Prepare the props for the user edit page.
      *
-     * @param \App\Models\User $user The user being edited.
-     * @return array
+     * @param  \App\Models\User  $user  The user being edited.
      */
     public function handle(User $user): array
     {
- 
+
         $formProps = $this->createUsers->handle();
 
         $user->load('roles');
-
 
         return array_merge(
             ['user' => $user],

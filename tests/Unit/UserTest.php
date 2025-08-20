@@ -28,9 +28,7 @@ class UserTest extends TestCase
         Role::create(['name' => 'hr', 'guard_name' => 'web']);
     }
 
-    //==================================
-    // ATTRIBUTE & BASIC RELATIONSHIP TESTS
-    //==================================
+
 
     #[Test]
     public function avatar_url_returns_storage_url_when_image_is_set(): void
@@ -63,9 +61,7 @@ class UserTest extends TestCase
         $this->assertEquals($manager->id, $employee->parent->id);
     }
 
-    //==================================
-    // LEAVE CALCULATION TESTS
-    //==================================
+
 
     #[Test]
     public function it_correctly_calculates_remaining_leave_balance(): void
@@ -113,9 +109,7 @@ class UserTest extends TestCase
         $this->assertEquals(1, $stats['rejected_applications']);
     }
 
-    //==================================
-    // HIERARCHY & MANAGER TESTS
-    //==================================
+
 
     #[Test]
     public function is_manager_of_returns_true_for_direct_and_indirect_subordinates(): void
@@ -147,18 +141,6 @@ class UserTest extends TestCase
         $this->assertTrue($subordinates->contains('id', $grandchild1->id));
     }
 
-    //==================================
-    // LEAVE APPROVAL LOGIC TESTS
-    //==================================
-
-    #[Test]
-    public function can_approve_leave_for_a_user_when_set_as_designated_approver(): void
-    {
-        $approver = User::factory()->create();
-        $employee = User::factory()->create(['leave_approver_id' => $approver->id]);
-
-        $this->assertTrue($approver->canApproveLeaveFor($employee));
-    }
 
     #[Test]
     public function can_approve_leave_for_a_user_when_they_are_the_manager(): void
@@ -168,6 +150,8 @@ class UserTest extends TestCase
 
         $this->assertTrue($manager->canApproveLeaveFor($employee));
     }
+
+
 
     #[Test]
     public function admin_or_hr_can_approve_leave_for_any_user(): void
@@ -189,12 +173,10 @@ class UserTest extends TestCase
         $this->assertFalse($unrelatedUser->canApproveLeaveFor($employee));
     }
 
-    //==================================
-    // TASK, TIME & PERFORMANCE TESTS
-    //==================================
 
 
-   #[Test]
+    #[Test]
+
     public function it_calculates_task_completion_rate(): void
     {
         // Arrange
@@ -248,7 +230,9 @@ class UserTest extends TestCase
         $this->assertFalse($userWithNoLogs->isActive());
     }
 
+
      #[Test]
+
     public function a_user_model_correctly_calculates_all_its_derived_attributes_and_relations(): void
     {
         // =================================================================

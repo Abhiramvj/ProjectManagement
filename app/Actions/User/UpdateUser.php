@@ -30,7 +30,6 @@ class UpdateUser
             // If 'work_mode' is not in the form data, it keeps the user's existing value.
             'work_mode' => $data['work_mode'] ?? $user->work_mode,
 
-
             'parent_id' => $data['parent_id'] ?? null,
             'designation' => $data['designation'] ?? null,
             'image' => $data['image'] ?? $user->image,
@@ -45,14 +44,13 @@ class UpdateUser
             $user->syncRoles($data['role']);
         }
 
-            if (!empty($data['team_id'])) {
-        // sync() will update the pivot table correctly.
-        $user->teams()->sync([$data['team_id']]);
-    } else {
-        // If no team was selected, detach the user from all teams.
-        $user->teams()->detach();
-    }
-
+        if (! empty($data['team_id'])) {
+            // sync() will update the pivot table correctly.
+            $user->teams()->sync([$data['team_id']]);
+        } else {
+            // If no team was selected, detach the user from all teams.
+            $user->teams()->detach();
+        }
 
         return $user;
     }

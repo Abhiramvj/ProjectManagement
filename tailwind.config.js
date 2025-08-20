@@ -32,5 +32,6 @@ export default {
   // ✅ Force DaisyUI to use light theme
   daisyui: {
     themes: ['light'],
+    darkTheme: false,
   },
 };

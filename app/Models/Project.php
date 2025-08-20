@@ -66,7 +66,8 @@ class Project extends Model
             if ($totalTasks === 0) {
                 return 0;
             }
-            $completedTasks = $this->tasks()->where('status', 'done')->count();
+            // Align with allowed task statuses used across the app
+            $completedTasks = $this->tasks()->where('status', 'completed')->count();
 
             return round(($completedTasks / $totalTasks) * 100);
         });

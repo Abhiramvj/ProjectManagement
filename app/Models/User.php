@@ -280,6 +280,13 @@ class User extends Authenticatable
         return $this->getAllSubordinates()->contains('id', $user->id);
     }
 
+    public function tasks(): HasMany
+    {
+        // This defines that a User can have many Tasks.
+        // It correctly points to the 'assigned_to_id' foreign key on the 'tasks' table.
+        return $this->hasMany(Task::class, 'assigned_to_id');
+    }
+
     /**
      * Get the hierarchy path (from top to current user)
      */
@@ -380,7 +387,9 @@ class User extends Authenticatable
             ->first();
 
         // If there are no tasks, the completion rate is 0.
-        if (!$stats || $stats->total_tasks == 0) {
+
+        if (! $stats || $stats->total_tasks == 0) {
+
             return 0;
         }
 
@@ -462,7 +471,9 @@ class User extends Authenticatable
         );
     }
 
-     public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
+
+
+    public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
     {
         return $this->hasMany(Announcement::class);
     }

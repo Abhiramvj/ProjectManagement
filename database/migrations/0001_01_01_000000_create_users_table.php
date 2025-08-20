@@ -59,7 +59,9 @@ return new class extends Migration
             $table->dropColumn('parent_id');
             $table->dropColumn('work_mode');
             $table->dropColumn('leave_balance');
+            $table->dropColumn('total_experience_years');
              $table->dropColumn('comp_off_balance');
+
         });
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');

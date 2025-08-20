@@ -18,6 +18,7 @@ class StoreProject
             'team_id' => $data['team_id'],
             'project_manager_id' => Auth::id(), // <-- THE KEY CHANGE IS HERE
             'status' => 'pending',
+            'priority' => $data['priority'] ?? 'medium',
             'end_date' => $data['end_date'] ?? null,
             'total_hours_required' => $data['total_hours_required'] ?? 0,
         ]);
