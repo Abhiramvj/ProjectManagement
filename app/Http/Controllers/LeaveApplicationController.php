@@ -104,7 +104,7 @@ class LeaveApplicationController extends Controller
             // C. Restore the user's leave balance.
             $user = $leave_application->user;
             if ($user) {
-                if (in_array($leave_application->leave_type, ['annual', 'casual'])) {
+                if (in_array($leave_application->leave_type, ['annual', 'personal'])) {
                     $user->leave_balance += $leave_application->leave_days;
                 } elseif ($leave_application->leave_type === 'compensatory') {
                     $user->comp_off_balance += $leave_application->leave_days;

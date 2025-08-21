@@ -122,24 +122,15 @@ const navigationItems = computed(() => {
         { name: 'Projects', route: 'projects.index', active: route().current('projects.*'), show: user.value.permissions.includes('assign projects') || user.value.permissions.includes('view all projects progress'), icon: 'Projects' },
         { name: 'Company Hierarchy', route: 'company.hierarchy', active: route().current('company.hierarchy'), show: true, icon: 'Company Hierarchy' },
         { name: 'Working Hours', route: 'hours.index', active: route().current('hours.index'), show: true, icon: 'Working Hours' },
-        { name: 'Apply for Leave', route: 'leave.index', active: route().current('leave.*'), show: user.value.permissions.includes('apply for leave'), icon: 'Apply for Leave' },
+        { name: 'Apply for Leave', route: 'leave.index', active: route().current('leave.index'), show: user.value.permissions.includes('apply for leave'), icon: 'Apply for Leave' },
+        { name: 'Your Requests', route: 'leave.fullRequests', active: route().current('leave.fullRequests'), show: true, icon: 'Your Requests'},
         { name: 'Leave Calendar', route: 'leaves.calendar', active: route().current('leaves.calendar'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Calendar' },
         { name: 'Leave Logs', route: 'leave.logs', active: route().current('leave.logs'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Logs' },
         { name: 'Manage Users', route: 'users.index', active: route().current('users.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Users' },
         { name: 'Manage Teams', route: 'teams.index', active: route().current('teams.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Teams' },
         { name: 'Manage Roles', route: 'roles.index', active: route().current('roles.index'), show: user.value.permissions.includes('manage roles'), icon: 'Manage Roles' },
-        // This is our new, single Mail Logs link, properly secured.
-        {
-            name: 'Mail Logs',
-            route: 'mail-logs.index',
-            active: route().current('mail-logs.index'),
-            // Show this if the user is an admin OR an hr user.
-            // We check for permissions that these roles have.
-            show: user.value.permissions.includes('view mail logs'),
-            icon: 'Mail Logs'
-        },
+        { name: 'Mail Logs', route: 'mail-logs.index', active: route().current('mail-logs.index'), show: user.value.permissions.includes('view mail logs'), icon: 'Mail Logs' },
     ];
-
     return items.filter(item => item.show);
 });
 
@@ -151,6 +142,7 @@ const icons = {
     'Leave Logs': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
     Projects: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`,
     'Apply for Leave': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`,
+    'Your Requests': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4-4-4m0 8V5a2 2 0 012-2h6a2 2 0 012 2v14a2 2 0 01-2 2H8a2 2 0 01-2-2z" /></svg>`,
     'Working Hours': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
     'Manage Users': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
     'Manage Teams': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,

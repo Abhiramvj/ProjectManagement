@@ -42,7 +42,7 @@ class UserHierarchyControllerTest extends TestCase
         // Use Model Factories or manually set counts on models if needed
     }
 
-    public function testIndexReturnsHierarchyData()
+    public function test_index_returns_hierarchy_data()
     {
         $response = $this->get(route('company.hierarchy')); // Adjust route name as needed
 

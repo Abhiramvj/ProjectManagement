@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeaveApplication;
+use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -22,27 +23,48 @@ class LeaveController extends Controller
      * @return \Inertia\Response
      */
     public function showLogs(Request $request)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        // Confirm user is authorized to manage leave applications (e.g. middleware or gate)
-        abort_unless($user->can('manage leave applications'), 403);
+    // Confirm user has permission to manage leave applications
+    abort_unless($user->can('manage leave applications'), 403);
 
-        $leaveRequests = LeaveApplication::with('user:id,name,email')
-            ->orderByRaw("CASE status
-            WHEN 'pending' THEN 1
-            WHEN 'approved' THEN 2
-            WHEN 'rejected' THEN 3
-            ELSE 4
-        END")
-            ->latest()
-            ->paginate(15);
+    $query = LeaveApplication::with('user:id,name,email');
 
-        return Inertia::render('Leave/LeaveLogs', [
-            'leaveRequests' => $leaveRequests,
-            'canManage' => true,
-        ]);
+    if ($user->hasRole('admin') || $user->hasRole('hr')) {
+        // Admin and HR see all leave requests - no filter
+    } elseif ($user->hasRole('team-lead')) {
+        // Get teams where current user is team lead, along with their members
+        $teams = Team::where('team_lead_id', $user->id)->with('members')->get();
+
+        // Extract all member IDs across these teams
+        $memberIds = $teams->flatMap(function ($team) {
+            return $team->members->pluck('id');
+        })->unique();
+
+        // Filter leave requests to only these members
+        $query->whereIn('user_id', $memberIds);
+    } else {
+        // Other roles get unauthorized
+        abort(403, 'Unauthorized');
     }
+
+    // Order by status priority and latest created
+    $leaveRequests = $query->orderByRaw("CASE status
+        WHEN 'pending' THEN 1
+        WHEN 'approved' THEN 2
+        WHEN 'rejected' THEN 3
+        ELSE 4
+    END")
+    ->latest()
+    ->paginate(15);
+
+    // Render Inertia page with leave requests and permission flag
+    return Inertia::render('Leave/LeaveLogs', [
+        'leaveRequests' => $leaveRequests,
+        'canManage' => true,
+    ]);
+}
 
     public function fullRequests(Request $request)
     {

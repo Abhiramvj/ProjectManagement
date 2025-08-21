@@ -168,7 +168,7 @@ class StoreLeave
         ]);
 
         // Deduct from DB immediately
-        if (in_array($leaveType, ['annual', 'casual'])) {
+        if (in_array($leaveType, ['annual', 'personal'])) {
             $user->leave_balance = max(0, $user->leave_balance - $leaveDays);
         } elseif ($leaveType === 'compensatory') {
             $user->comp_off_balance = max(0, $user->comp_off_balance - $leaveDays);

@@ -476,74 +476,19 @@ const approvedUpcomingRequests = computed(() =>
   <Head title="Leave" />
   <AuthenticatedLayout>
     <div class="p-6 bg-gray-50 min-h-screen">
-      <h1 class="text-3xl font-bold text-gray-800 mb-6">Leave</h1>
 
-      <!-- Controls -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <!-- Upcoming/Pending leave requests -->
-<div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
-  <h2 class="text-lg font-semibold text-gray-700 mb-4">Upcoming Approved Leave</h2>
-  <div class="space-y-3" v-if="approvedUpcomingRequests.length">
-    <div
-      v-for="request in approvedUpcomingRequests"
-      :key="request.id"
-      class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-    >
-      <div class="flex items-center gap-4">
-        <div class="p-3 rounded-full"
-             :class="getTagClass(request.leave_type)">
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800">
-            {{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
-            <span v-if="request.start_date !== request.end_date">
-              - {{ new Date(request.end_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
-            </span>
-          </p>
-          <p class="text-sm text-gray-500 capitalize">{{ request.leave_type }}</p>
-        </div>
-      </div>
-      <p class="text-sm text-gray-600 hidden md:block truncate max-w-[180px]">{{ request.reason }}</p>
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
-        <p class="text-sm font-medium text-green-500">Approved</p>
-      </div>
-    </div>
-  </div>
-  <div v-else class="text-gray-500 text-sm">
-    No approved upcoming leave requests.
-  </div>
-</div>
-
-
-
-        <div class="space-y-3 flex flex-col justify-between">
-
-          <button @click="scrollToLeaveForm" class="w-full text-left bg-blue-600 text-white p-4 rounded-lg shadow-sm hover:bg-blue-700 transition font-medium">
-            Apply Leave
-          </button>
-          <button @click="openRequestsModal" class="w-full text-left bg-gray-200 text-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-300 transition font-medium">
-            Your Requests
-          </button>
-          <button @click="openPolicyModal" class="w-full text-left bg-white text-gray-700 p-4 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium">
-            View Leave Policy
-          </button>
-        </div>
-      </div>
+     
 
       <!-- Leave Request Form -->
       <div ref="leaveFormSection" class="bg-white rounded-lg shadow overflow-hidden mb-6">
-        <div class="p-6 border-b border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-900">New Leave Request</h3>
-          <p class="mt-1 text-sm text-gray-500">Select dates and provide details for your leave</p>
-        </div>
+        
 
         <form @submit.prevent="submitApplication" class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6" enctype="multipart/form-data">
           <div class="lg:col-span-2 space-y-4">
             <div class="flex items-center justify-between">
               <div class="flex items-center mb-3 space-x-3">
                 <label class="text-sm font-medium text-gray-700 select-none">
-                  Color-code leave types
+                  Color-code for leave types
                 </label>
                 <button
                   type="button"
@@ -582,15 +527,21 @@ const approvedUpcomingRequests = computed(() =>
           </div>
           <div class="space-y-4">
             <div class="bg-blue-50 p-4 rounded-lg">
-              <div class="text-sm font-medium text-gray-700">Remaining Leave Balance</div>
-                <div class="text-2xl font-bold text-blue-600 mt-1">
+              <div class="text-12 font-bold text-blue-600 mt-1">Remaining Leave Balance : <template v-if="form.leave_type === 'compensatory'">
+                    {{ props.compOffBalance }} day{{ props.compOffBalance !== 1 ? 's' : '' }}
+                  </template>
+                  <template v-else>
+                    {{ props.remainingLeaveBalance }} day{{ props.remainingLeaveBalance !== 1 ? 's' : '' }}
+                  </template>
+              </div>
+                <!-- <div class="text-2xl font-bold text-blue-600 mt-1">
                   <template v-if="form.leave_type === 'compensatory'">
                     {{ props.compOffBalance }} day{{ props.compOffBalance !== 1 ? 's' : '' }}
                   </template>
                   <template v-else>
                     {{ props.remainingLeaveBalance }} day{{ props.remainingLeaveBalance !== 1 ? 's' : '' }}
                   </template>
-                </div>
+                </div> -->
               </div>
             <div>
               <InputLabel for="leave_type" value="Leave Type" class="text-sm font-medium text-gray-700 mb-1" />
@@ -677,6 +628,16 @@ const approvedUpcomingRequests = computed(() =>
                 {{ form.processing ? 'Submitting...' : 'Submit Leave Request' }}
               </PrimaryButton>
             </div>
+            <div class="space-y-3 flex flex-col justify-between">
+
+          
+          <button @click="openRequestsModal" class="w-full text-left bg-gray-200 text-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-300 transition font-medium">
+            Your Requests
+          </button>
+          <button @click="openPolicyModal" class="w-full text-left bg-white text-gray-700 p-4 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium">
+            View Leave Policy
+          </button>
+        </div>
           </div>
         </form>
       </div>
@@ -858,7 +819,56 @@ const approvedUpcomingRequests = computed(() =>
           </div>
         </form>
       </div>
+       <!-- Controls -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Upcoming/Pending leave requests -->
+<div class="lg:col-span-3 bg-white p-6 rounded-lg shadow-sm">
+  <h2 class="text-lg font-semibold text-gray-700 mb-4">Upcoming Approved Leave</h2>
+  <div class="space-y-3" v-if="approvedUpcomingRequests.length">
+    <div
+      v-for="request in approvedUpcomingRequests"
+      :key="request.id"
+      class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+    >
+      <div class="flex items-center gap-4">
+        <div class="p-3 rounded-full"
+             :class="getTagClass(request.leave_type)">
+        </div>
+        <div>
+          <p class="font-semibold text-gray-800">
+            {{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
+            <span v-if="request.start_date !== request.end_date">
+              - {{ new Date(request.end_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
+            </span>
+          </p>
+          <p class="text-sm text-gray-500 capitalize">{{ request.leave_type }}</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-600 hidden md:block truncate max-w-[180px]">{{ request.reason }}</p>
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+        <p class="text-sm font-medium text-green-500">Approved</p>
+      </div>
+    </div>
+  </div>
+  <div v-else class="text-gray-500 text-sm">
+    No approved upcoming leave requests.
+  </div>
+</div>
 
+
+
+        <!-- <div class="space-y-3 flex flex-col justify-between">
+
+          
+          <button @click="openRequestsModal" class="w-full text-left bg-gray-200 text-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-300 transition font-medium">
+            Your Requests
+          </button>
+          <button @click="openPolicyModal" class="w-full text-left bg-white text-gray-700 p-4 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium">
+            View Leave Policy
+          </button>
+        </div> -->
+      </div>
     </div>
   </AuthenticatedLayout>
 </template>
