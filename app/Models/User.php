@@ -475,4 +475,27 @@ class User extends Authenticatable
     {
         return $this->hasMany(Announcement::class);
     }
+    public function approvedAnnualLeaves()
+{
+    return $this->hasMany(LeaveApplication::class)
+        ->where('leave_type', 'annual')
+        ->where('status', 'approved')
+        ->whereYear('start_date', now()->year);
+}
+
+public function approvedSickLeaves()
+{
+    return $this->hasMany(LeaveApplication::class)
+        ->where('leave_type', 'sick')
+        ->where('status', 'approved')
+        ->whereYear('start_date', now()->year);
+}
+
+public function approvedPersonalLeaves()
+{
+    return $this->hasMany(LeaveApplication::class)
+        ->where('leave_type', 'personal')
+        ->where('status', 'approved')
+        ->whereYear('start_date', now()->year);
+}
 }

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
+import FlashMessage from '@/Components/FlashMessage.vue'; // <-- 1. IMPORT THE COMPONENT
 
 // Lazy load components for better performance
 const ApplicationLogo = shallowRef(null);
@@ -164,157 +165,12 @@ onUnmounted(() => {
 });
 </script>
 <template>
-    <div class="min-h-screen bg-slate-50 font-sans">
-        <!-- Static sidebar for desktop -->
-        <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
-            <div class="flex flex-grow flex-col overflow-y-auto border-r border-slate-200 bg-white pt-5">
-                <div class="flex flex-shrink-0 items-center px-4 space-x-2">
-                    <Link :href="route('dashboard')">
-                        <component :is="ApplicationLogo" v-if="ApplicationLogo" class="block h-8 w-auto text-slate-800" />
-                    </Link>
-                    <span class="text-xl font-bold text-slate-800">WorkSphere</span>
-                </div>
-                <nav v-if="user && user.permissions && NavLink" class="mt-8 flex-1 space-y-1 px-3 pb-4">
-                    <component
-                        :is="NavLink"
-                        v-for="item in navigationItems"
-                        :key="item.name"
-                        :href="route(item.route)"
-                        :active="item.active"
-                    >
-                        <span
-                            v-html="icons[item.icon]"
-                            class="mr-3 flex-shrink-0 h-6 w-6"
-                            :class="[item.active ? 'text-slate-700' : 'text-slate-400 group-hover:text-slate-500']"
-                        ></span>
-                        {{ item.name }}
-                    </component>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Main content area -->
-        <div class="md:pl-64">
-            <div class="mx-auto flex max-w-7xl flex-col min-h-screen">
-                <!-- Top bar -->
-                <header class="sticky top-0 z-20 flex h-16 flex-shrink-0 justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8">
-                    <button @click="showingSidebar = true" type="button" class="border-r border-slate-200 px-4 text-slate-500 focus:outline-none md:hidden">
-                        <span class="sr-only">Open sidebar</span>
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-                    </button>
-                    <div class="flex items-center">
-                        <slot name="header" />
-                    </div>
-                    <div class="flex flex-1 items-center justify-end space-x-4">
-                        <template v-if="user && Dropdown">
-                            <!-- Notification Dropdown -->
-                            <div class="relative">
-                                <button
-                                    @click="toggleNotificationDropdown"
-                                    class="relative inline-flex items-center p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                                >
-                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                    </svg>
-                                    <span v-if="unreadNotificationCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                                        {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
-                                    </span>
-                                </button>
-
-                                <!-- Notification dropdown content -->
-                                <div
-                                    v-if="showingNotificationDropdown"
-                                    @click="closeNotificationDropdown"
-                                    class="fixed inset-0 z-40"
-                                ></div>
-                                <div
-                                    v-if="showingNotificationDropdown"
-                                    class="absolute right-0 z-50 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-lg"
-                                >
-                                    <div class="p-4 border-b border-slate-200">
-                                        <div class="flex items-center justify-between">
-                                            <h3 class="text-sm font-semibold text-slate-900">Notifications</h3>
-                                            <button
-                                                v-if="notifications.length > 0"
-                                                @click="markAllAsRead"
-                                                :disabled="loading"
-                                                class="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="max-h-64 overflow-y-auto">
-                                        <div v-if="notifications.length === 0" class="p-4 text-center text-slate-500 text-sm">
-                                            No notifications
-                                        </div>
-                                        <div
-                                            v-for="notification in notifications"
-                                            :key="notification.id"
-                                            @click="handleNotificationClick(notification)"
-                                            class="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
-                                        >
-                                            <div class="flex items-start space-x-3">
-                                                <span class="text-lg">{{ getNotificationIcon(notification.data.type) }}</span>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm text-slate-900 font-medium truncate">{{ notification.data.title }}</p>
-                                                    <p class="text-xs text-slate-500 mt-1">{{ formatDate(notification.created_at) }}</p>
-                                                </div>
-                                                <div v-if="!notification.read_at" class="w-2 h-2 bg-blue-600 rounded-full"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- User Profile Dropdown -->
-                            <component :is="Dropdown" align="right" width="48">
-                                <template #trigger>
-                                    <button class="flex items-center space-x-3 rounded-lg p-1 transition hover:bg-slate-50">
-                                        <template v-if="user && user.image">
-                                        <img
-                                            class="h-9 w-9 rounded-full object-cover"
-                                            :src="`/storage/${user.image}`"
-                                            alt="User Avatar"
-                                        />
-                                        </template>
-                                        <template v-else>
-                                        <!-- If no user image, always show the default avatar image -->
-                                        <img
-                                            class="h-9 w-9 rounded-full object-cover"
-                                            src="/storage/defaults/default-avatar.jpg"
-                                            alt="Default Avatar"
-                                        />
-                                        </template>
-                                        <div class="hidden text-left md:block">
-                                        <div class="text-sm font-semibold text-slate-800">{{ user.name }}</div>
-                                        <div class="text-xs text-slate-500">{{ userDesignation }}</div>
-                                        </div>
-                                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </template>
-
-                                <template #content>
-                                    <component :is="DropdownLink" v-if="DropdownLink" :href="route('profile.edit')"> Profile </component>
-                                    <component :is="DropdownLink" v-if="DropdownLink" :href="route('notifications.index')">Notifications</component>
-                                    <component :is="DropdownLink" v-if="DropdownLink" :href="route('logout')" method="post" as="button">Log Out</component>
-                                </template>
-                            </component>
-                        </template>
-                    </div>
-                </header>
-                <main class="flex-1">
-                    <slot />
-                </main>
-            </div>
-        </div>
-
-        <!-- Mobile Sidebar (Overlay) -->
-        <div v-if="showingSidebar" class="relative z-40 md:hidden" role="dialog" aria-modal="true">
-            <div @click="showingSidebar = false" class="fixed inset-0 bg-slate-600 bg-opacity-75"></div>
-            <div class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white">
+    <div>
+        <FlashMessage /> <!-- <-- 2. ADD THE COMPONENT TAG HERE -->
+        <div class="min-h-screen bg-slate-50 font-sans">
+            
+            <!-- Static sidebar for desktop -->
+            <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
                 <div class="flex flex-grow flex-col overflow-y-auto border-r border-slate-200 bg-white pt-5">
                     <div class="flex flex-shrink-0 items-center px-4 space-x-2">
                         <Link :href="route('dashboard')">
@@ -329,7 +185,6 @@ onUnmounted(() => {
                             :key="item.name"
                             :href="route(item.route)"
                             :active="item.active"
-                            @click="showingSidebar = false"
                         >
                             <span
                                 v-html="icons[item.icon]"
@@ -339,6 +194,156 @@ onUnmounted(() => {
                             {{ item.name }}
                         </component>
                     </nav>
+                </div>
+            </div>
+
+            <!-- Main content area -->
+            <div class="md:pl-64">
+                <div class="mx-auto flex max-w-7xl flex-col min-h-screen">
+                    <!-- Top bar -->
+                    <header class="sticky top-0 z-20 flex h-16 flex-shrink-0 justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8">
+                        <button @click="showingSidebar = true" type="button" class="border-r border-slate-200 px-4 text-slate-500 focus:outline-none md:hidden">
+                            <span class="sr-only">Open sidebar</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                        </button>
+                        <div class="flex items-center">
+                            <slot name="header" />
+                        </div>
+                        <div class="flex flex-1 items-center justify-end space-x-4">
+                            <template v-if="user && Dropdown">
+                                <!-- Notification Dropdown -->
+                                <div class="relative">
+                                    <button
+                                        @click="toggleNotificationDropdown"
+                                        class="relative inline-flex items-center p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                    >
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <span v-if="unreadNotificationCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                            {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+                                        </span>
+                                    </button>
+
+                                    <!-- Notification dropdown content -->
+                                    <div
+                                        v-if="showingNotificationDropdown"
+                                        @click="closeNotificationDropdown"
+                                        class="fixed inset-0 z-40"
+                                    ></div>
+                                    <div
+                                        v-if="showingNotificationDropdown"
+                                        class="absolute right-0 z-50 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-lg"
+                                    >
+                                        <div class="p-4 border-b border-slate-200">
+                                            <div class="flex items-center justify-between">
+                                                <h3 class="text-sm font-semibold text-slate-900">Notifications</h3>
+                                                <button
+                                                    v-if="notifications.length > 0"
+                                                    @click="markAllAsRead"
+                                                    :disabled="loading"
+                                                    class="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                                                >
+                                                    Mark all as read
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="max-h-64 overflow-y-auto">
+                                            <div v-if="notifications.length === 0" class="p-4 text-center text-slate-500 text-sm">
+                                                No notifications
+                                            </div>
+                                            <div
+                                                v-for="notification in notifications"
+                                                :key="notification.id"
+                                                @click="handleNotificationClick(notification)"
+                                                class="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
+                                            >
+                                                <div class="flex items-start space-x-3">
+                                                    <span class="text-lg">{{ getNotificationIcon(notification.data.type) }}</span>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm text-slate-900 font-medium truncate">{{ notification.data.title }}</p>
+                                                        <p class="text-xs text-slate-500 mt-1">{{ formatDate(notification.created_at) }}</p>
+                                                    </div>
+                                                    <div v-if="!notification.read_at" class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- User Profile Dropdown -->
+                                <component :is="Dropdown" align="right" width="48">
+                                    <template #trigger>
+                                        <button class="flex items-center space-x-3 rounded-lg p-1 transition hover:bg-slate-50">
+                                            <template v-if="user && user.image">
+                                            <img
+                                                class="h-9 w-9 rounded-full object-cover"
+                                                :src="`/storage/${user.image}`"
+                                                alt="User Avatar"
+                                            />
+                                            </template>
+                                            <template v-else>
+                                            <!-- If no user image, always show the default avatar image -->
+                                            <img
+                                                class="h-9 w-9 rounded-full object-cover"
+                                                src="/storage/defaults/default-avatar.jpg"
+                                                alt="Default Avatar"
+                                            />
+                                            </template>
+                                            <div class="hidden text-left md:block">
+                                            <div class="text-sm font-semibold text-slate-800">{{ user.name }}</div>
+                                            <div class="text-xs text-slate-500">{{ userDesignation }}</div>
+                                            </div>
+                                            <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </template>
+
+                                    <template #content>
+                                        <component :is="DropdownLink" v-if="DropdownLink" :href="route('profile.edit')"> Profile </component>
+                                        <component :is="DropdownLink" v-if="DropdownLink" :href="route('notifications.index')">Notifications</component>
+                                        <component :is="DropdownLink" v-if="DropdownLink" :href="route('logout')" method="post" as="button">Log Out</component>
+                                    </template>
+                                </component>
+                            </template>
+                        </div>
+                    </header>
+                    <main class="flex-1">
+                        <slot />
+                    </main>
+                </div>
+            </div>
+
+            <!-- Mobile Sidebar (Overlay) -->
+            <div v-if="showingSidebar" class="relative z-40 md:hidden" role="dialog" aria-modal="true">
+                <div @click="showingSidebar = false" class="fixed inset-0 bg-slate-600 bg-opacity-75"></div>
+                <div class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white">
+                    <div class="flex flex-grow flex-col overflow-y-auto border-r border-slate-200 bg-white pt-5">
+                        <div class="flex flex-shrink-0 items-center px-4 space-x-2">
+                            <Link :href="route('dashboard')">
+                                <component :is="ApplicationLogo" v-if="ApplicationLogo" class="block h-8 w-auto text-slate-800" />
+                            </Link>
+                            <span class="text-xl font-bold text-slate-800">WorkSphere</span>
+                        </div>
+                        <nav v-if="user && user.permissions && NavLink" class="mt-8 flex-1 space-y-1 px-3 pb-4">
+                            <component
+                                :is="NavLink"
+                                v-for="item in navigationItems"
+                                :key="item.name"
+                                :href="route(item.route)"
+                                :active="item.active"
+                                @click="showingSidebar = false"
+                            >
+                                <span
+                                    v-html="icons[item.icon]"
+                                    class="mr-3 flex-shrink-0 h-6 w-6"
+                                    :class="[item.active ? 'text-slate-700' : 'text-slate-400 group-hover:text-slate-500']"
+                                ></span>
+                                {{ item.name }}
+                            </component>
+                        </nav>
+                    </div>
                 </div>
             </div>
         </div>

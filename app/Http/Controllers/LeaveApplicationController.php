@@ -32,25 +32,43 @@ class LeaveApplicationController extends Controller
         return Inertia::render('Leave/Index', $getLeaveRequests->handle());
     }
 
-    public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
+     public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
     {
-        $leave_application = $storeLeave->handle($request->validated());
+        // The StoreLeaveRequest has already run and passed at this point.
+        // We now wrap our core logic in a try...catch block.
+        
+        try {
+            // --- HAPPY PATH ---
+            // This is your existing code.
+            $leave_application = $storeLeave->handle($request->validated());
 
-        $recipients = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'hr']);
-        })->get();
+            $recipients = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['admin', 'hr']);
+            })->get();
 
-        // if ($recipients->isNotEmpty()) {
-        //     foreach ($recipients as $recipient) {
-        //         $this->sendEmail(
-        //             $leave_application,
-        //             new LeaveApplicationSubmitted($leave_application),
-        //             $recipient->email
-        //         );
-        //     }
-        // }
+            // if ($recipients->isNotEmpty()) {
+            //     foreach ($recipients as $recipient) {
+            //         $this->sendEmail(
+            //             $leave_application,
+            //             new LeaveApplicationSubmitted($leave_application),
+            //             $recipient->email
+            //         );
+            //     }
+            // }
 
-        return redirect()->route('leave.index')->with('success', 'Leave application submitted.');
+            // On success, redirect to the index page with a success flash message.
+            return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
+
+        } catch (\Exception $e) {
+            // --- FAILURE PATH ---
+            // If anything inside the `try` block fails...
+
+            // 1. Log the detailed error for the developer to debug.
+            Log::error('Failed to store leave application: ' . $e->getMessage());
+
+            // 2. Redirect the user back with a friendly error flash message.
+            return Redirect::back()->with('error', 'An unexpected server error occurred. Please try again later.');
+        }
     }
 
     public function approveCompOff(Request $request, User $user)
