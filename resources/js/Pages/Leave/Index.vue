@@ -17,6 +17,10 @@ const props = defineProps({
   highlightedDates: Array,
   remainingLeaveBalance: Number,
   compOffBalance: Number,
+  employees: {
+        type: Array,
+        default: () => []
+    },
 })
 
 const page = usePage()
@@ -76,9 +80,11 @@ function toISODateOnly(date) {
   return `${year}-${month}-${day}`
 }
 
-const calendarEvents = computed(() =>
-  (props.highlightedDates || [])
-    .filter(ev => ev.user_id === currentUserId || ev.user_id === null)
+const calendarEvents = computed(() => {
+  const selectedUserId = isAdminOrHR && form.user_id ? form.user_id : currentUserId;
+
+  return (props.highlightedDates || [])
+    .filter(ev => ev.user_id === selectedUserId || ev.user_id === null)
     .map(ev => ({
       display: 'background',
       start: ev.start,
@@ -87,11 +93,11 @@ const calendarEvents = computed(() =>
         : ev.start,
       backgroundColor: showColors.value
         ? (leaveColors[ev.color_category] || '#9ca3af')
-        : 'transparent',   // Use transparent instead of gray
-      borderColor: 'transparent', // Remove border color as well
+        : 'transparent',
+      borderColor: 'transparent',
       title: ev.title,
-    }))
-)
+    }));
+});
 
 
 
@@ -125,10 +131,13 @@ function updateFormDates() {
 const handleDateClick = (info) => {
   const clicked = new Date(info.date)
   clicked.setHours(0, 0, 0, 0)
-  if (clicked < today) {
-    alert('Please select a date that is today or after today.')
+
+  // This is the only line that changes
+  if (!isAdminOrHR && clicked < today) {
+    alert('You can only select today or a future date.')
     return
   }
+
   const [start, end] = selectedDates.value
   if (!start) {
     selectedDates.value = [clicked, null]
@@ -144,66 +153,82 @@ const handleDateClick = (info) => {
   updateFormDates()
 }
 
+const userRoles = page.props.auth.user.roles || [];
+const isAdminOrHR = userRoles.includes('admin') || userRoles.includes('hr');
+
 const submitApplication = () => {
   if (form.day_type === 'half') {
     if (!form.start_half_session) {
-      alert('Please select morning or afternoon session for start date.')
-      return
+      alert('Please select morning or afternoon session for start date.');
+      return;
     }
     if (form.end_date && form.start_date !== form.end_date && !form.end_half_session) {
-      alert('Please select morning or afternoon session for end date.')
-      return
+      alert('Please select morning or afternoon session for end date.');
+      return;
     }
   }
+  
   if (!form.start_date) {
-    alert('Please select at least a start date.')
-    return
+    alert('Please select at least a start date.');
+    return;
   }
   if (!form.end_date) {
-    form.end_date = form.start_date
-    selectedDates.value = [new Date(form.start_date), new Date(form.start_date)]
+    form.end_date = form.start_date;
+    selectedDates.value = [new Date(form.start_date), new Date(form.start_date)];
     if (form.day_type === 'half') {
-      form.end_half_session = form.start_half_session
+      form.end_half_session = form.start_half_session;
     }
   }
   if (form.day_type === 'full') {
-    form.start_half_session = null
-    form.end_half_session = null
+    form.start_half_session = null;
+    form.end_half_session = null;
   }
 
-  const startDate = new Date(form.start_date)
-  const timeDiff = startDate.getTime() - today.getTime()
-  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
-  if (form.leave_type === 'annual' && daysDiff < 7) {
-    if (!confirm('Warning: Annual leaves should be requested at least 7 days in advance. Do you still want to submit?')) return
-  }
-  if (form.leave_type === 'personal' && daysDiff < 3) {
-    if (!confirm('Warning: Personal leaves should be requested at least 3 days in advance. Do you still want to submit?')) return
+  const startDate = new Date(form.start_date);
+  const timeDiff = startDate.getTime() - today.getTime();
+  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+  // Only enforce advance notice for non-admin/hr users
+  if (!isAdminOrHR) {
+    if (form.leave_type === 'annual' && daysDiff < 7) {
+      if (!confirm('Warning: Annual leaves should be requested at least 7 days in advance. Do you still want to submit?')) return;
+    }
+    if (form.leave_type === 'personal' && daysDiff < 3) {
+      if (!confirm('Warning: Personal leaves should be requested at least 3 days in advance. Do you still want to submit?')) return;
+    }
   }
 
-  const formData = new FormData()
+  const formData = new FormData();
   for (const [key, val] of Object.entries(form.data())) {
-    formData.append(key, val ?? '')
+    formData.append(key, val ?? '');
   }
-  if (supportingDocument.value) formData.append('supporting_document', supportingDocument.value)
+
+  // Append user_id if admin/HR selects an employee
+  if (isAdminOrHR && form.user_id) {
+    formData.append('user_id', form.user_id);
+  }
+
+  if (supportingDocument.value) formData.append('supporting_document', supportingDocument.value);
 
   router.post(route('leave.store'), formData, {
     preserveScroll: true,
     headers: { 'Content-Type': 'multipart/form-data' },
     onSuccess: () => {
-      form.reset()
-      form.leave_type = 'sick'
-      form.day_type = 'full'
-      form.start_half_session = ''
-      form.end_half_session = ''
-      selectedDates.value = [null, null]
-      supportingDocument.value = null
+      form.reset();
+      form.leave_type = 'sick';
+      form.day_type = 'full';
+      form.start_half_session = '';
+      form.end_half_session = '';
+      selectedDates.value = [null, null];
+      supportingDocument.value = null;
+      if (isAdminOrHR) form.user_id = null; // Reset selected employee
     },
     onError: (errors) => {
-      if (errors.message) alert(errors.message)
-    }
-  })
-}
+      if (errors.message) alert(errors.message);
+    },
+  });
+};
+
 
 const statusConfig = {
   approved: { class: 'bg-green-100 text-green-800', icon: '✅' },
@@ -469,6 +494,41 @@ const approvedUpcomingRequests = computed(() =>
     .slice(0, 3)
 )
 
+const selectedEmployeeBalance = computed(() => {
+  if (!form.user_id) {
+    // no selection, fallback to logged-in user’s own balance
+    return props.remainingLeaveBalance;
+  }
+
+  const selectedEmp = props.employees.find(e => e.id === form.user_id);
+  
+  if (selectedEmp) {
+    return selectedEmp.leave_balance;
+  } else {
+    // fallback safety
+    return props.remainingLeaveBalance;
+  }
+});
+const selectedLeaveBalance = computed(() => {
+  if (!form.user_id) {
+    // No employee selected, fallback to logged-in user's leave balance
+    return props.remainingLeaveBalance;
+  }
+  const employee = props.employees.find(e => e.id === form.user_id);
+  return employee ? employee.leave_balance : props.remainingLeaveBalance;
+});
+
+const selectedCompOffBalance = computed(() => {
+  if (!form.user_id) {
+    // No employee selected, fallback to logged-in user's comp off balance
+    return props.compOffBalance;
+  }
+  const employee = props.employees.find(e => e.id === form.user_id);
+  return employee ? employee.comp_off_balance : props.compOffBalance;
+});
+
+
+
 
 </script>
 
@@ -527,13 +587,18 @@ const approvedUpcomingRequests = computed(() =>
           </div>
           <div class="space-y-4">
             <div class="bg-blue-50 p-4 rounded-lg">
-              <div class="text-12 font-bold text-blue-600 mt-1">Remaining Leave Balance : <template v-if="form.leave_type === 'compensatory'">
-                    {{ props.compOffBalance }} day{{ props.compOffBalance !== 1 ? 's' : '' }}
-                  </template>
-                  <template v-else>
-                    {{ props.remainingLeaveBalance }} day{{ props.remainingLeaveBalance !== 1 ? 's' : '' }}
-                  </template>
-              </div>
+            <div class="text-12 font-bold text-blue-600 mt-1">
+  Remaining Leave Balance : 
+  <template v-if="form.leave_type === 'compensatory'">
+    {{ selectedCompOffBalance }} day{{ selectedCompOffBalance !== 1 ? 's' : '' }}
+  </template>
+  <template v-else>
+    {{ selectedLeaveBalance }} day{{ selectedLeaveBalance !== 1 ? 's' : '' }}
+  </template>
+</div>
+
+
+
                 <!-- <div class="text-2xl font-bold text-blue-600 mt-1">
                   <template v-if="form.leave_type === 'compensatory'">
                     {{ props.compOffBalance }} day{{ props.compOffBalance !== 1 ? 's' : '' }}
@@ -543,7 +608,20 @@ const approvedUpcomingRequests = computed(() =>
                   </template>
                 </div> -->
               </div>
+              
             <div>
+             <div>
+              
+
+  <select v-if="isAdminOrHR" v-model="form.user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+  <option value="" disabled>Select Employee</option>
+  <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+    {{ employee.name }}
+  </option>
+</select>
+
+</div>
+
               <InputLabel for="leave_type" value="Leave Type" class="text-sm font-medium text-gray-700 mb-1" />
               <select id="leave_type" v-model="form.leave_type" required
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
@@ -613,9 +691,7 @@ const approvedUpcomingRequests = computed(() =>
 
             <div>
               <InputLabel for="reason" value="Reason" class="text-sm font-medium text-gray-700 mb-1" />
-              <textarea id="reason" v-model="form.reason" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Brief explanation for your leave request"></textarea>
-              <InputError :message="form.errors.reason" />
-            </div>
+<input type="text" id="reason" v-model="form.reason" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-3 px-4" placeholder="Brief explanation for your leave request" />            </div>
 
             <div v-if="form.leave_type === 'sick'">
               <InputLabel for="supporting_document" value="Supporting Document (Optional)" />
@@ -629,15 +705,13 @@ const approvedUpcomingRequests = computed(() =>
               </PrimaryButton>
             </div>
             <div class="space-y-3 flex flex-col justify-between">
-
-          
-          <button @click="openRequestsModal" class="w-full text-left bg-gray-200 text-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-300 transition font-medium">
-            Your Requests
-          </button>
-          <button @click="openPolicyModal" class="w-full text-left bg-white text-gray-700 p-4 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium">
-            View Leave Policy
-          </button>
-        </div>
+  <button type="button" @click="openRequestsModal" class="w-full text-left bg-gray-200 text-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-300 transition font-medium">
+    Your Requests
+  </button>
+  <button type="button" @click="openPolicyModal" class="w-full text-left bg-white text-gray-700 p-4 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium">
+    View Leave Policy
+  </button>
+</div>
           </div>
         </form>
       </div>

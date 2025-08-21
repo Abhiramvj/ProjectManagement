@@ -4,13 +4,13 @@ namespace App\Actions\Leave;
 
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class GetLeave
 {
     /**
-     * Determine the color category used for frontend display,
-     * based on leave type and remaining leave balance.
+     * Determine the color category used for frontend display.
      */
     private function getLeaveColorCategory(LeaveApplication $request): string
     {
@@ -18,19 +18,12 @@ class GetLeave
             return 'pending';
         }
 
-        $leaveType = $request->leave_type;
-        $user = $request->user;
-        $remainingBalance = $user ? $user->getRemainingLeaveBalance() : 0;
-
-        if ($leaveType === 'personal') {
-            return $remainingBalance >= $request->leave_days ? 'personal' : 'paid';
-        }
-
-        return match ($leaveType) {
+        return match ($request->leave_type) {
             'annual' => 'annual',
             'sick' => 'sick',
+            'personal' => 'personal',
             'emergency' => 'emergency',
-            'maternity', 'paternity' => $leaveType,
+            'maternity', 'paternity' => $request->leave_type,
             'wfh' => 'wfh',
             'compensatory' => 'compensatory',
             default => 'unknown',
@@ -38,66 +31,74 @@ class GetLeave
     }
 
     /**
-     * Fetch leave requests, annotate with color category,
-     * and return data for frontend consumption.
+     * Fetch leave requests and other data for the frontend.
      */
     public function handle(): array
     {
         $user = Auth::user();
 
-        // Subtract pending leaves for UI display only
-        // $remainingLeaveBalance = $user->getRemainingLeaveBalance();
+        // 1. Fetch employees list for admin/hr dropdown
+        $employees = [];
+        if ($user->hasAnyRole(['admin', 'hr'])) {
+            $employees = User::select('id', 'name', 'leave_balance', 'comp_off_balance')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($emp) => [
+                    'id' => $emp->id,
+                    'name' => $emp->name,
+                    'leave_balance' => $emp->leave_balance,
+                    'comp_off_balance' => $emp->comp_off_balance,
+                ]);
+        }
 
-        // $pendingLeaveDays = $user->leaveApplications()
-        //     ->where('status', 'pending')
-        //     ->whereIn('leave_type', ['annual', 'casual']) // only those that will deduct in DB
-        //     ->sum('leave_days');
+        // 2. Build the query for calendar events
+        $leaveEventsQuery = LeaveApplication::with('user:id,name')
+            ->whereIn('status', ['pending', 'approved']);
 
-        // $uiDisplayedBalance = max(0, $remainingLeaveBalance - $pendingLeaveDays);
+        // If user is NOT admin/hr, restrict the query to their own leaves
+        if (! $user->hasAnyRole(['admin', 'hr'])) {
+            $leaveEventsQuery->where('user_id', $user->id);
+        }
 
-        $compOffBalance = $user->comp_off_balance ?? 0;
-
-        $requests = LeaveApplication::with(['user:id,name'])
-            ->where('user_id', $user->id)
-            ->orderByRaw("CASE status
-            WHEN 'pending' THEN 1
-            WHEN 'approved' THEN 2
-            WHEN 'rejected' THEN 3
-            ELSE 4
-        END")
-            ->latest()
-            ->paginate(15);
-
-        $leaveEvents = $requests->getCollection()
-            ->filter(fn ($request) => in_array($request->status, ['pending', 'approved']))
+        // Execute query and map results for the calendar
+        $leaveEvents = $leaveEventsQuery->get()
             ->map(fn ($request) => [
+                'user_id' => $request->user_id,
                 'start' => $request->start_date->toDateString(),
                 'end' => $request->end_date ? $request->end_date->toDateString() : null,
                 'title' => ucfirst($request->leave_type).' Leave',
                 'class' => $request->status,
                 'color_category' => $this->getLeaveColorCategory($request),
-                'user_id' => $request->user_id,
             ]);
 
-        $holidayEvents = Holiday::all()->map(function ($holiday) {
-            return [
-                'start' => $holiday->date->toDateString(),
-                'end' => null,
-                'title' => $holiday->name,
-                'class' => 'holiday',
-                'color_category' => 'holiday', // match this with your Vue color map
-                'user_id' => null, // so they’re visible to all
-            ];
-        });
+        // 3. Get holiday events
+        $holidayEvents = Holiday::all()->map(fn ($holiday) => [
+            'start' => $holiday->date->toDateString(),
+            'end' => null,
+            'title' => $holiday->name,
+            'class' => 'holiday',
+            'color_category' => 'holiday',
+            'user_id' => null,
+        ]);
 
+        // Merge all events for the calendar display
         $highlighted = $leaveEvents->merge($holidayEvents)->values()->all();
 
+        // 4. Get paginated requests FOR THE LOGGED-IN USER (for the "Your Requests" modal)
+        $requests = LeaveApplication::with(['user:id,name'])
+            ->where('user_id', $user->id)
+            ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END")
+            ->latest()
+            ->paginate(15);
+
+        // 5. Return all data to the Vue component
         return [
             'leaveRequests' => $requests,
-            'canManage' => false,
             'highlightedDates' => $highlighted,
             'remainingLeaveBalance' => $user->leave_balance,
-            'compOffBalance' => $compOffBalance,
+            'compOffBalance' => $user->comp_off_balance,
+            'employees' => $employees,
+            'canManage' => false,
         ];
     }
 }

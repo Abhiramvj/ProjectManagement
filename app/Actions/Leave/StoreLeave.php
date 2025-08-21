@@ -4,6 +4,7 @@ namespace App\Actions\Leave;
 
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
+use App\Models\User;
 use App\Notifications\LeaveRequestSubmitted;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -14,25 +15,18 @@ class StoreLeave
 {
     public function handle(array $data): LeaveApplication
     {
-        \Log::info('Received leave request data', $data);
+        $authUser = Auth::user();
 
-        $user = Auth::user();
-
-        // Validate leave_type presence
-        $leaveType = $data['leave_type'] ?? null;
-        if (! $leaveType) {
-            throw ValidationException::withMessages([
-                'leave_type' => ['Leave type is required.'],
-            ]);
-        }
+        // Determine target user (Admin/HR can specify, else use auth user)
+        $targetUserId = $data['user_id'] ?? $authUser->id;
+        $targetUser = User::findOrFail($targetUserId);
 
         $start = Carbon::parse($data['start_date']);
         $end = Carbon::parse($data['end_date']);
-
         $startSession = $data['start_half_session'] ?? null;
         $endSession = $data['end_half_session'] ?? null;
 
-        // Normalize empty string sessions to null
+        // Normalize empty strings to null
         $startSession = $startSession === '' ? null : $startSession;
         $endSession = $endSession === '' ? null : $endSession;
 
@@ -42,19 +36,17 @@ class StoreLeave
             ]);
         }
 
-        // --- Leave days calculation ---
+        // Calculate leave days (existing logic unchanged)
         $leaveDays = 0;
         $isSingleDay = $start->isSameDay($end);
 
         if ($isSingleDay) {
-            // Check if this single day is weekend or holiday — if yes → leaveDays = 0
             $isWeekend = in_array($start->dayOfWeekIso, [6, 7]);
             $isHoliday = Holiday::whereDate('date', $start->toDateString())->exists();
 
             if ($isWeekend || $isHoliday) {
                 $leaveDays = 0;
             } else {
-                // Half-day / full-day check
                 $isFullDay = ($startSession === 'morning' && $endSession === 'afternoon');
 
                 $halfDayCases = [
@@ -78,27 +70,22 @@ class StoreLeave
                 } elseif ($isHalfDay) {
                     $leaveDays = 0.5;
                 } else {
-                    $leaveDays = 1.0; // Fallback
+                    $leaveDays = 1.0;
                 }
             }
         } else {
-            // Multi-day leave — exclude weekends & holidays
-
-            // First day value
             $firstDayValue = 0.0;
-            if (! in_array($start->dayOfWeekIso, [6, 7]) &&
-                ! Holiday::whereDate('date', $start->toDateString())->exists()) {
+            if (! in_array($start->dayOfWeekIso, [6, 7])
+                && ! Holiday::whereDate('date', $start->toDateString())->exists()) {
                 $firstDayValue = ($startSession === 'afternoon') ? 0.5 : 1.0;
             }
 
-            // Last day value
             $lastDayValue = 0.0;
-            if (! in_array($end->dayOfWeekIso, [6, 7]) &&
-                ! Holiday::whereDate('date', $end->toDateString())->exists()) {
+            if (! in_array($end->dayOfWeekIso, [6, 7])
+                && ! Holiday::whereDate('date', $end->toDateString())->exists()) {
                 $lastDayValue = ($endSession === 'morning') ? 0.5 : 1.0;
             }
 
-            // Days in between
             $workingDaysInBetween = 0;
             $currentDay = $start->copy()->addDay();
 
@@ -117,67 +104,53 @@ class StoreLeave
             $leaveDays = max(0, $leaveDays);
         }
 
-        \Log::info('Calculated leave days', [
-            'start_date' => $start->toDateString(),
-            'end_date' => $end->toDateString(),
-            'start_half_session' => $startSession,
-            'end_half_session' => $endSession,
-            'leave_days' => $leaveDays,
-        ]);
-
-        // Validate leave balance except for exempt leave types
-        if (! in_array($leaveType, ['emergency', 'sick', 'wfh', 'compensatory'])
-            && $leaveDays > $user->getRemainingLeaveBalance()) {
-            $remaining = $user->getRemainingLeaveBalance();
+        // Validate leave balance for target user except exempt leave types
+        if (! in_array($data['leave_type'], ['emergency', 'sick', 'wfh', 'compensatory'])
+            && $leaveDays > $targetUser->getRemainingLeaveBalance()) {
+            $remaining = $targetUser->getRemainingLeaveBalance();
             throw ValidationException::withMessages([
-                'leave_days' => ["You do not have enough leave balance. Remaining: {$remaining} days."],
+                'leave_days' => ["User does not have enough leave balance. Remaining: {$remaining} days."],
             ]);
         }
 
-        // Validate compensatory leave balance
-        $compOffBalance = $user->comp_off_balance ?? 0;
-        if ($leaveType === 'compensatory' && $leaveDays > $compOffBalance) {
+        if ($data['leave_type'] === 'compensatory' && $leaveDays > ($targetUser->comp_off_balance ?? 0)) {
             throw ValidationException::withMessages([
-                'leave_days' => ['You do not have enough compensatory leave balance.'],
+                'leave_days' => ['User does not have enough compensatory leave balance.'],
             ]);
         }
 
-        // Handle supporting document upload
         $supportingDocumentPath = null;
         if (isset($data['supporting_document']) && $data['supporting_document'] instanceof UploadedFile) {
             $supportingDocumentPath = $data['supporting_document']->store(
-                'leave_documents/'.$user->id,
+                'leave_documents/'.$targetUser->id,
                 'public'
             );
         }
 
-        \Log::info('Starting leave creation');
-
+        // Create the leave application for target user
         $leaveApplication = LeaveApplication::create([
-            'user_id' => $user->id,
+            'user_id' => $targetUser->id,
             'start_date' => $start,
             'end_date' => $end,
             'start_half_session' => $startSession,
             'end_half_session' => $endSession,
             'reason' => $data['reason'],
-            'leave_type' => $leaveType,
+            'leave_type' => $data['leave_type'],
             'leave_days' => $leaveDays,
             'salary_deduction_days' => 0,
             'status' => 'pending',
             'supporting_document_path' => $supportingDocumentPath,
         ]);
 
-        // Deduct from DB immediately
-        if (in_array($leaveType, ['annual', 'personal'])) {
-            $user->leave_balance = max(0, $user->leave_balance - $leaveDays);
-        } elseif ($leaveType === 'compensatory') {
-            $user->comp_off_balance = max(0, $user->comp_off_balance - $leaveDays);
+        // Deduct leave balance from target user
+        if (in_array($data['leave_type'], ['annual', 'personal'])) {
+            $targetUser->leave_balance = max(0, $targetUser->leave_balance - $leaveDays);
+        } elseif ($data['leave_type'] === 'compensatory') {
+            $targetUser->comp_off_balance = max(0, $targetUser->comp_off_balance - $leaveDays);
         }
-        $user->save();
+        $targetUser->save();
 
         $this->sendNotifications($leaveApplication);
-
-        \Log::info('Leave created', ['id' => $leaveApplication->id]);
 
         return $leaveApplication;
     }
