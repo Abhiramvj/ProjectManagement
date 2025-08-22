@@ -16,6 +16,7 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Mailable;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -34,26 +35,43 @@ class LeaveApplicationController extends Controller
         return Inertia::render('Leave/Index', $getLeaveRequests->handle());
     }
 
-    public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
+     public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
     {
-        $leave_application = $storeLeave->handle($request->validated());
+        // The StoreLeaveRequest has already run and passed at this point.
+        // We now wrap our core logic in a try...catch block.
 
-        $recipients = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'hr']);
-        })->get();
+        try {
+            // --- HAPPY PATH ---
+            // This is your existing code.
+            $leave_application = $storeLeave->handle($request->validated());
 
-        if ($recipients->isNotEmpty()) {
-            foreach ($recipients as $recipient) {
-                // Dispatch the email job to the queue instead of sending it synchronously
-                SendLeaveEmail::dispatch(
-                    $leave_application,
-                    new LeaveApplicationSubmitted($leave_application),
-                    $recipient->email
-                );
-            }
+            $recipients = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['admin', 'hr']);
+            })->get();
+
+            // if ($recipients->isNotEmpty()) {
+            //     foreach ($recipients as $recipient) {
+            //         $this->sendEmail(
+            //             $leave_application,
+            //             new LeaveApplicationSubmitted($leave_application),
+            //             $recipient->email
+            //         );
+            //     }
+            // }
+
+            // On success, redirect to the index page with a success flash message.
+            return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
+
+        } catch (\Exception $e) {
+            // --- FAILURE PATH ---
+            // If anything inside the `try` block fails...
+
+            // 1. Log the detailed error for the developer to debug.
+            Log::error('Failed to store leave application: ' . $e->getMessage());
+
+            // 2. Redirect the user back with a friendly error flash message.
+            return Redirect::back()->with('error', 'An unexpected server error occurred. Please try again later.');
         }
-
-        return redirect()->route('leave.index')->with('success', 'Leave application submitted.');
     }
 
     public function approveCompOff(Request $request, User $user)
@@ -72,29 +90,39 @@ class LeaveApplicationController extends Controller
 
     public function update(UpdateLeaveRequest $request, LeaveApplication $leave_application, UpdateLeave $updateLeaveStatus)
     {
+        // 1. Get validated data. This is correct.
         $validatedData = $request->validated();
         $status = $validatedData['status'];
 
+        // --- THIS IS THE KEY CHANGE ---
+        // We now handle everything based on the status.
         if ($status === 'approved') {
             // --- APPROVAL LOGIC ---
+
+            // A. Update the status in the database.
             $updateLeaveStatus->handle($leave_application, 'approved');
 
-            $employee = $leave_application->user;
-            if ($employee) {
-                $mailable = new LeaveApplicationApproved($leave_application);
-                // Dispatch the approval email to the queue
-                SendLeaveEmail::dispatch($leave_application, $mailable, $employee->email);
-            }
+            // B. Prepare and send the approval email.
+            // $employee = $leave_application->user;
+            // if ($employee) {
+            //     $mailable = new LeaveApplicationApproved($leave_application);
+            //     $this->sendEmail($leave_application, $mailable, $employee->email);
+            // }
 
         } elseif ($status === 'rejected') {
             // --- REJECTION LOGIC ---
+
+            // A. Get the rejection reason from the validated data.
+            // We only access it here, where we know it's safe.
             $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
+
+            // B. Update the status in the database.
             $updateLeaveStatus->handle($leave_application, 'rejected', $rejectReason);
 
-            // Restore the user's leave balance
+            // C. Restore the user's leave balance.
             $user = $leave_application->user;
             if ($user) {
-                if (in_array($leave_application->leave_type, ['annual', 'casual'])) {
+                if (in_array($leave_application->leave_type, ['annual', 'personal'])) {
                     $user->leave_balance += $leave_application->leave_days;
                 } elseif ($leave_application->leave_type === 'compensatory') {
                     $user->comp_off_balance += $leave_application->leave_days;
@@ -102,14 +130,14 @@ class LeaveApplicationController extends Controller
                 $user->save();
             }
 
-            // Prepare and send the rejection email
-            if ($user) {
-                $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
-                // Dispatch the rejection email to the queue
-                SendLeaveEmail::dispatch($leave_application, $mailable, $user->email);
-            }
+            // D. Prepare and send the rejection email.
+            // if ($user) {
+            //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+            //     $this->sendEmail($leave_application, $mailable, $user->email);
+            // }
         }
 
+        // --- REDIRECT BACK ---
         return Redirect::back()->with('success', 'Application status updated.');
     }
 
@@ -238,5 +266,72 @@ class LeaveApplicationController extends Controller
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
     }
 
+    // private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
+    // {
+    //     // --- STEP 1: RENDER THE MAIL TO HTML ---
+    //     // This is the most important new line. It takes your Markdown template
+    //     // and converts it into a complete HTML string, exactly as it will be sent.
+    //     $emailHtmlContent = $mailable->render();
 
+    //     // Get the event type directly from the mailable's public property.
+    //     $eventType = $mailable->eventType ?? 'unknown_event';
+
+    //     // --- STEP 2: PREPARE DATA FOR MONGODB ---
+    //     // Now we prepare the data array that will be saved to your database.
+    //     $logData = [
+    //         'leave_application_id' => $leaveApplication->id,
+    //         'recipient_email' => $recipientEmail,
+    //         'subject' => $mailable->subject ?? 'Leave Application Notification',
+    //         'event_type' => $eventType,
+    //         'sent_at' => now(),
+    //         'reason' => $leaveApplication->reason,
+    //         'leave_period' => $leaveApplication->start_date->format('M d, Y').' to '.$leaveApplication->end_date->format('M d, Y'),
+
+    //         // --- Add the rendered HTML to the log data ---
+    //         'body_html' => $emailHtmlContent,
+    //     ];
+
+    //     try {
+    //         // Send the actual email.
+    //         Mail::to($recipientEmail)->send($mailable);
+
+    //         // LOG SUCCESS: The $logData array now includes the 'body_html'
+    //         MailLog::create(array_merge($logData, [
+    //             'status' => 'sent',
+    //             'error_message' => null,
+    //         ]));
+
+    //     } catch (\Exception $e) {
+    //         // LOG FAILURE
+    //         Log::error(
+    //             'Mail sending failed for LeaveApplication ID '.$leaveApplication->id.
+    //             ' to '.$recipientEmail.': '.$e->getMessage()
+    //         );
+    //         // The log data still includes the HTML, so you can see what was supposed to be sent.
+    //         MailLog::create(array_merge($logData, [
+    //             'status' => 'failed',
+    //             'error_message' => $e->getMessage(),
+    //         ]));
+    //     }
+    // }
+
+    // private function getEventTypeFromMailable(Mailable $mailable): string
+    // {
+    //     // This handles modern Laravel Mailables (Laravel 9+)
+    //     if (method_exists($mailable, 'headers')) {
+    //         // NEW, CORRECT WAY: get the header and check if the result is not null.
+    //         $header = $mailable->headers()->get('X-Event-Type');
+
+    //         if ($header) {
+    //             // The getBodyAsString() method safely returns the header's value.
+    //             return $header->getBodyAsString();
+    //         }
+    //     }
+
+    //     // Fallback if the header isn't set or for older mailables.
+    //     // It uses the Mailable's class name as the event type.
+    //     $path = explode('\\', get_class($mailable));
+
+    //     return array_pop($path);
+    // }
 }

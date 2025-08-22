@@ -14,8 +14,6 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user() ? [
-                    // --- THE DEFINITIVE FIX IS HERE ---
-                    // We manually build the user array to include exactly what we need.
                     'id' => $request->user()->id,
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
@@ -23,11 +21,14 @@ class HandleInertiaRequests extends Middleware
                     'image' => $request->user()->image,
                     'avatar_url' => $request->user()->avatar_url,
 
-                    // THIS IS THE CRITICAL LINE THAT PROVIDES PERMISSIONS TO THE FRONTEND
                     'permissions' => $request->user()->getAllPermissions()->pluck('name'),
 
+                    // Add roles here
+                    'roles' => $request->user()->roles()->pluck('name'),
                 ] : null,
             ],
+
+            // Existing ziggy and flash props...
             'ziggy' => fn () => [
                 ...(new \Tighten\Ziggy\Ziggy)->toArray(),
                 'location' => $request->url(),

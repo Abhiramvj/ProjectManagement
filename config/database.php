@@ -114,18 +114,18 @@ return [
 
         // config/database.php
 
-'mongodb' => [
-    'driver' => 'mongodb',
-    // It's reading the unique '_MONGO' suffixed variables
-    'host' => env('DB_HOST_MONGO', '127.0.0.1'),
-    'port' => env('DB_PORT_MONGO', 27017),
-    'database' => env('DB_DATABASE_MONGO', 'projectmanagement'),
-    'username' => env('DB_USERNAME_MONGO', ''),
-    'password' => env('DB_PASSWORD_MONGO', ''),
-    'options' => [
-        'database' => env('DB_AUTHENTICATION_DATABASE_MONGO', 'admin'),
-    ]
-],
+        'mongodb' => [
+            'driver' => 'mongodb',
+            // It's reading the unique '_MONGO' suffixed variables
+            'host' => env('DB_HOST_MONGO', '127.0.0.1'),
+            'port' => env('DB_PORT_MONGO', 27017),
+            'database' => env('DB_DATABASE_MONGO', 'projectmanagement'),
+            'username' => env('DB_USERNAME_MONGO', ''),
+            'password' => env('DB_PASSWORD_MONGO', ''),
+            'options' => [
+                'database' => env('DB_AUTHENTICATION_DATABASE_MONGO', 'admin'),
+            ],
+        ],
 
     ],
 

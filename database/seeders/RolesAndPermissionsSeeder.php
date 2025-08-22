@@ -68,7 +68,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'apply for leave',
             'view leaves',
             'manage announcements',
-            'view mail logs', 
+            'view mail logs',
 
         ]);
 
@@ -76,7 +76,6 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
 
         $adminRole->syncPermissions(Permission::all());
-
 
     }
 }

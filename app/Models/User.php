@@ -56,7 +56,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-      protected $fillable = [
+    protected $fillable = [
         'name',
         'email',
         'password',
@@ -449,7 +449,7 @@ class User extends Authenticatable
     /**
      * Get user performance score
      */
-       public function getPerformanceScore(): float
+    public function getPerformanceScore(): int
     {
         $taskScore = $this->getTaskCompletionRate();
         $timeScore = min(100, ($this->getCurrentMonthHours() / 160) * 100);
@@ -506,10 +506,31 @@ class User extends Authenticatable
         );
     }
 
-
-
     public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
     {
         return $this->hasMany(Announcement::class);
     }
+    public function approvedAnnualLeaves()
+{
+    return $this->hasMany(LeaveApplication::class)
+        ->where('leave_type', 'annual')
+        ->where('status', 'approved')
+        ->whereYear('start_date', now()->year);
+}
+
+public function approvedSickLeaves()
+{
+    return $this->hasMany(LeaveApplication::class)
+        ->where('leave_type', 'sick')
+        ->where('status', 'approved')
+        ->whereYear('start_date', now()->year);
+}
+
+public function approvedPersonalLeaves()
+{
+    return $this->hasMany(LeaveApplication::class)
+        ->where('leave_type', 'personal')
+        ->where('status', 'approved')
+        ->whereYear('start_date', now()->year);
+}
 }

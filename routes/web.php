@@ -36,8 +36,6 @@ Route::get('/', function () {
     ]);
 })->middleware('guest')->name('login');
 
-
-
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -87,16 +85,15 @@ Route::middleware('auth')->group(function () {
         ->only(['index', 'store', 'edit', 'update'])
         ->middleware(['can:manage roles']);
 
-
-  Route::get('/mail-logs', [MailLogController::class, 'index'])
+    Route::get('/mail-logs', [MailLogController::class, 'index'])
         ->name('mail-logs.index')
         ->middleware(['can:view mail logs']);
 
     Route::get('/mail-logs/{mailLog}', [MailLogController::class, 'show'])->name('mail-logs.show')->middleware(['can:view mail logs']);
     // In routes/web.php
-Route::get('/mail-logs/snapshot/{mailLog}', [App\Http\Controllers\MailLogController::class, 'showSnapshot'])
-      ->name('mail-logs.snapshot')
-      ->middleware('can:view mail logs');
+    Route::get('/mail-logs/snapshot/{mailLog}', [App\Http\Controllers\MailLogController::class, 'showSnapshot'])
+        ->name('mail-logs.snapshot')
+        ->middleware('can:view mail logs');
 
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
@@ -110,7 +107,7 @@ Route::get('/mail-logs/snapshot/{mailLog}', [App\Http\Controllers\MailLogControl
     // Leave application routes
     Route::resource('leave', LeaveApplicationController::class)->only(['index', 'store', 'destroy'])->middleware(['can:apply for leave']);
     Route::post('/leave/approve-comp-off/{user}', [LeaveApplicationController::class, 'approveCompOff'])->name('leave.approveCompOff')->middleware('can:manage-leave');
-    Route::get('/leave/logs', [LeaveController::class, 'showLogs'])->name('leave.logs')->middleware(['can:manage employees']);
+    Route::get('/leave/logs', [LeaveController::class, 'showLogs'])->name('leave.logs')->middleware(['can:manage leave applications']);
     Route::get('/leave/requests', [LeaveController::class, 'fullRequests'])->name('leave.fullRequests');
     Route::patch('/leave/{leave_application}', [LeaveApplicationController::class, 'update'])->name('leave.update')->middleware(['can:manage leave applications']);
     Route::patch('/leave/{leave_application}/reason', [LeaveApplicationController::class, 'updateReason'])->name('leave.updateReason')->middleware(['can:apply for leave']);
@@ -146,7 +143,6 @@ Route::get('/mail-logs/snapshot/{mailLog}', [App\Http\Controllers\MailLogControl
     Route::resource('announcements', AnnouncementController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:manage announcements');
-
 
 });
 

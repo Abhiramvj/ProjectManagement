@@ -10,6 +10,5 @@ return [
 
     'port' => env('OLLAMA_PORT', 11434),
 
-
     'request_timeout' => env('OLLAMA_REQUEST_TIMEOUT', 300),
 ];

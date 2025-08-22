@@ -7,17 +7,15 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
-// ADD THIS IMPORT
 use Illuminate\Mail\Mailables\Headers;
+// ADD THIS IMPORT
+use Illuminate\Queue\SerializesModels;
 
 class LeaveApplicationApproved extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public LeaveApplication $leaveApplication)
-    {
-    }
+    public function __construct(public LeaveApplication $leaveApplication) {}
 
     public function envelope(): Envelope
     {

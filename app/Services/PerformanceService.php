@@ -26,7 +26,7 @@ class PerformanceService
         if (config('optimization.cache.enabled', true)) {
             return Cache::remember($key, $ttl, $callback);
         }
-        
+
         return $callback();
     }
 
@@ -36,7 +36,7 @@ class PerformanceService
     public static function optimizeQueries(): void
     {
         // Disable query logging in production
-        if (!app()->environment('local')) {
+        if (! app()->environment('local')) {
             DB::connection()->disableQueryLog();
         }
     }
@@ -68,11 +68,11 @@ class PerformanceService
     public static function generateCacheKey(string $prefix, array $params = []): string
     {
         $key = $prefix;
-        
-        if (!empty($params)) {
-            $key .= '_' . md5(serialize($params));
+
+        if (! empty($params)) {
+            $key .= '_'.md5(serialize($params));
         }
-        
+
         return $key;
     }
 
@@ -108,10 +108,10 @@ class PerformanceService
         if ($duration > 1000) { // Log operations taking more than 1 second
             Log::warning('Slow operation detected', [
                 'operation' => $operation,
-                'duration' => round($duration, 2) . 'ms',
+                'duration' => round($duration, 2).'ms',
                 'memory' => self::getMemoryUsage(),
                 'context' => $context,
             ]);
         }
     }
-} 
+}

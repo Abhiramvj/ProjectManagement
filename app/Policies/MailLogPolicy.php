@@ -15,7 +15,6 @@ class MailLogPolicy
      *
      * This corresponds to the 'index' page.
      *
-     * @param  \App\Models\User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function viewAny(User $user)
@@ -30,8 +29,6 @@ class MailLogPolicy
      *
      * This corresponds to the 'show' (detail) page.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\MailLog  $mailLog
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function view(User $user, MailLog $mailLog)

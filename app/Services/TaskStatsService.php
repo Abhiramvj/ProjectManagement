@@ -8,7 +8,6 @@ class TaskStatsService
 {
     /**
      * Get task statistics for a specific user.
-
      */
     public function getStatsForUser(int $userId): array
     {

@@ -12,14 +12,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // This schedule will run your 'app:add-monthly-leave' command
-        // on the 1st day of every month at midnight.
+
         $schedule->command('app:add-monthly-leave')->monthlyOn(1, '00:00');
     }
 
-    /**
-     * Register the commands for the application.
-     */
     protected function commands(): void
     {
         // This line automatically discovers and registers all command files

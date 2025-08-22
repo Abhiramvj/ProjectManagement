@@ -22,8 +22,8 @@ class MailLogController extends Controller
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('recipient_email', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('subject', 'like', '%' . $searchTerm . '%');
+                $q->where('recipient_email', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('subject', 'like', '%'.$searchTerm.'%');
             });
         }
 
@@ -34,12 +34,12 @@ class MailLogController extends Controller
             'subject',
             'event_type',
             'status',
-            'sent_at'
+            'sent_at',
         ])
-        ->latest('sent_at') // Order by the most recent
-        ->paginate(15)
+            ->latest('sent_at') // Order by the most recent
+            ->paginate(15)
         // This 'withQueryString' is crucial! It makes the pagination links remember the search query.
-        ->withQueryString();
+            ->withQueryString();
 
         return Inertia::render('MailLogs/Index', [
             // Pass the paginated logs to the Vue component

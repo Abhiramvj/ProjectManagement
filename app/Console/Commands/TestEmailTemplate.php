@@ -33,8 +33,9 @@ class TestEmailTemplate extends Command
         // Get the first leave application
         $leaveApplication = LeaveApplication::with('user')->first();
 
-        if (!$leaveApplication) {
+        if (! $leaveApplication) {
             $this->error('No leave applications found in the database.');
+
             return 1;
         }
 
@@ -44,43 +45,44 @@ class TestEmailTemplate extends Command
         try {
             // Create the mailable
             $mailable = new LeaveApplicationSubmitted($leaveApplication);
-            
+
             // Render the email content
             $rendered = $mailable->render();
-            
+
             $this->info('Email template rendered successfully!');
-            $this->info('Subject: ' . $mailable->subject);
-            $this->info('Content length: ' . strlen($rendered) . ' characters');
-            
+            $this->info('Subject: '.$mailable->subject);
+            $this->info('Content length: '.strlen($rendered).' characters');
+
             // Show a preview of the rendered content
             $this->info('Preview of rendered email:');
             $this->line('---');
-            $this->line(substr($rendered, 0, 500) . '...');
+            $this->line(substr($rendered, 0, 500).'...');
             $this->line('---');
-            
+
             // If --send flag is provided, actually send the email
             if ($this->option('send')) {
                 $this->info('Sending email...');
-                
+
                 // Send to a test email (you can change this)
                 $testEmail = 'test@example.com';
-                
+
                 try {
                     Mail::to($testEmail)->send($mailable);
                     $this->info("Email sent successfully to {$testEmail}");
                     $this->info('Check your mailer (Mailtrap, log, etc.) to see the email.');
                 } catch (\Exception $e) {
-                    $this->error('Failed to send email: ' . $e->getMessage());
+                    $this->error('Failed to send email: '.$e->getMessage());
                     $this->error('This might be due to mailer configuration.');
                 }
             } else {
                 $this->info('Use --send flag to actually send the email for testing.');
             }
-            
+
             return 0;
         } catch (\Exception $e) {
-            $this->error('Error rendering email template: ' . $e->getMessage());
-            $this->error('Stack trace: ' . $e->getTraceAsString());
+            $this->error('Error rendering email template: '.$e->getMessage());
+            $this->error('Stack trace: '.$e->getTraceAsString());
+
             return 1;
         }
     }

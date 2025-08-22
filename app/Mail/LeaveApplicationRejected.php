@@ -18,7 +18,6 @@ class LeaveApplicationRejected extends Mailable
     // --- ADD A PUBLIC PROPERTY FOR THE REASON ---
     /**
      * The specific reason provided for the rejection.
-     * @var string|null
      */
     public ?string $rejection_reason;
 

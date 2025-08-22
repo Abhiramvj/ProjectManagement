@@ -19,7 +19,7 @@ class TeamFactory extends Factory
     {
         return [
 
-            'name' => $this->faker->words(2, true) . ' Team',
+            'name' => $this->faker->words(2, true).' Team',
 
             'team_lead_id' => User::factory(),
         ];
