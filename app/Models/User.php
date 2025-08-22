@@ -209,6 +209,10 @@ class User extends Authenticatable
         return $this->belongsToMany(Team::class, 'team_user', 'user_id', 'team_id');
     }
 
+    public function ledTeams(): HasMany
+    {
+        return $this->hasMany(Team::class, 'team_lead_id');
+    }
     // === NOTIFICATIONS ===
 
     public function unreadNotifications()
@@ -475,27 +479,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Announcement::class);
     }
+
     public function approvedAnnualLeaves()
-{
-    return $this->hasMany(LeaveApplication::class)
-        ->where('leave_type', 'annual')
-        ->where('status', 'approved')
-        ->whereYear('start_date', now()->year);
-}
+    {
+        return $this->hasMany(LeaveApplication::class)
+            ->where('leave_type', 'annual')
+            ->where('status', 'approved')
+            ->whereYear('start_date', now()->year);
+    }
 
-public function approvedSickLeaves()
-{
-    return $this->hasMany(LeaveApplication::class)
-        ->where('leave_type', 'sick')
-        ->where('status', 'approved')
-        ->whereYear('start_date', now()->year);
-}
+    public function approvedSickLeaves()
+    {
+        return $this->hasMany(LeaveApplication::class)
+            ->where('leave_type', 'sick')
+            ->where('status', 'approved')
+            ->whereYear('start_date', now()->year);
+    }
 
-public function approvedPersonalLeaves()
-{
-    return $this->hasMany(LeaveApplication::class)
-        ->where('leave_type', 'personal')
-        ->where('status', 'approved')
-        ->whereYear('start_date', now()->year);
-}
+    public function approvedPersonalLeaves()
+    {
+        return $this->hasMany(LeaveApplication::class)
+            ->where('leave_type', 'personal')
+            ->where('status', 'approved')
+            ->whereYear('start_date', now()->year);
+    }
 }

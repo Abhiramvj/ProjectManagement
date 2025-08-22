@@ -18,6 +18,7 @@ class GetLeave
         if ($request->status === 'pending') {
             return 'pending';
         }
+
         return match ($request->leave_type) {
             'annual' => 'annual',
             'sick' => 'sick',
@@ -39,17 +40,17 @@ class GetLeave
 
         // 1. Fetch employees list for admin/hr dropdown WITH their leave stats
         $employees = [];
-    if ($user->hasAnyRole(['admin', 'hr'])) {
-        $employees = User::select(
-                'id', 'name', 'leave_balance', 'comp_off_balance', 
+        if ($user->hasAnyRole(['admin', 'hr'])) {
+            $employees = User::select(
+                'id', 'name', 'leave_balance', 'comp_off_balance',
                 'total_annual_leave', 'total_sick_leave', 'total_personal_leave' // Select new columns
             )
-            ->withSum('approvedAnnualLeaves', 'leave_days')
-            ->withSum('approvedSickLeaves', 'leave_days')
-            ->withSum('approvedPersonalLeaves', 'leave_days')
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($emp) => [
+                ->withSum('approvedAnnualLeaves', 'leave_days')
+                ->withSum('approvedSickLeaves', 'leave_days')
+                ->withSum('approvedPersonalLeaves', 'leave_days')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($emp) => [
                 'id' => $emp->id,
                 'name' => $emp->name,
                 'leave_balance' => $emp->leave_balance,
@@ -58,16 +59,16 @@ class GetLeave
                     'annual' => ['taken' => $emp->approved_annual_leaves_sum_leave_days ?? 0, 'total' => $emp->total_annual_leave],
                     'sick' => ['taken' => $emp->approved_sick_leaves_sum_leave_days ?? 0, 'total' => $emp->total_sick_leave],
                     'personal' => ['taken' => $emp->approved_personal_leaves_sum_leave_days ?? 0, 'total' => $emp->total_personal_leave],
-                ]
+                ],
             ]);
-    }
+        }
 
         // NEW: 2. Get leave stats FOR THE LOGGED-IN USER
         $currentUserStats = [
-        'annual' => ['taken' => $user->approvedAnnualLeaves()->sum('leave_days'), 'total' => $user->total_annual_leave],
-        'sick' => ['taken' => $user->approvedSickLeaves()->sum('leave_days'), 'total' => $user->total_sick_leave],
-        'personal' => ['taken' => $user->approvedPersonalLeaves()->sum('leave_days'), 'total' => $user->total_personal_leave],
-    ];
+            'annual' => ['taken' => $user->approvedAnnualLeaves()->sum('leave_days'), 'total' => $user->total_annual_leave],
+            'sick' => ['taken' => $user->approvedSickLeaves()->sum('leave_days'), 'total' => $user->total_sick_leave],
+            'personal' => ['taken' => $user->approvedPersonalLeaves()->sum('leave_days'), 'total' => $user->total_personal_leave],
+        ];
 
         // 3. Build the query for calendar events (Unchanged)
         $leaveEventsQuery = LeaveApplication::with('user:id,name')
@@ -108,13 +109,13 @@ class GetLeave
 
         // 6. Return all data to the Vue component
         return [
-        'leaveRequests' => $requests,
-        'highlightedDates' => $highlighted,
-        'remainingLeaveBalance' => $user->leave_balance,
-        'compOffBalance' => $user->comp_off_balance,
-        'employees' => $employees,
-        'leaveStats' => $currentUserStats,
-        'canManage' => false,
-    ];
+            'leaveRequests' => $requests,
+            'highlightedDates' => $highlighted,
+            'remainingLeaveBalance' => $user->leave_balance,
+            'compOffBalance' => $user->comp_off_balance,
+            'employees' => $employees,
+            'leaveStats' => $currentUserStats,
+            'canManage' => false,
+        ];
     }
 }

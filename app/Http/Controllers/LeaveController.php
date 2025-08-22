@@ -22,7 +22,7 @@ class LeaveController extends Controller
      * @param  Request  $request  The incoming HTTP request.
      * @return \Inertia\Response
      */
-    public function showLogs(Request $request)
+    public function manageRequests(Request $request)
     {
         $user = Auth::user();
 
@@ -60,7 +60,7 @@ class LeaveController extends Controller
             ->paginate(15);
 
         // Render Inertia page with leave requests and permission flag
-        return Inertia::render('Leave/LeaveLogs', [
+        return Inertia::render('Leave/manageRequests', [
             'leaveRequests' => $leaveRequests,
             'canManage' => true,
         ]);
