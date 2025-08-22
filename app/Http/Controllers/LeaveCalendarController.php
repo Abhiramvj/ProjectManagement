@@ -8,51 +8,79 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection; // <-- Add or confirm this use statement
-use Illuminate\Support\Facades\Validator; // For the date range collection
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class LeaveCalendarController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Get validated filters
         $filters = $this->getValidatedFilters($request);
         $startDate = Carbon::parse($filters['start_date']);
         $endDate = Carbon::parse($filters['end_date']);
+        $user = Auth::user();
 
-        // 2. Build users query
-        $usersQuery = User::query()
-            ->with([
-                'leaveApplications' => function ($query) use ($startDate, $endDate) {
-                    $query->approved()
-                        ->overlapsWith($startDate, $endDate)
-                        ->select('id', 'user_id', 'start_date', 'end_date', 'leave_type', 'day_type');
-                },
-                'teams:id,name',
-            ])
+        $usersQuery = User::query();
+        $ledTeamIds = collect();
+
+        if ($user->hasAnyRole(['admin', 'hr'])) {
+            // =================================================================
+            // START OF THE FIX
+            // =================================================================
+            // Instead of including specific roles, we can exclude roles we NEVER want to see,
+            // like a "Super Admin" or "System" account. This is more flexible.
+            // If you want to see EVERYONE, you can remove this whereHas clause entirely.
+            $usersQuery->whereHas('roles', fn ($q) => $q->whereNotIn('name', ['super-admin'])); // Example: Exclude a super-admin role
+            // =================================================================
+            // END OF THE FIX
+            // =================================================================
+
+        } elseif ($user->hasRole('team-lead')) {
+            $ledTeamIds = $user->ledTeams()->pluck('id');
+            if ($ledTeamIds->isEmpty()) {
+                $usersQuery->whereRaw('1 = 0');
+            } else {
+                $memberIds = DB::table('team_user')->whereIn('team_id', $ledTeamIds)->pluck('user_id')->unique();
+                $usersQuery->whereIn('id', $memberIds);
+            }
+        } else {
+            abort(403, 'You are not authorized to view this calendar.');
+        }
+
+        $usersQuery->with([
+            'leaveApplications' => function ($query) use ($startDate, $endDate) {
+                $query->approved()->overlapsWith($startDate, $endDate)
+                    ->select('id', 'user_id', 'start_date', 'end_date', 'leave_type', 'day_type');
+            },
+            'teams:id,name',
+        ])
             ->select('id', 'name')
             ->orderBy('name');
 
-        $this->applyFilters($usersQuery, $filters);
+        $this->applyFilters($usersQuery, $filters, $user, $ledTeamIds);
         $users = $usersQuery->get();
 
-        // 3. Generate date range
         $dateRange = collect(CarbonPeriod::create($startDate, $endDate))->map(fn ($date) => $date->format('Y-m-d'));
-
-        // 4. Process calendar data - THIS LINE WILL NOW WORK
         $calendarData = $this->formatCalendarData($users, $dateRange);
 
-        // 5. Apply "show absent only" filter
         if ($filters['show_absent_only']) {
-            $calendarData = $calendarData->filter(fn ($user) => $user['has_absence'])->values();
+            $calendarData = $calendarData->filter(fn ($userData) => $userData['has_absence'])->values();
         }
 
-        // 6. Render the Inertia component
+        $teamsForFilter = collect();
+        if ($user->hasAnyRole(['admin', 'hr'])) {
+            $teamsForFilter = Team::orderBy('name')->get(['id', 'name']);
+        } elseif ($user->hasRole('team-lead')) {
+            $teamsForFilter = $user->ledTeams()->select('id', 'name')->orderBy('name')->get();
+        }
+
         return Inertia::render('Leave/Calendar', [
             'calendarData' => $calendarData,
             'dateRange' => $dateRange,
-            'teams' => Team::orderBy('name')->get(['id', 'name']),
+            'teams' => $teamsForFilter,
             'filters' => $filters,
         ]);
     }
@@ -63,14 +91,13 @@ class LeaveCalendarController extends Controller
             'start_date' => now()->startOfMonth()->format('Y-m-d'),
             'end_date' => now()->endOfMonth()->format('Y-m-d'),
             'show_absent_only' => false,
-            'employee_name' => null,
+            'search' => null,
             'team_id' => null,
         ];
-
         $data = array_merge($defaults, $request->all());
 
         return Validator::make($data, [
-            'employee_name' => 'nullable|string|max:255',
+            'search' => 'nullable|string|max:255',
             'team_id' => 'nullable|integer|exists:teams,id',
             'start_date' => 'required|date|before_or_equal:end_date',
             'end_date' => 'required|date',
@@ -78,21 +105,21 @@ class LeaveCalendarController extends Controller
         ])->validate();
     }
 
-    private function applyFilters($query, array $filters): void
+    private function applyFilters($query, array $filters, User $user, Collection $ledTeamIds): void
     {
-        if (! empty($filters['employee_name'])) {
-            $query->where('name', 'like', "%{$filters['employee_name']}%");
+        if (! empty($filters['search'])) {
+            $query->where('name', 'like', "%{$filters['search']}%");
         }
-
         if (! empty($filters['team_id'])) {
+            if ($user->hasRole('team-lead') && ! $ledTeamIds->contains($filters['team_id'])) {
+                abort(403);
+            }
             $query->whereHas('teams', function ($teamQuery) use ($filters) {
                 $teamQuery->where('teams.id', $filters['team_id']);
             });
         }
     }
 
-    // --- THIS IS THE FIX ---
-    // The type hint for $users has been changed to the correct EloquentCollection class.
     private function formatCalendarData(EloquentCollection $users, Collection $dateRange): Collection
     {
         $today = now()->startOfDay();
@@ -100,16 +127,13 @@ class LeaveCalendarController extends Controller
         return $users->map(function ($user) use ($dateRange, $today) {
             $dailyStatuses = [];
             $hasAbsence = false;
-
             foreach ($dateRange as $dateString) {
                 $date = Carbon::parse($dateString);
                 $status = 'Working';
                 $details = null;
-
                 $onLeave = $user->leaveApplications->first(
                     fn ($leave) => $date->betweenIncluded($leave->start_date, $leave->end_date)
                 );
-
                 if ($onLeave) {
                     $hasAbsence = true;
                     $status = 'Leave';
@@ -124,7 +148,6 @@ class LeaveCalendarController extends Controller
                 } elseif ($date->isAfter($today)) {
                     $status = 'Future';
                 }
-
                 $dailyStatuses[$dateString] = ['status' => $status, 'details' => $details];
             }
 

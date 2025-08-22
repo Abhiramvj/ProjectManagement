@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -204,11 +205,14 @@ class User extends Authenticatable
 
     // === TEAMS ===
 
-    public function teams()
+    public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_user', 'user_id', 'team_id');
     }
 
+    /**
+     * The teams that this user LEADS.
+     */
     public function ledTeams(): HasMany
     {
         return $this->hasMany(Team::class, 'team_lead_id');
