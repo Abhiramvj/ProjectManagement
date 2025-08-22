@@ -24,7 +24,7 @@ class MailLog extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var list<string>
      */
     protected $fillable = [
         'leave_application_id',
@@ -42,7 +42,7 @@ class MailLog extends Model
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'sent_at' => 'datetime',

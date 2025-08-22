@@ -12,7 +12,7 @@ class Announcement extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [ // <-- THIS IS THE FIX
         'user_id',

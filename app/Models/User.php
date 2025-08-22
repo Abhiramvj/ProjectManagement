@@ -11,6 +11,41 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Notifications\DatabaseNotificationCollection;
+use Spatie\Permission\Models\Role;
+/**
+ * == Properties for Database Columns ==
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property ?Carbon $email_verified_at
+ * @property string $password
+ * @property ?string $remember_token
+ * @property ?Carbon $created_at
+ * @property ?Carbon $updated_at
+ * @property ?string $image
+ * @property ?string $designation
+ * @property ?Carbon $hire_date
+ * @property ?Carbon $birth_date          // ADDED
+ * @property ?string $work_mode           // ADDED
+ * @property ?int $parent_id
+ * @property ?int $leave_approver_id
+ * @property ?int $team_id                 // ADDED
+ * @property float $leave_balance
+ *
+ * == Properties for Eloquent Relationships ==
+ * @property-read ?User $parent
+ * @property-read Collection<int, User> $children
+ * @property-read ?User $leaveApprover
+ * @property-read Collection<int, Team> $teams
+ * @property-read Collection<int, LeaveApplication> $leaveApplications
+ * @property-read Collection<int, Role> $roles   // CORRECTED for Spatie/Permission
+ *
+ * == Properties from Laravel Traits ==
+ * @property-read DatabaseNotificationCollection $notifications
+ * @property-read DatabaseNotificationCollection $unreadNotifications
+ */
 
 class User extends Authenticatable
 {
@@ -19,7 +54,7 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
       protected $fillable = [
         'name',
@@ -39,7 +74,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -414,7 +449,7 @@ class User extends Authenticatable
     /**
      * Get user performance score
      */
-       public function getPerformanceScore(): int
+       public function getPerformanceScore(): float
     {
         $taskScore = $this->getTaskCompletionRate();
         $timeScore = min(100, ($this->getCurrentMonthHours() / 160) * 100);

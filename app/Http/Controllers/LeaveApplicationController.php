@@ -23,6 +23,10 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
+
+/**
+ * @property-read User $user // <-- ADD THIS LINE
+ */
 class LeaveApplicationController extends Controller
 {
     public function index(GetLeave $getLeaveRequests)

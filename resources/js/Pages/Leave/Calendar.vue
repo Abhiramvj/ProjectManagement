@@ -231,14 +231,14 @@ const getDay = (dateString) => {
                             <td v-for="date in dateRange" :key="date" class="text-center py-2">
                                 <div class="flex items-center justify-center h-full">
                                     <!-- Leave Status -->
-                                    <div
-                                        v-if="user.daily_statuses[date].status === 'Leave'"
-                                        :title="`Type: ${user.daily_statuses[date].details.leave_type} (${user.daily_statuses[date].details.day_type})`"
-                                        class="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs cursor-help"
-                                        :style="{ backgroundColor: user.daily_statuses[date].details.color }"
-                                    >
-                                        {{ user.daily_statuses[date].details.code }}
-                                    </div>
+                                     <div
+    v-if="user.daily_statuses[date].status === 'Leave'"
+    :title="`Type: ${user.daily_statuses[date].details.leave_type} (${user.daily_statuses[date].details.day_type.replace('_', ' ')})`"
+    class="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs cursor-help"
+    :style="{ backgroundColor: user.daily_statuses[date].details.color }"
+>
+    {{ user.daily_statuses[date].details.code }}
+</div>
                                     <!-- Present/Working (past and today only) -->
                                     <div v-else-if="user.daily_statuses[date].status === 'Working'" class="text-green-500 text-lg" title="Present">✓</div>
                                     <!-- Future dates -->

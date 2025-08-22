@@ -17,7 +17,7 @@ import axios from 'axios';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// --- MODIFIED --- Add the new performance props
+// Props are unchanged
 const props = defineProps({
     user: { type: Object, required: true },
     attendance: { type: Object, required: true },
@@ -25,7 +25,6 @@ const props = defineProps({
     greeting: { type: Object, required: true },
     projects: { type: Array, default: () => [] },
     myTasks: { type: Array, default: () => [] },
-    // [+] New props for performance data
     taskStats: { type: Object, required: true },
     timeStats: { type: Object, required: true },
     leaveStats: { type: Object, required: true },
@@ -33,7 +32,7 @@ const props = defineProps({
 });
 
 
-// --- [+] NEW --- Logic for Performance Score and AI Summary
+// --- MODIFIED --- Logic for Performance Score and AI Summary
 const performanceScore = computed(() => {
     if (!props.taskStats || !props.timeStats || !props.leaveStats || !props.leaveStats.balance) {
         return NaN;
@@ -50,14 +49,14 @@ const isDataReadyForSummary = computed(() => {
            !isNaN(performanceScore.value);
 });
 
-const isSummaryModalVisible = ref(false);
+// [-] REMOVED isSummaryModalVisible
+const showSummaryBox = ref(false); // [+] NEW state for on-page box
 const generatedSummary = ref('');
 const isLoadingSummary = ref(false);
 const summaryError = ref('');
 
-// This function now calls a generic summary route, as the backend knows who the user is.
-// IMPORTANT: Ensure you have a route named 'my-performance.generateSummary' pointing to a controller method.
 const fetchAiSummary = async () => {
+    showSummaryBox.value = true; // [+] Show the box immediately
     isLoadingSummary.value = true;
     summaryError.value = '';
     generatedSummary.value = '';
@@ -75,14 +74,15 @@ const fetchAiSummary = async () => {
         summaryError.value = error.response?.data?.error || 'An unexpected error occurred.';
     } finally {
         isLoadingSummary.value = false;
-        isSummaryModalVisible.value = true; // Open the modal regardless of outcome
+        // [-] REMOVED modal logic
     }
 };
 
-const closeSummaryModal = () => {
-    isSummaryModalVisible.value = false;
+// [+] NEW function to hide the on-page box
+const closeSummaryBox = () => {
+    showSummaryBox.value = false;
 };
-// --- END NEW ---
+// --- END MODIFICATION ---
 
 
 // --- ROLE-BASED VISIBILITY & HELPERS (Unchanged) ---
@@ -98,28 +98,20 @@ const hasPermission = (permission) => {
 
 // --- Computed property for managing announcements ---
 const canManageAnnouncements = computed(() => hasPermission('manage announcements'));
-
 const canViewAttendanceStats = computed(() => hasPermission('manage employees'));
-
-// --- ANNOUNCEMENT MANAGEMENT ---
+// --- ANNOUNCEMENT MANAGEMENT (Unchanged)---
 const isAnnouncementModalOpen = ref(false);
-const announcementModalMode = ref('create'); // 'create' or 'edit'
+const announcementModalMode = ref('create');
 const editingAnnouncementId = ref(null);
-const announcementForm = useForm({
-    title: '',
-    content: '',
-});
-
+const announcementForm = useForm({ title: '', content: '' });
 const isViewAnnouncementModalOpen = ref(false);
 const viewingAnnouncement = ref(null);
-
 function openCreateAnnouncementModal() {
     announcementModalMode.value = 'create';
     announcementForm.reset();
     editingAnnouncementId.value = null;
     isAnnouncementModalOpen.value = true;
 }
-
 function openEditAnnouncementModal(announcement) {
     announcementModalMode.value = 'edit';
     editingAnnouncementId.value = announcement.id;
@@ -127,77 +119,33 @@ function openEditAnnouncementModal(announcement) {
     announcementForm.content = announcement.content;
     isAnnouncementModalOpen.value = true;
 }
-
-function closeAnnouncementModal() {
-    isAnnouncementModalOpen.value = false;
-    announcementForm.reset();
-}
-
+function closeAnnouncementModal() { isAnnouncementModalOpen.value = false; announcementForm.reset(); }
 function saveAnnouncement() {
-    const onFinish = () => {
-        closeAnnouncementModal();
-        router.reload({ only: ['announcements'] });
-    };
-
+    const onFinish = () => { closeAnnouncementModal(); router.reload({ only: ['announcements'] }); };
     if (announcementModalMode.value === 'create') {
-        announcementForm.post(route('announcements.store'), {
-            preserveScroll: true,
-            onSuccess: onFinish,
-        });
+        announcementForm.post(route('announcements.store'), { preserveScroll: true, onSuccess: onFinish, });
     } else {
-        announcementForm.put(route('announcements.update', editingAnnouncementId.value), {
-            preserveScroll: true,
-            onSuccess: onFinish,
-        });
+        announcementForm.put(route('announcements.update', editingAnnouncementId.value), { preserveScroll: true, onSuccess: onFinish, });
     }
 }
-
 function deleteAnnouncement() {
     if (confirm('Are you sure you want to delete this announcement?')) {
         router.delete(route('announcements.destroy', editingAnnouncementId.value), {
             preserveScroll: true,
-            onSuccess: () => {
-                closeAnnouncementModal();
-                router.reload({ only: ['announcements'] });
-            },
+            onSuccess: () => { closeAnnouncementModal(); router.reload({ only: ['announcements'] }); },
         });
     }
 }
-
-function openViewAnnouncementModal(announcement) {
-    viewingAnnouncement.value = announcement;
-    isViewAnnouncementModalOpen.value = true;
-}
-
-function closeViewAnnouncementModal() {
-    isViewAnnouncementModalOpen.value = false;
-    viewingAnnouncement.value = null;
-}
-
-
-
-
+function openViewAnnouncementModal(announcement) { viewingAnnouncement.value = announcement; isViewAnnouncementModalOpen.value = true; }
+function closeViewAnnouncementModal() { isViewAnnouncementModalOpen.value = false; viewingAnnouncement.value = null; }
 // --- EXISTING SCRIPT SETUP LOGIC (Unchanged) ---
-const updateTaskStatus = (task, newStatus) => {
-    router.patch(route('tasks.updateStatus', task.id), { status: newStatus }, { preserveScroll: true });
-};
-const getTaskStatusColor = (status) => {
-    if (status === 'completed' || status === 'done') return 'bg-green-50 border-green-200';
-    if (status === 'in_progress') return 'bg-blue-50 border-blue-200';
-    return 'bg-gray-50 border-gray-200';
-};
-const getStatusBadgeColor = (status) => {
-    if (status === 'completed' || status === 'done') return 'bg-green-100 text-green-800';
-    if (status === 'in_progress') return 'bg-blue-100 text-blue-800';
-    return 'bg-gray-100 text-gray-800';
-};
+const updateTaskStatus = (task, newStatus) => { router.patch(route('tasks.updateStatus', task.id), { status: newStatus }, { preserveScroll: true }); };
+const getTaskStatusColor = (status) => { if (status === 'completed' || status === 'done') return 'bg-green-50 border-green-200'; if (status === 'in_progress') return 'bg-blue-50 border-blue-200'; return 'bg-gray-50 border-gray-200'; };
+const getStatusBadgeColor = (status) => { if (status === 'completed' || status === 'done') return 'bg-green-100 text-green-800'; if (status === 'in_progress') return 'bg-blue-100 text-blue-800'; return 'bg-gray-100 text-gray-800'; };
 const getStatusDisplayName = (status) => (status || 'todo').replace(/_/g, ' ');
 const canStartTask = (status) => status === 'todo' || status === 'pending';
 const canCompleteTask = (status) => status === 'in_progress';
-const companyExperience = computed(() => {
-    if (!props.user.hire_date) return 'N/A';
-    return formatDistanceToNowStrict(new Date(props.user.hire_date));
-});
+const companyExperience = computed(() => { if (!props.user.hire_date) return 'N/A'; return formatDistanceToNowStrict(new Date(props.user.hire_date)); });
 const isNoteModalVisible = ref(false);
 const modalMode = ref('create');
 const editingNoteId = ref(null);
@@ -208,84 +156,17 @@ const liveTime = computed(() => now.value.toLocaleTimeString('en-US', { hour: '2
 onMounted(() => { timeUpdater = setInterval(() => { now.value = new Date(); }, 1000); });
 onUnmounted(() => { clearInterval(timeUpdater); });
 const calendar = ref(null);
-watch(() => props.calendarEvents, (newEvents) => {
-    if (calendar.value) {
-        const calendarApi = calendar.value.getApi();
-        calendarApi.removeAllEvents();
-        calendarApi.addEventSource(newEvents);
-    }
-}, { deep: true });
+watch(() => props.calendarEvents, (newEvents) => { if (calendar.value) { const calendarApi = calendar.value.getApi(); calendarApi.removeAllEvents(); calendarApi.addEventSource(newEvents); } }, { deep: true });
 const currentCalendarView = ref('dayGridMonth');
-function handleDateClick(arg) {
-    modalMode.value = 'create';
-    editingNoteId.value = null;
-    noteForm.date = arg.dateStr;
-    isNoteModalVisible.value = true;
-}
-function handleEventClick(arg) {
-    if (arg.event.extendedProps.type === 'note') {
-        modalMode.value = 'edit';
-        editingNoteId.value = arg.event.extendedProps.note_id;
-        noteForm.note = arg.event.title;
-        noteForm.date = arg.event.startStr;
-        isNoteModalVisible.value = true;
-    }
-}
-const calendarOptions = ref({
-    plugins: [dayGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
-    headerToolbar: false,
-    events: props.calendarEvents,
-    height: 'auto',
-    selectable: true,
-    dateClick: handleDateClick,
-    eventClick: handleEventClick,
-    dayHeaderClassNames: 'text-xs font-semibold text-slate-500 uppercase',
-    dayCellClassNames: 'border-slate-200',
-    eventDisplay: 'block',
-    eventClassNames: 'p-1 rounded-md font-medium cursor-pointer border-none text-xs',
-});
-function changeCalendarView(view) {
-    if(calendar.value) {
-        calendar.value.getApi().changeView(view);
-        currentCalendarView.value = view;
-    }
-}
-function saveNote() {
-    const action = modalMode.value === 'create' ? route('calendar-notes.store') : route('calendar-notes.update', editingNoteId.value);
-    const method = modalMode.value === 'create' ? 'post' : 'put';
-    noteForm[method](action, {
-        preserveScroll: true,
-        onSuccess: () => { closeModal(); router.reload({ only: ['calendarEvents'] }); },
-    });
-}
-function deleteNote() {
-    if (confirm('Are you sure you want to delete this note?')) {
-        router.delete(route('calendar-notes.destroy', editingNoteId.value), {
-            preserveScroll: true,
-            onSuccess: () => { closeModal(); router.reload({ only: ['calendarEvents'] }); },
-        });
-    }
-}
-function closeModal() {
-    isNoteModalVisible.value = false;
-    noteForm.reset();
-    editingNoteId.value = null;
-}
-const chartData = computed(() => ({
-    labels: ['Present', 'Absent'],
-    datasets: [{
-        backgroundColor: ['#3b82f6', '#1f2937'],
-        data: [props.attendance.present, props.attendance.absent],
-        borderWidth: 0,
-    }],
-}));
-const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '80%',
-    plugins: { legend: { display: false }, tooltip: { enabled: true } },
-};
+function handleDateClick(arg) { modalMode.value = 'create'; editingNoteId.value = null; noteForm.date = arg.dateStr; isNoteModalVisible.value = true; }
+function handleEventClick(arg) { if (arg.event.extendedProps.type === 'note') { modalMode.value = 'edit'; editingNoteId.value = arg.event.extendedProps.note_id; noteForm.note = arg.event.title; noteForm.date = arg.event.startStr; isNoteModalVisible.value = true; } }
+const calendarOptions = ref({ plugins: [dayGridPlugin, interactionPlugin], initialView: 'dayGridMonth', headerToolbar: false, events: props.calendarEvents, height: 'auto', selectable: true, dateClick: handleDateClick, eventClick: handleEventClick, dayHeaderClassNames: 'text-xs font-semibold text-slate-500 uppercase', dayCellClassNames: 'border-slate-200', eventDisplay: 'block', eventClassNames: 'p-1 rounded-md font-medium cursor-pointer border-none text-xs', });
+function changeCalendarView(view) { if(calendar.value) { calendar.value.getApi().changeView(view); currentCalendarView.value = view; } }
+function saveNote() { const action = modalMode.value === 'create' ? route('calendar-notes.store') : route('calendar-notes.update', editingNoteId.value); const method = modalMode.value === 'create' ? 'post' : 'put'; noteForm[method](action, { preserveScroll: true, onSuccess: () => { closeModal(); router.reload({ only: ['calendarEvents'] }); }, }); }
+function deleteNote() { if (confirm('Are you sure you want to delete this note?')) { router.delete(route('calendar-notes.destroy', editingNoteId.value), { preserveScroll: true, onSuccess: () => { closeModal(); router.reload({ only: ['calendarEvents'] }); }, }); } }
+function closeModal() { isNoteModalVisible.value = false; noteForm.reset(); editingNoteId.value = null; }
+const chartData = computed(() => ({ labels: ['Present', 'Absent'], datasets: [{ backgroundColor: ['#3b82f6', '#1f2937'], data: [props.attendance.present, props.attendance.absent], borderWidth: 0, }], }));
+const chartOptions = { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: true } }, };
 
 </script>
 
@@ -294,35 +175,10 @@ const chartOptions = {
 
     <AuthenticatedLayout>
 
-        <!-- --- [+] NEW --- AI Performance Summary Modal --- -->
-        <Modal :show="isSummaryModalVisible" @close="closeSummaryModal">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-slate-900">Your AI Performance Insights</h3>
-                    <button @click="closeSummaryModal" class="p-1 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">×</button>
-                </div>
+        <!-- [-] REMOVED AI Performance Summary Modal from here -->
 
-                <div v-if="isLoadingSummary" class="text-center py-10">
-                    <div class="mt-4 animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto"></div>
-                    <p class="text-slate-600 mt-3">Generating your summary, please wait...</p>
-                </div>
-
-                <div v-if="summaryError" class="text-red-700 bg-red-100 border border-red-200 p-4 rounded-lg">
-                    <p class="font-bold">Could not generate summary</p>
-                    <p class="text-sm">{{ summaryError }}</p>
-                </div>
-
-                <p v-if="generatedSummary" class="text-slate-700 whitespace-pre-wrap leading-relaxed">
-                    {{ generatedSummary }}
-                </p>
-
-                 <div class="mt-6 flex justify-end">
-                    <button type="button" @click="closeSummaryModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Close</button>
-                </div>
-            </div>
-        </Modal>
-
-         <Modal :show="isViewAnnouncementModalOpen" @close="closeViewAnnouncementModal">
+        <!-- Announcement and Calendar Modals (Unchanged) -->
+        <Modal :show="isViewAnnouncementModalOpen" @close="closeViewAnnouncementModal">
             <div v-if="viewingAnnouncement" class="p-6">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
@@ -342,7 +198,6 @@ const chartOptions = {
                 </div>
             </div>
         </Modal>
-
         <Modal :show="isAnnouncementModalOpen" @close="closeAnnouncementModal">
              <div class="p-6">
                 <h3 class="text-lg font-bold text-slate-900">{{ announcementModalMode === 'create' ? 'New Announcement' : 'Edit Announcement' }}</h3>
@@ -364,18 +219,13 @@ const chartOptions = {
                             </div>
                             <div class="flex justify-end space-x-3">
                                 <button type="button" @click="closeAnnouncementModal" class="px-4 py-2 text-sm font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Cancel</button>
-                                <button type="submit" :disabled="announcementForm.processing" class="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50">
-                                    {{ announcementForm.processing ? 'Saving...' : 'Save Announcement' }}
-                                </button>
+                                <button type="submit" :disabled="announcementForm.processing" class="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50">{{ announcementForm.processing ? 'Saving...' : 'Save Announcement' }}</button>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
         </Modal>
-
-
-        <!-- Calendar Note Modal (Unchanged) -->
         <Modal :show="isNoteModalVisible" @close="closeModal">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
@@ -403,11 +253,10 @@ const chartOptions = {
 
         <div class="p-4 sm:p-6 lg:p-8 font-sans">
             <div class="max-w-7xl mx-auto space-y-6">
-                <!-- Dashboard Header --- MODIFIED --- -->
+                <!-- Dashboard Header (Unchanged) -->
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <h1 class="text-3xl font-bold text-slate-900">Dashboard</h1>
                     <div class="flex items-center space-x-3">
-                        <!-- [+] NEW BUTTON FOR PERFORMANCE INSIGHTS -->
                         <button
                             @click="fetchAiSummary"
                             :disabled="isLoadingSummary || !isDataReadyForSummary"
@@ -419,6 +268,26 @@ const chartOptions = {
                         </button>
                         <Link :href="route('leave.index')" class="px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 transition-colors shadow-sm">Create Leave Request</Link>
                     </div>
+                </div>
+
+                <!-- --- [+] NEW --- AI Performance Insights Box --- -->
+                <div v-if="showSummaryBox" class="relative bg-white p-6 rounded-xl shadow-sm border border-slate-200 transition-all">
+                    <button @click="closeSummaryBox" class="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">×</button>
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">AI Performance Insights</h3>
+
+                    <div v-if="isLoadingSummary" class="text-center py-10">
+                        <div class="mt-4 animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto"></div>
+                        <p class="text-slate-600 mt-3">Generating your summary, please wait...</p>
+                    </div>
+
+                    <div v-else-if="summaryError" class="text-red-700 bg-red-100 border border-red-200 p-4 rounded-lg">
+                        <p class="font-bold">Could not generate summary</p>
+                        <p class="text-sm">{{ summaryError }}</p>
+                    </div>
+
+                    <p v-else-if="generatedSummary" class="text-slate-700 whitespace-pre-wrap leading-relaxed">
+                        {{ generatedSummary }}
+                    </p>
                 </div>
 
                 <!-- Grid for Top Row Cards (Unchanged) -->
@@ -452,7 +321,7 @@ const chartOptions = {
                     </div>
                 </div>
 
-                 <!-- Announcement Panel -->
+                 <!-- Announcement Panel (Unchanged)-->
                 <div v-if="announcements.length > 0 || canManageAnnouncements" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-slate-900">Announcements</h3>

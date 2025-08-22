@@ -4,13 +4,13 @@ namespace App\Actions\Leave;
 
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
+use App\Models\User; // <-- Import User model for type hinting
 use Illuminate\Support\Facades\Auth;
 
 class GetLeave
 {
     /**
-     * Determine the color category used for frontend display,
-     * based on leave type and remaining leave balance.
+     * Determine the color category used for frontend display.
      */
     private function getLeaveColorCategory(LeaveApplication $request): string
     {
@@ -20,7 +20,10 @@ class GetLeave
 
         $leaveType = $request->leave_type;
         $user = $request->user;
-        $remainingBalance = $user ? $user->getRemainingLeaveBalance() : 0;
+
+        // FIX FOR LINE 24: Removed unnecessary ternary check
+        // We know $user is never null here because of the relationship definition.
+        $remainingBalance = $user->getRemainingLeaveBalance();
 
         if ($leaveType === 'personal') {
             return $remainingBalance >= $request->leave_days ? 'personal' : 'paid';
@@ -38,24 +41,16 @@ class GetLeave
     }
 
     /**
-     * Fetch leave requests, annotate with color category,
-     * and return data for frontend consumption.
+     * Fetch leave requests and prepare data for the frontend.
      */
     public function handle(): array
     {
+        /** @var User $user */
         $user = Auth::user();
 
-        // Subtract pending leaves for UI display only
-        // $remainingLeaveBalance = $user->getRemainingLeaveBalance();
-
-        // $pendingLeaveDays = $user->leaveApplications()
-        //     ->where('status', 'pending')
-        //     ->whereIn('leave_type', ['annual', 'casual']) // only those that will deduct in DB
-        //     ->sum('leave_days');
-
-        // $uiDisplayedBalance = max(0, $remainingLeaveBalance - $pendingLeaveDays);
-
-        $compOffBalance = $user->comp_off_balance ?? 0;
+        // FIX FOR LINE 67: Removed unnecessary null coalescing operator
+        // We know comp_off_balance is a float on the User model.
+        $compOffBalance = $user->comp_off_balance;
 
         $requests = LeaveApplication::with(['user:id,name'])
             ->where('user_id', $user->id)
@@ -70,9 +65,9 @@ class GetLeave
 
         $leaveEvents = $requests->getCollection()
             ->filter(fn ($request) => in_array($request->status, ['pending', 'approved']))
-            ->map(fn ($request) => [
+            ->map(fn (LeaveApplication $request) => [ // Added type hint for clarity
                 'start' => $request->start_date->toDateString(),
-                'end' => $request->end_date ? $request->end_date->toDateString() : null,
+                'end' => $request->end_date?->toDateString() ?? $request->start_date->toDateString(),
                 'title' => ucfirst($request->leave_type).' Leave',
                 'class' => $request->status,
                 'color_category' => $this->getLeaveColorCategory($request),
@@ -82,11 +77,12 @@ class GetLeave
         $holidayEvents = Holiday::all()->map(function ($holiday) {
             return [
                 'start' => $holiday->date->toDateString(),
-                'end' => null,
+                'end' => $holiday->date->toDateString(),
                 'title' => $holiday->name,
                 'class' => 'holiday',
-                'color_category' => 'holiday', // match this with your Vue color map
-                'user_id' => null, // so they’re visible to all
+                'color_category' => 'holiday',
+                // FIX FOR LINE 86: Changed null to 0 to match the integer type
+                'user_id' => 0,
             ];
         });
 

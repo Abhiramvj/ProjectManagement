@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
-// All necessary imports from both files, deduplicated
 use App\Models\CalendarNote;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
@@ -20,11 +19,8 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    // Using the Service-based architecture from the second controller for better organization
     protected $taskStatsService;
-
     protected $timeStatsService;
-
     protected $leaveStatsService;
 
     public function __construct(
@@ -44,7 +40,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user()->load('parent');
 
-        // --- ATTENDANCE & GREETING DATA (Common to both) ---
+        // --- ATTENDANCE & GREETING DATA ---
         $totalEmployees = User::count();
         $absentTodayUsers = User::whereHas('leaveApplications', function ($query) {
             $today = now()->toDateString();
@@ -71,7 +67,7 @@ class DashboardController extends Controller
             $greetingIcon = '🌙';
         }
 
-        // --- CALENDAR DATA (Common to both) ---
+        // --- CALENDAR DATA ---
         $leaveEvents = LeaveApplication::where('user_id', $user->id)
             ->where('status', 'approved')
             ->get()
@@ -80,9 +76,14 @@ class DashboardController extends Controller
                     'id' => 'leave_'.$leave->id,
                     'title' => ucfirst($leave->leave_type).' Leave',
                     'start' => $leave->start_date,
-                    'end' => $leave->start_date === $leave->end_date
-                        ? null // Single day event
-                        : Carbon::parse($leave->end_date)->addDay()->toDateString(),
+
+                    // =================================================================================
+                    //  FIXED LOGIC: Removed the conditional.
+                    //  We ALWAYS add one day to the end_date. FullCalendar handles both single and
+                    //  multi-day events correctly with this approach, making the 'end' date exclusive.
+                    // =================================================================================
+                    'end' => Carbon::parse($leave->end_date)->addDay()->toDateString(),
+
                     'allDay' => true,
                     'backgroundColor' => $this->getLeaveColor($leave->leave_type),
                     'borderColor' => $this->getLeaveColor($leave->leave_type),
@@ -120,7 +121,7 @@ class DashboardController extends Controller
                 'title' => $holiday->name,
                 'start' => $holiday->date->toDateString(),
                 'allDay' => true,
-                'backgroundColor' => '#10B981', // Tailwind Emerald for example
+                'backgroundColor' => '#10B981',
                 'borderColor' => '#059669',
                 'textColor' => '#ffffff',
                 'extendedProps' => [
@@ -133,7 +134,7 @@ class DashboardController extends Controller
             ->merge($noteEvents)
             ->merge($holidayEvents);
 
-        // --- PROJECTS AND TASKS (Using the more concise logic) ---
+        // --- PROJECTS AND TASKS ---
         $projects = collect();
         if ($user->hasRole(['admin', 'project-manager', 'team-lead'])) {
             $projects = Project::where('status', '!=', 'completed')
@@ -146,7 +147,7 @@ class DashboardController extends Controller
             ->where('status', '!=', 'completed')
             ->orderBy('due_date', 'asc')->get();
 
-        // --- ANNOUNCEMENTS (Merged from the first controller) ---
+        // --- ANNOUNCEMENTS ---
         $announcements = Announcement::with('user:id,name,avatar_url')
             ->latest()
             ->take(5)
@@ -161,12 +162,12 @@ class DashboardController extends Controller
                 ];
             });
 
-        // --- PERFORMANCE STATS (Using the Service classes) ---
+        // --- PERFORMANCE STATS ---
         $taskStats = $this->taskStatsService->getStatsForUser($user->id);
         $timeStats = $this->timeStatsService->getStatsForUser($user->id);
         $leaveStats = $this->leaveStatsService->getStatsForUser($user->id);
 
-        // --- RENDER VIEW (With all props combined) ---
+        // --- RENDER VIEW ---
         return Inertia::render('Dashboard', [
             'user' => $user->append('avatar_url'),
             'attendance' => $attendanceData,
@@ -178,10 +179,10 @@ class DashboardController extends Controller
             ],
             'projects' => $projects,
             'myTasks' => $myTasks,
-            'announcements' => $announcements, // <-- Merged
-            'taskStats' => $taskStats,         // <-- Merged
-            'timeStats' => $timeStats,         // <-- Merged
-            'leaveStats' => $leaveStats,         // <-- Merged
+            'announcements' => $announcements,
+            'taskStats' => $taskStats,
+            'timeStats' => $timeStats,
+            'leaveStats' => $leaveStats,
         ]);
     }
 

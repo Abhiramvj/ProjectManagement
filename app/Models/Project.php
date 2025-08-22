@@ -31,6 +31,11 @@ class Project extends Model
         return $this->belongsTo(Team::class);
     }
 
+    public function teamLead()
+    {
+        return $this->belongsTo(User::class, 'team_lead_id');
+    }
+
     public function tasks()
     {
         return $this->hasMany(Task::class);

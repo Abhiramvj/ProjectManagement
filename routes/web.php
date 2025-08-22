@@ -45,11 +45,23 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware('auth')->group(function () {
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // User management routes
-    Route::resource('users', UserController::class)->except(['show'])->middleware(['can:manage employees']);
+  Route::middleware(['auth', 'verified', 'can:manage employees'])->group(function () {
+
+    Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+
+    // [+] NEW: Add a GET route to download the template file.
+    Route::get('users/import-template', function () {
+        // Make sure you have a file named 'users_template.xlsx' in your /public directory
+        return response()->download(public_path('users_template.xlsx'));
+    })->name('users.import.template');
+
+    // Your existing resource route remains the same
+    Route::resource('users', UserController::class)->except(['show']);
+});
     Route::get('/performance/{user}', [PerformanceReportController::class, 'show'])
         ->name('performance.show')
         ->middleware(['can:manage employees']);

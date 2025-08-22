@@ -13,7 +13,7 @@ class TimeLog extends Model
      * The attributes that are mass assignable.
      * This is the recommended "whitelist" approach for security.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'user_id',
@@ -37,5 +37,29 @@ class TimeLog extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get the total hours worked
+     */
+    public function getTotalHoursAttribute()
+    {
+        return $this->hours_worked ?? 0;
+    }
+
+    /**
+     * Get the week number
+     */
+    public function getWeekAttribute()
+    {
+        return $this->work_date ? $this->work_date->weekOfYear : null;
+    }
+
+    /**
+     * Get the year
+     */
+    public function getYearAttribute()
+    {
+        return $this->work_date ? $this->work_date->year : null;
     }
 }

@@ -1,0 +1,11 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    # The level of analysis, 0 is the loosest, 9 is the strictest
+    level: 5
+
+    # The paths to analyse
+    paths:
+        - app
+        - tests

@@ -2,14 +2,44 @@
 
 namespace App\Models;
 
-use Carbon\Carbon; // <-- ADDED: Import Carbon for date handling
-use Illuminate\Database\Eloquent\Builder; // <-- ADDED: Import Builder for scopes
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * == Properties for Database Columns ==
+ * @property int $id
+ * @property int $user_id
+ * @property string $leave_type
+ * @property string $day_type
+ * @property Carbon $start_date
+ * @property ?Carbon $end_date // <-- THE ONLY CHANGE IS THIS QUESTION MARK
+ * @property float $leave_days
+ * @property string $reason
+ * @property string $status
+ * @property ?string $start_half_session
+ * @property ?string $end_half_session
+ * @property ?int $approved_by
+ * @property ?Carbon $approved_at
+ * @property ?string $rejection_reason
+ * @property ?string $supporting_document_path
+ * @property ?float $comp_off_balance
+ * @property ?Carbon $created_at
+ * @property ?Carbon $updated_at
+ *
+ * == Properties for Eloquent Relationships ==
+ * @property-read User $user
+ * @property-read ?User $approvedBy
+ *
+ * == Properties from Accessors ==
+ * @property-read ?string $supporting_document_url
+ */
 class LeaveApplication extends Model
 {
+    // ... all the rest of your model code remains the same
     use HasFactory;
 
     protected $fillable = [
@@ -36,7 +66,6 @@ class LeaveApplication extends Model
         'approved_at' => 'datetime',
         'leave_days' => 'float',
     ];
-
     // Set default values for attributes
     protected $attributes = [
         'leave_type' => 'annual',
@@ -44,18 +73,18 @@ class LeaveApplication extends Model
     ];
 
     // Relationships
-    public function user()
+    public function user(): BelongsTo // <-- ADDED RETURN TYPE
     {
         return $this->belongsTo(User::class);
     }
 
-    public function approvedBy()
+    public function approvedBy(): BelongsTo // <-- ADDED RETURN TYPE
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
     // Accessors
-    public function getSupportingDocumentUrlAttribute()
+    public function getSupportingDocumentUrlAttribute(): ?string // <-- ADDED RETURN TYPE
     {
         return $this->supporting_document_path ? Storage::url($this->supporting_document_path) : null;
     }
@@ -89,16 +118,9 @@ class LeaveApplication extends Model
 
     /**
      * Scope a query to only include leave applications that overlap with a given date range.
-     *
-     * This allows for clean queries like ->overlapsWith($startDate, $endDate).
-     *
-     * @param  \Carbon\Carbon  $startDate  The start of the period to check against.
-     * @param  \Carbon\Carbon  $endDate  The end of the period to check against.
      */
     public function scopeOverlapsWith(Builder $query, Carbon $startDate, Carbon $endDate): Builder
     {
-        // The standard logic for checking if two date ranges overlap is:
-        // Range A overlaps with Range B if A.start_date <= B.end_date AND A.end_date >= B.start_date.
         return $query->where(function ($q) use ($startDate, $endDate) {
             $q->where('start_date', '<=', $endDate->toDateString())
                 ->where('end_date', '>=', $startDate->toDateString());
