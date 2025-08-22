@@ -244,11 +244,70 @@ class LeaveApplicationController extends Controller
 
     // private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
     // {
-    //     // ...
+    //     // --- STEP 1: RENDER THE MAIL TO HTML ---
+    //     // This is the most important new line. It takes your Markdown template
+    //     // and converts it into a complete HTML string, exactly as it will be sent.
+    //     $emailHtmlContent = $mailable->render();
+
+    //     // Get the event type directly from the mailable's public property.
+    //     $eventType = $mailable->eventType ?? 'unknown_event';
+
+    //     // --- STEP 2: PREPARE DATA FOR MONGODB ---
+    //     // Now we prepare the data array that will be saved to your database.
+    //     $logData = [
+    //         'leave_application_id' => $leaveApplication->id,
+    //         'recipient_email' => $recipientEmail,
+    //         'subject' => $mailable->subject ?? 'Leave Application Notification',
+    //         'event_type' => $eventType,
+    //         'sent_at' => now(),
+    //         'reason' => $leaveApplication->reason,
+    //         'leave_period' => $leaveApplication->start_date->format('M d, Y').' to '.$leaveApplication->end_date->format('M d, Y'),
+
+    //         // --- Add the rendered HTML to the log data ---
+    //         'body_html' => $emailHtmlContent,
+    //     ];
+
+    //     try {
+    //         // Send the actual email.
+    //         Mail::to($recipientEmail)->send($mailable);
+
+    //         // LOG SUCCESS: The $logData array now includes the 'body_html'
+    //         MailLog::create(array_merge($logData, [
+    //             'status' => 'sent',
+    //             'error_message' => null,
+    //         ]));
+
+    //     } catch (\Exception $e) {
+    //         // LOG FAILURE
+    //         Log::error(
+    //             'Mail sending failed for LeaveApplication ID '.$leaveApplication->id.
+    //             ' to '.$recipientEmail.': '.$e->getMessage()
+    //         );
+    //         // The log data still includes the HTML, so you can see what was supposed to be sent.
+    //         MailLog::create(array_merge($logData, [
+    //             'status' => 'failed',
+    //             'error_message' => $e->getMessage(),
+    //         ]));
+    //     }
     // }
 
     // private function getEventTypeFromMailable(Mailable $mailable): string
     // {
-    //     // ...
+    //     // This handles modern Laravel Mailables (Laravel 9+)
+    //     if (method_exists($mailable, 'headers')) {
+    //         // NEW, CORRECT WAY: get the header and check if the result is not null.
+    //         $header = $mailable->headers()->get('X-Event-Type');
+
+    //         if ($header) {
+    //             // The getBodyAsString() method safely returns the header's value.
+    //             return $header->getBodyAsString();
+    //         }
+    //     }
+
+    //     // Fallback if the header isn't set or for older mailables.
+    //     // It uses the Mailable's class name as the event type.
+    //     $path = explode('\\', get_class($mailable));
+
+    //     return array_pop($path);
     // }
 }
