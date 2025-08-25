@@ -84,9 +84,9 @@ const getActionClass = (action) => {
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-700 max-w-md">
                                         <p>{{ log.description }}</p>
-                                        <div v-if="log.details && log.details.old_balance !== undefined" class="text-xs text-gray-500 mt-1">
+                                        <!-- <div v-if="log.details && log.details.old_balance !== undefined" class="text-xs text-gray-500 mt-1">
                                             Balance changed from {{ log.details.old_balance }} to {{ log.details.new_balance }}.
-                                        </div>
+                                        </div> -->
                                     </td>
                                 </tr>
                             </tbody>
