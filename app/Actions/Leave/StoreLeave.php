@@ -18,7 +18,7 @@ class StoreLeave
         $authUser = Auth::user();
 
         // Determine target user (Admin/HR can specify, else use auth user)
-        $targetUserId = $data['user_id'] ?? $authUser->id;
+        $targetUserId = $data['user_id'] ?? Auth::id();
         $targetUser = User::findOrFail($targetUserId);
 
         $start = Carbon::parse($data['start_date']);

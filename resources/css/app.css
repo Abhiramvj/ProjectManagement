@@ -165,3 +165,31 @@ select {
     display: none;
   }
 }
+
+@layer components {
+    /* Base styles for form inputs, selects, and textareas */
+    .form-input, .form-select, .form-textarea {
+        @apply block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm shadow-sm;
+        @apply placeholder:text-gray-400;
+        @apply focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500;
+        @apply transition duration-150 ease-in-out;
+    }
+
+    .form-select {
+        @apply pr-10; /* Add space for the dropdown arrow */
+    }
+
+    /* Primary Button Style */
+    .btn-primary {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-sm text-white;
+        @apply hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+
+    /* Secondary Button Style */
+    .btn-secondary {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700;
+        @apply hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    }
+}

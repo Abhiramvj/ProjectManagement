@@ -12,6 +12,12 @@ const props = defineProps({
 const activeTab = ref('reporting')
 const isFullscreen = ref(false)
 
+// CORRECT
+const chartConfig = {
+  searchInput: {
+    text: "Search"
+  }
+};
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
 }
@@ -24,6 +30,7 @@ function toggleFullscreen() {
     <!-- Normal mode with AuthenticatedLayout and sticky header -->
     <AuthenticatedLayout>
       <template #header>
+        <!-- Header is now simplified as requested by the new layout -->
         <div class="authenticated-layout-header">
           <h2 class="font-semibold text-xl text-gray-800 leading-tight">Company Hierarchy</h2>
         </div>
@@ -31,14 +38,6 @@ function toggleFullscreen() {
 
       <div class="hierarchy-container">
         <div class="relative bg-white overflow-hidden shadow-sm sm:rounded-lg">
-
-          <button
-  v-if="!isFullscreen"
-  @click="toggleFullscreen"
-  class="fullscreen-toggle-button px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
->
-  Enter Fullscreen
-</button>
 
           <div class="border-b border-gray-200">
             <nav class="-mb-px flex" aria-label="Tabs">
@@ -52,16 +51,27 @@ function toggleFullscreen() {
           </div>
 
           <div class="p-6">
+            <!-- Fullscreen button moved inside the content area -->
+            <button
+              v-if="!isFullscreen"
+              @click="toggleFullscreen"
+              class="mb-4 px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            >
+              Enter Fullscreen
+            </button>
+
             <div v-show="activeTab === 'reporting'">
               <div v-if="props.reportingNodes && props.reportingNodes.length > 0">
-                <BalkanOrgChart :nodes="props.reportingNodes" />
+                <!-- 2. Pass the configuration object to the component -->
+                <BalkanOrgChart :nodes="props.reportingNodes" :config="chartConfig" />
               </div>
               <div v-else class="text-center text-gray-500 py-10">No reporting structure to display.</div>
             </div>
 
             <div v-show="activeTab === 'designation'">
               <div v-if="props.designationBasedNodes && props.designationBasedNodes.length > 0">
-                <BalkanOrgChart :nodes="props.designationBasedNodes" />
+                <!-- 2. Pass the configuration object to the component -->
+                <BalkanOrgChart :nodes="props.designationBasedNodes" :config="chartConfig" />
               </div>
               <div v-else class="text-center text-gray-500 py-10">No designation hierarchy to display.</div>
             </div>
@@ -75,12 +85,12 @@ function toggleFullscreen() {
     <!-- Fullscreen mode: full viewport, no AuthenticatedLayout -->
     <div v-if="isFullscreen" class="fixed inset-0 z-50 bg-gradient-to-br from-blue-100 to-blue-300 overflow-auto p-6">
       <button
-  v-if="isFullscreen"
-  @click="toggleFullscreen"
-  class="absolute top-4 right-4 z-50 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
->
-  Exit Fullscreen
-</button>
+        v-if="isFullscreen"
+        @click="toggleFullscreen"
+        class="absolute top-4 right-4 z-50 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        Exit Fullscreen
+      </button>
 
       <h2 class="font-semibold text-xl text-gray-800 mb-4">Company Hierarchy (Fullscreen)</h2>
 
@@ -98,14 +108,14 @@ function toggleFullscreen() {
       <div>
         <div v-show="activeTab === 'reporting'">
           <div v-if="props.reportingNodes && props.reportingNodes.length > 0">
-            <BalkanOrgChart :nodes="props.reportingNodes" />
+            <BalkanOrgChart :nodes="props.reportingNodes" :config="chartConfig" />
           </div>
           <div v-else class="text-center text-gray-500 py-10">No reporting structure to display.</div>
         </div>
 
         <div v-show="activeTab === 'designation'">
           <div v-if="props.designationBasedNodes && props.designationBasedNodes.length > 0">
-            <BalkanOrgChart :nodes="props.designationBasedNodes" />
+            <BalkanOrgChart :nodes="props.designationBasedNodes" :config="chartConfig" />
           </div>
           <div v-else class="text-center text-gray-500 py-10">No designation hierarchy to display.</div>
         </div>
@@ -131,10 +141,36 @@ function toggleFullscreen() {
   position: relative;
 }
 
-.fullscreen-toggle-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 60;
+.boc-input > label {
+    font-size: 0 !important;
+    color: transparent;
+}
+
+/* Creates a new pseudo-element and inserts the correct text */
+.boc-input > label::after {
+    content: "Search"; /* This is your new placeholder text */
+    font-size: 16px; /* Adjust this to match the original font size */
+    color: #a0aec0;  /* A standard placeholder gray color */
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Allows clicks to pass through to the input */
+}
+
+/* --- The rest of your existing styles --- */
+.chart-container-glass {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #ffffff 0%, #62a5dc 100%);
+    border-radius: 0.5rem;
+}
+.glass-node > rect {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    fill: rgba(255, 255, 255, 0.2);
+    stroke-width: 1px;
+    stroke: rgba(255, 255, 255, 0.3);
 }
 </style>

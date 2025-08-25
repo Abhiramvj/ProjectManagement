@@ -1,7 +1,10 @@
+// In BalkanOrgChart.vue
+
 <script setup>
 import { onMounted, ref, watch, defineProps } from 'vue';
 import OrgChart from '@balkangraph/orgchart.js';
 
+// --- FIX 1: Simplified props. We only need 'nodes'. ---
 const props = defineProps({
   nodes: {
     type: Array,
@@ -14,34 +17,26 @@ const performanceData = ref(null);
 const chartContainer = ref(null);
 let chartInstance = null;
 
-// --- FIX START: Node size and template elements are adjusted for more vertical space ---
+// Node templates remain the same...
 OrgChart.templates.templateGlass = Object.assign({}, OrgChart.templates.base);
-// Increased node height from 90 to 120
 OrgChart.templates.templateGlass.size = [250, 120];
-// Updated rectangle to match new height
 OrgChart.templates.templateGlass.node = '<rect x="0" y="0" width="250" height="120" rx="12" ry="12"></rect>';
-// Re-centered the image and its clip-path vertically
 OrgChart.templates.templateGlass.img_0 =
     '<circle cx="45" cy="60" r="32" fill="none" stroke="{binding.color}" stroke-width="2.5"></circle>' +
     '<clipPath id="clip-glass"><circle cx="45" cy="60" r="30"></circle></clipPath>' +
     '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-glass)" xlink:href="{val}" x="15" y="30" width="60" height="60"></image>';
-
-// Repositioned name field and gave it enough height for two lines
 OrgChart.templates.templateGlass.field_0 =
     '<foreignObject x="95" y="35" width="145" height="40">' +
     '<div xmlns="http://www.w3.org/1999/xhtml" style="font-size: 16px; font-weight: 600; color: #ffffff; white-space: normal; word-wrap: break-word; line-height: 1.25;">' +
     '{val}' +
     '</div>' +
     '</foreignObject>';
-
-// Repositioned title field and gave it enough height for two lines
 OrgChart.templates.templateGlass.field_1 =
     '<foreignObject x="95" y="75" width="145" height="35">' +
     '<div xmlns="http://www.w3.org/1999/xhtml" style="font-size: 12px; font-weight: 400; color: #e5e7eb; white-space: normal; word-wrap: break-word; line-height: 1.25;">' +
     '{val}' +
     '</div>' +
     '</foreignObject>';
-// --- FIX END ---
 
 
 const initializeChart = () => {
@@ -49,12 +44,12 @@ const initializeChart = () => {
     if (chartInstance) chartInstance.destroy();
 
     chartInstance = new OrgChart(chartContainer.value, {
+      // All your chart settings
       nodes: props.nodes,
       template: "templateGlass",
       nodeMouseClick: OrgChart.action.none,
       mouseScrool: OrgChart.action.zoom,
       layout: OrgChart.mixed,
-      searchInput: { text: "Search" },
       nodeSeparation: 60,
       levelSeparation: 80,
       subtreeSeparation: 70,
@@ -86,8 +81,16 @@ const initializeChart = () => {
         total_experience_years: "total_experience_years",
         canViewPerformance: "canViewPerformance",
         performance_summary: "performance_summary"
+      },
+
+      // The onInit function to change the placeholder text
+      onInit: function(sender) {
+        const searchInput = sender.element.querySelector('.boc-search input');
+        if (searchInput) {
+          searchInput.placeholder = 'Search';
+        }
       }
-    });
+    }); // --- FIX 2: Corrected the closing brackets here. The extra '}),' has been removed.
 
     chartInstance.on('field', function(sender, args){
         if (args.name == 'menu'){
@@ -175,9 +178,10 @@ const getTaskProgress = (summary) => {
 
 <style>
 /* All CSS is unchanged */
+
 .chart-container-glass {
     width: 100%;
-    height: 85vh;
+    height: 100%; /* CHANGE THIS FROM 85vh to 100% */
     background: linear-gradient(135deg, #ffffff 0%, #62a5dc 100%);
     border-radius: 0.5rem;
 }

@@ -674,7 +674,7 @@ const leaveTypeDetails = [
               <form @submit.prevent="submitApplication" class="space-y-5 p-6" enctype="multipart/form-data">
                 
                 <div v-if="isAdminOrHR">
-                    <InputLabel for="employee_select" value="Apply for Employee (Admin)" class="font-semibold" />
+                    <InputLabel for="employee_select" value="Apply for Employee " class="font-semibold" />
                     <select id="employee_select" v-model="form.user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option :value="null">For Myself</option>
                         <option v-for="employee in employees" :key="employee.id" :value="employee.id">

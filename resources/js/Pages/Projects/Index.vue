@@ -425,91 +425,107 @@ const clearFilters = () => {
             </div>
         </div>
 
-        <!-- Enhanced Create Project Modal -->
-        <Modal :show="isCreateModalVisible" @close="closeModal">
-  <div class="p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-xl mx-auto transition-all duration-300">
-    <!-- Header -->
-    <div class="flex items-center space-x-3 mb-6">
-      <div class="flex items-center justify-center bg-blue-100 rounded-lg h-11 w-11">
-        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v1a3 3 0 006 0V7" />
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z" />
-</svg>
+<Modal :show="isCreateModalVisible" @close="closeModal">
+    <div class="p-6 bg-white rounded-xl shadow-xl w-full max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center justify-center bg-indigo-100 rounded-lg h-12 w-12 flex-shrink-0">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v1a3 3 0 006 0V7" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Create New Project</h2>
+                    <p class="text-sm text-gray-500">Please fill out the details below.</p>
+                </div>
+            </div>
+             <button @click="closeModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
 
-      </div>
-      <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Create New Project</h2>
+        <!-- Form -->
+        <form @submit.prevent="submit" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                <!-- Project Name -->
+                <div>
+                    <label for="name" class="form-label">Project Name</label>
+                    <input v-model="form.name" id="name" type="text" required
+                        class="form-input"
+                        placeholder="e.g., Q4 Marketing Campaign" />
+                    <InputError class="mt-1" :message="form.errors.name" />
+                </div>
+
+                <!-- Assign to Team -->
+                <div>
+                    <label for="team_id" class="form-label">Assign to Team</label>
+                    <select v-model="form.team_id" id="team_id" required class="form-select">
+                        <option value="" disabled>-- Select a team --</option>
+                        <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
+                    </select>
+                    <InputError class="mt-1" :message="form.errors.team_id" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                 <!-- Due Date -->
+                <div>
+                    <label for="end_date" class="form-label">Due Date</label>
+                    <input v-model="form.end_date" id="end_date" type="date" required
+                        class="form-input" />
+                    <InputError class="mt-1" :message="form.errors.end_date" />
+                </div>
+
+                <!-- Estimated Hours -->
+                <div>
+                    <label for="total_hours_required" class="form-label">Estimated Hours</label>
+                    <input v-model="form.total_hours_required" id="total_hours_required" type="number" min="1" required
+                        class="form-input" placeholder="e.g., 100" />
+                    <InputError class="mt-1" :message="form.errors.total_hours_required" />
+                </div>
+
+                <!-- Priority -->
+                <div>
+                    <label for="priority" class="form-label">Priority</label>
+                    <select v-model="form.priority" id="priority" class="form-select">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <InputError class="mt-1" :message="form.errors.priority" />
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="description" class="form-label">Description</label>
+                <textarea v-model="form.description" id="description" rows="4"
+                    class="form-textarea"
+                    placeholder="Describe the project goals, key deliverables, and requirements..."></textarea>
+                <InputError class="mt-1" :message="form.errors.description" />
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-5 flex justify-end gap-4 border-t border-gray-200 mt-6">
+                <button type="button" @click="closeModal"
+                    class="btn-secondary" :disabled="form.processing">
+                    Cancel
+                </button>
+                <button type="submit" :disabled="form.processing"
+                    class="btn-primary">
+                    <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ form.processing ? 'Creating...' : 'Create Project' }}
+                </button>
+            </div>
+        </form>
     </div>
-
-    <!-- Form Grid -->
-    <form @submit.prevent="submit" class="space-y-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Project Name</label>
-          <input v-model="form.name" id="name" type="text" required
-            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Enter project name" />
-          <InputError class="mt-2" :message="form.errors.name" />
-        </div>
-        <div>
-          <label for="team_id" class="block text-sm font-medium text-gray-700 mb-2">Assign to Team</label>
-          <select v-model="form.team_id" id="team_id" required class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-            <option value="" disabled>-- Select a team --</option>
-            <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
-          </select>
-          <InputError class="mt-2" :message="form.errors.team_id" />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
-          <input v-model="form.end_date" id="end_date" type="date" required
-            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
-          <InputError class="mt-2" :message="form.errors.end_date" />
-        </div>
-        <div>
-          <label for="total_hours_required" class="block text-sm font-medium text-gray-700 mb-2">Estimated Hours</label>
-          <input v-model="form.total_hours_required" id="total_hours_required" type="number" min="1" required
-            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
-          <InputError class="mt-2" :message="form.errors.total_hours_required" />
-        </div>
-        <div>
-          <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-          <select v-model="form.priority" id="priority"
-            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-          <InputError class="mt-2" :message="form.errors.priority" />
-        </div>
-      </div>
-
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-        <textarea v-model="form.description" id="description" rows="4"
-          class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-          placeholder="Describe the project goals and requirements..."></textarea>
-        <InputError class="mt-2" :message="form.errors.description" />
-      </div>
-
-      <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 mt-8">
-        <button type="button" @click="closeModal"
-          class="inline-flex items-center px-6 py-3 rounded-xl border border-gray-300 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" :disabled="isLoading">
-          Cancel
-        </button>
-        <button type="submit" :disabled="form.processing || isLoading"
-          class="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg hover:scale-105 hover:bg-blue-700 transition">
-
-
-
-          {{ isLoading ? 'Creating...' : 'Create Project' }}
-        </button>
-      </div>
-    </form>
-  </div>
 </Modal>
-
     </AuthenticatedLayout>
 </template>
 

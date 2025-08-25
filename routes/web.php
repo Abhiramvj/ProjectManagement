@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\LeaveLogController;
 use App\Http\Controllers\MailLogController; // ✅ 1. IMPORT THE NEW CONTROLLER
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
@@ -107,7 +108,7 @@ Route::middleware('auth')->group(function () {
     // Leave application routes
     Route::resource('leave', LeaveApplicationController::class)->only(['index', 'store', 'destroy'])->middleware(['can:apply for leave']);
     Route::post('/leave/approve-comp-off/{user}', [LeaveApplicationController::class, 'approveCompOff'])->name('leave.approveCompOff')->middleware('can:manage-leave');
-    Route::get('/leave/logs', [LeaveController::class, 'showLogs'])->name('leave.logs')->middleware(['can:manage leave applications']);
+    Route::get('/leave/manageRequests', [LeaveController::class, 'manageRequests'])->name('leave.manageRequests')->middleware(['can:manage leave applications']);
     Route::get('/leave/requests', [LeaveController::class, 'fullRequests'])->name('leave.fullRequests');
     Route::patch('/leave/{leave_application}', [LeaveApplicationController::class, 'update'])->name('leave.update')->middleware(['can:manage leave applications']);
     Route::patch('/leave/{leave_application}/reason', [LeaveApplicationController::class, 'updateReason'])->name('leave.updateReason')->middleware(['can:apply for leave']);
@@ -116,6 +117,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:apply for leave');
     Route::delete('/leave/{leave_application}/cancel', [LeaveApplicationController::class, 'cancel'])->name('leave.cancel')->middleware(['can:apply for leave']);
 
+    // In routes/web.php
+
+    // This is for the TRUE AUDIT LOGS
+    Route::get('/leave-logs', [LeaveLogController::class, 'index'])
+        ->middleware(['auth', 'verified', 'can:manage leave applications']) // Or a more specific permission like 'view audit logs'
+        ->name('leave.logs');
     // Leave calendar route
     Route::get('/leave-calendar', [LeaveCalendarController::class, 'index'])->name('leaves.calendar');
 

@@ -5,6 +5,7 @@ namespace App\Providers;
 use Gemini\Client;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Vite; // This is the class we want to override
 use Illuminate\Support\ServiceProvider; // We need to create a Guzzle client
 
@@ -41,5 +42,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
         JsonResource::withoutWrapping();
+        Broadcast::routes();
     }
 }
