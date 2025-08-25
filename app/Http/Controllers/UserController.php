@@ -54,4 +54,21 @@ class UserController extends Controller
 
         return Redirect::route('users.index')->with('success', 'Employee deleted successfully.');
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $users = User::where('name', 'like', "%{$query}%")
+            ->orWhere('email', 'like', "%{$query}%")
+            ->select('id', 'name', 'email')
+            ->limit(10)
+            ->get();
+
+        return response()->json($users);
+    }
 }

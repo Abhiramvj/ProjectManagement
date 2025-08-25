@@ -49,6 +49,9 @@ Route::middleware('auth')->group(function () {
 
     // User management routes
     Route::resource('users', UserController::class)->except(['show'])->middleware(['can:manage employees']);
+    Route::get('/users/search', [UserController::class, 'search'])
+    ->middleware([ 'can:manage leave applications'])
+    ->name('users.search');
     Route::get('/performance/{user}', [PerformanceReportController::class, 'show'])
         ->name('performance.show')
         ->middleware(['can:manage employees']);

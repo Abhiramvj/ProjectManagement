@@ -8,6 +8,9 @@ import { ref, computed, watch } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import axios from 'axios';
+import vSelect from 'vue-select';
+import 'vue-select/dist/vue-select.css';
 const showColors = ref(true)
 
 
@@ -58,6 +61,52 @@ const form = useForm({
   supporting_document: null,
   user_id: null,
 })
+
+
+const employeeOptions = ref([]);
+const isLoadingEmployees = ref(false);
+// This function is called by vue-select as the user types
+const searchEmployees = (search) => {
+    if (search.length > 1) {
+        isLoadingEmployees.value = true; // Turn spinner ON
+        debounce(async () => {
+            try {
+                const response = await axios.get(route('users.search', { query: search }));
+                employeeOptions.value = response.data;
+            } catch (error) {
+                console.error("Error searching employees:", error);
+            } finally {
+                isLoadingEmployees.value = false; // Turn spinner OFF
+            }
+        }, 350);
+    }
+};
+
+// Simple debounce helper function
+let debounceTimer;
+const debounce = (callback, delay) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(callback, delay);
+};
+
+// This is the critical watcher that reloads data when an employee is selected
+watch(() => form.user_id, (newUserId) => {
+    // When a user is selected, immediately stop any pending search/loading
+    clearTimeout(debounceTimer);
+    isLoadingEmployees.value = false;
+
+    router.visit(route('leave.index'), {
+        method: 'get',
+        data: { user_id: newUserId },
+        preserveState: true,
+        preserveScroll: true,
+        only: ['highlightedDates', 'employees', 'leaveStats', 'remainingLeaveBalance', 'compOffBalance'],
+        onSuccess: () => {
+            calendarOptions.value.events = [...calendarEvents.value, ...getSelectionBackground()];
+        }
+    });
+});
+
 
 const supportingDocument = ref(null)
 function onSupportingDocumentChange(event) {
@@ -674,14 +723,33 @@ const leaveTypeDetails = [
               <form @submit.prevent="submitApplication" class="space-y-5 p-6" enctype="multipart/form-data">
                 
                 <div v-if="isAdminOrHR">
-                    <InputLabel for="employee_select" value="Apply for Employee " class="font-semibold" />
-                    <select id="employee_select" v-model="form.user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        <option :value="null">For Myself</option>
-                        <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-                            {{ employee.name }}
-                        </option>
-                    </select>
-                </div>
+    <InputLabel for="employee_select" value="Apply for Employee" class="font-semibold" />
+    <v-select
+    id="employee_select"
+    v-model="form.user_id"
+    :options="employeeOptions"
+    :filterable="false"
+    :loading="isLoadingEmployees"
+    @search="searchEmployees"
+    label="name"
+    :reduce="employee => employee.id"
+    placeholder="Start typing employee name or email..."
+    class="mt-1 vs-style"
+>
+    <template #no-options>
+        Type 2 or more characters to search...
+    </template>
+    <template #option="option">
+        <div>{{ option.name }}</div>
+        <div class="text-xs text-gray-500">{{ option.email }}</div>
+    </template>
+    <template #selected-option="option">
+        <!-- This now handles the case where the v-model is just an ID -->
+        <div v-if="typeof option === 'object'">{{ option.name }}</div>
+    </template>
+</v-select>
+    <InputError :message="form.errors.user_id" class="mt-1"/>
+</div>
                 
                 <div>
                   <InputLabel for="leave_type" value="Leave Type" class="font-semibold" />
@@ -923,5 +991,24 @@ const leaveTypeDetails = [
 }
 .fc .fc-bg-event {
     opacity: 0.8 !important;
+}
+
+
+
+.vs-style .vs__dropdown-toggle {
+    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus-within:border-indigo-500 focus-within:ring focus-within:ring-indigo-200 focus-within:ring-opacity-50;
+    padding: 2px 0px 4px;
+}
+.vs-style .vs__selected {
+    @apply text-sm py-0 pl-2;
+}
+.vs-style .vs__search {
+    @apply text-sm py-0;
+}
+.vs-style .vs__dropdown-menu {
+    @apply text-sm;
+}
+.vs-style .vs__spinner {
+    @apply h-5 w-5;
 }
 </style>

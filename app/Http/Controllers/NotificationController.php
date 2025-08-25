@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Notification; // <-- Use our new Notification model
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Illuminate\Database\Eloquent\Builder;
 
 class NotificationController extends Controller
 {
@@ -75,15 +74,14 @@ class NotificationController extends Controller
             // Team lead can only see notifications for their team members.
             $ledTeams = $user->ledTeams()->with('members:id')->get();
             $memberIds = $ledTeams->flatMap(fn ($team) => $team->members->pluck('id'))->unique();
-            
+
             $query->whereIn('notifiable_id', $memberIds);
         } else {
             // A regular employee can ONLY see their own notifications.
             $query->where('notifiable_id', $user->id)
-                  ->where('notifiable_type', User::class);
+                ->where('notifiable_type', User::class);
         }
     }
-
 
     // --- The following methods for marking notifications as read remain largely unchanged ---
     // They are actions performed by the logged-in user on notifications they have access to.
@@ -98,16 +96,15 @@ class NotificationController extends Controller
         if ($notification->read_at === null) {
             $notification->update(['read_at' => now()]);
         }
-        
+
         // For individual employees, also update their native unread notifications
-        if ($notification->notifiable_id === auth()->id()){
+        if ($notification->notifiable_id === auth()->id()) {
             auth()->user()->notifications()->find($id)?->markAsRead();
         }
 
-
         return response()->json(['success' => true]);
     }
-    
+
     public function markAllAsRead()
     {
         // Get all unread notifications the user is allowed to see
@@ -118,7 +115,7 @@ class NotificationController extends Controller
         if ($notificationsToUpdate->isNotEmpty()) {
             // Mark them as read in the database
             Notification::whereIn('id', $notificationsToUpdate->pluck('id'))->update(['read_at' => now()]);
-            
+
             // For individual employees, also update their native unread notifications
             auth()->user()->unreadNotifications->markAsRead();
         }
