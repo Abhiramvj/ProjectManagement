@@ -11,7 +11,7 @@ use App\Mail\LeaveApplicationApproved;
 use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
 use App\Models\LeaveApplication;
-use App\Models\LeaveLog; // <-- IMPORT THE LEAVELOG MODEL
+use App\Models\LeaveLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
@@ -33,7 +33,6 @@ class LeaveApplicationController extends Controller
         try {
             $leave_application = $storeLeave->handle($request->validated());
 
-            // --- ADD THIS LOGGING BLOCK ---
             LeaveLog::create([
                 'user_id' => $leave_application->user_id,
                 'actor_id' => auth()->id(),
@@ -83,7 +82,6 @@ class LeaveApplicationController extends Controller
 
         $user->increment('comp_off_balance', $daysToCredit);
 
-        // --- ADD THIS LOGGING BLOCK ---
         LeaveLog::create([
             'user_id' => $user->id,
             'actor_id' => $actor->id,
@@ -112,10 +110,8 @@ class LeaveApplicationController extends Controller
             $balanceType = in_array($leave_application->leave_type, ['compensatory']) ? 'comp_off_balance' : 'leave_balance';
             $oldBalance = $user->$balanceType;
 
-            // This action must deduct the balance itself.
             $updateLeaveStatus->handle($leave_application, 'approved');
 
-            // --- ADD THIS LOGGING BLOCK ---
             LeaveLog::create([
                 'user_id' => $leave_application->user_id,
                 'actor_id' => $actor->id,
@@ -152,10 +148,8 @@ class LeaveApplicationController extends Controller
                 $oldBalance = $user->$balanceType;
             }
 
-            // This action must restore the balance itself.
             $updateLeaveStatus->handle($leave_application, 'rejected', $rejectReason);
 
-            // --- ADD THIS LOGGING BLOCK ---
             LeaveLog::create([
                 'user_id' => $leave_application->user_id,
                 'actor_id' => $actor->id,
@@ -191,33 +185,51 @@ class LeaveApplicationController extends Controller
         return back()->with('success', 'Reason updated.');
     }
 
+   
     public function cancel(LeaveApplication $leave_application)
     {
         if ($leave_application->user_id !== auth()->id() || $leave_application->status !== 'pending') {
             abort(403, 'Unauthorized action.');
         }
 
-        // --- Important: We must restore the balance BEFORE deleting ---
         $user = $leave_application->user;
+        $oldBalance = 0;
+        $balanceType = null;
+
         if (in_array($leave_application->leave_type, ['annual', 'sick', 'personal'])) {
-            $user->increment('leave_balance', $leave_application->leave_days);
+            $balanceType = 'leave_balance';
         } elseif ($leave_application->leave_type === 'compensatory') {
-            $user->increment('comp_off_balance', $leave_application->leave_days);
+            $balanceType = 'comp_off_balance';
         }
 
-        $leave_application->delete();
-
-        // --- ADD THIS LOGGING BLOCK ---
+        if ($balanceType) {
+            $oldBalance = $user->$balanceType;
+        }
+        
+        
         LeaveLog::create([
             'user_id' => $leave_application->user_id,
             'actor_id' => auth()->id(),
             'leave_application_id' => $leave_application->id,
             'action' => 'cancelled',
-            'description' => 'User cancelled their pending leave request.',
+            'description' => 'User cancelled their pending leave request. Balance restored.',
+            'details' => [
+                'balance_type' => str_replace('_balance', '', $balanceType),
+                'change_amount' => +$leave_application->leave_days,
+                'old_balance' => $oldBalance,
+                'new_balance' => $oldBalance + $leave_application->leave_days, // Calculate the new balance for the log
+            ]
         ]);
+        
+        if ($balanceType) {
+            $user->increment($balanceType, $leave_application->leave_days);
+        }
+        
+        $leave_application->delete();
 
         return Redirect::route('leave.index')->with('success', 'Leave request canceled.');
     }
+
 
     public function uploadDocument(Request $request, LeaveApplication $leave_application)
     {

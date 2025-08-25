@@ -410,8 +410,21 @@ compensatory: {
     "Usually tracked separately to enforce usage policies"
   ],
 },
-
 }
+
+// ADD THIS ENTIRE ICONS OBJECT
+const leaveTypeIcons = {
+  annual: `<svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75s4.365-9.75 9.75-9.75c1.33 0 2.597.246 3.752.682m-11.25 11.25a9.75 9.75 0 01-9.75-9.75c0-4.436 3.12-8.148 7.2-9.397" /></svg>`,
+  sick: `<svg class="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>`,
+  personal: `<svg class="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>`,
+  emergency: `<svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>`,
+  maternity: `<svg class="w-6 h-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75s.168-.75.375-.75S9.75 9.336 9.75 9.75zm4.5 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75s.168-.75.375-.75s.375.336.375.75z" /></svg>`,
+  paternity: `<svg class="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75s.168-.75.375-.75S9.75 9.336 9.75 9.75zm4.5 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75s.168-.75.375-.75s.375.336.375.75z" /></svg>`,
+  wfh: `<svg class="w-6 h-6 text-sky-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>`,
+  compensatory: `<svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+  default: `<svg class="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-1.125 0-2.062.938-2.062 2.063v7.575c0 1.125.937 2.063 2.063 2.063h9.098c1.125 0 2.062-.937 2.062-2.063v-7.575a2.062 2.062 0 00-2.062-2.063H8.25z" /></svg>`,
+};
+
 
 const leaveTypeTags = {
   sick: 'bg-pink-100 text-pink-600',
@@ -647,38 +660,53 @@ const leaveTypeDetails = [
               </div>
             </div>
 
-            <!-- Card 2: Upcoming Approved Leave Section -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Approved Leave</h2>
-              <div class="space-y-3" v-if="approvedUpcomingRequests.length">
-                <div v-for="request in approvedUpcomingRequests" :key="request.id" class="flex items-center justify-between p-3.5 bg-gray-50 rounded-lg border">
-                  <div class="flex items-center gap-4">
-                    <div class="w-8 h-8 rounded-full flex-shrink-0" :class="getTagClass(request.leave_type)"></div>
-                    <div>
-                      <p class="font-semibold text-gray-800">
-                        {{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) }}
-                        <span v-if="request.start_date !== request.end_date">
-                          - {{ new Date(request.end_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
-                        </span>
-                        <span v-else>
-                          , {{ new Date(request.start_date).getFullYear() }}
-                        </span>
-                      </p>
-                      <p class="text-sm text-gray-500 capitalize">{{ request.leave_type }} Leave</p>
-                    </div>
-                  </div>
-                  <p class="text-sm text-gray-600 hidden md:block truncate max-w-[200px]">{{ request.reason }}</p>
-                  <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                    <p class="text-sm font-medium text-green-700">Approved</p>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="text-center py-8">
-                <p class="text-gray-500 text-sm">You have no upcoming approved leave requests.</p>
-              </div>
+              <!-- Secondary Actions -->
+            <div class="grid grid-cols-2 gap-4">
+                <button type="button" @click="openRequestsModal" class="w-full text-center bg-white border border-gray-300 text-gray-700 p-3 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium text-sm">
+                    My Requests
+                </button>
+                <button type="button" @click="openPolicyModal" class="w-full text-center bg-white border border-gray-300 text-gray-700 p-3 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium text-sm">
+                    Leave Policy
+                </button>
             </div>
 
+            <!-- Card 2: Upcoming Approved Leave Section -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Approved Leave</h2>
+
+                            <!-- If there are requests, show the scrollable list -->
+                            <div v-if="approvedUpcomingRequests.length > 0" 
+     class="overflow-y-auto space-y-3 pr-2"
+     style="max-height: 82px;">
+                                <div v-for="request in approvedUpcomingRequests" :key="request.id" class="flex items-center justify-between p-3.5 bg-gray-50 rounded-lg border">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-8 h-8 rounded-full flex-shrink-0" :class="getTagClass(request.leave_type)"></div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">
+                                                {{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) }}
+                                                <span v-if="request.start_date !== request.end_date">
+                                                  - {{ new Date(request.end_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}
+                                                </span>
+                                                <span v-else>
+                                                  , {{ new Date(request.start_date).getFullYear() }}
+                                                </span>
+                                            </p>
+                                            <p class="text-sm text-gray-500 capitalize">{{ request.leave_type }} Leave</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 hidden md:block truncate max-w-[200px]">{{ request.reason }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                        <p class="text-sm font-medium text-green-700">Approved</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Otherwise, show the "no requests" message -->
+                            <div v-else class="text-center py-8">
+                                <p class="text-gray-500 text-sm">You have no upcoming approved leave requests.</p>
+                            </div>
+                        </div>
           </div>
 
           <!-- Right Column: Form -->
@@ -698,25 +726,25 @@ const leaveTypeDetails = [
 
             <!-- Leave Usage Card -->
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-    <h3 class="font-medium text-gray-500 mb-4">Leave Usage (This Year)</h3>
-    <div class="space-y-4">
-        <div v-for="leave in leaveTypeDetails" :key="leave.key">
-            <div class="flex justify-between items-center mb-1 text-sm">
-                <span class="font-medium text-gray-600">{{ leave.label }}</span>
-                <span class="font-semibold text-gray-800">
-                    {{ displayedLeaveStats[leave.key]?.taken || 0 }} / {{ displayedLeaveStats[leave.key]?.total || 0 }} days
-                </span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div 
+              <h3 class="font-medium text-gray-500 mb-4">Leave Usage (This Year)</h3>
+              <div class="space-y-4">
+                <div v-for="leave in leaveTypeDetails" :key="leave.key">
+                  <div class="flex justify-between items-center mb-1 text-sm">
+                    <span class="font-medium text-gray-600">{{ leave.label }}</span>
+                    <span class="font-semibold text-gray-800">
+                      {{ displayedLeaveStats[leave.key]?.taken || 0 }} / {{ displayedLeaveStats[leave.key]?.total || 0 }} days
+                    </span>
+                  </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div 
                     class="h-2 rounded-full"
                     :class="leave.color"
                     :style="{ width: calculatePercentage(displayedLeaveStats[leave.key]?.taken, displayedLeaveStats[leave.key]?.total) + '%' }"
-                ></div>
+                  ></div>
+                </div>
+              </div>
             </div>
         </div>
-    </div>
-</div>
 
             <!-- Leave Application Form Card -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -839,15 +867,7 @@ const leaveTypeDetails = [
               </form>
             </div>
             
-            <!-- Secondary Actions -->
-            <div class="grid grid-cols-2 gap-4">
-                <button type="button" @click="openRequestsModal" class="w-full text-center bg-white border border-gray-300 text-gray-700 p-3 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium text-sm">
-                    My Requests
-                </button>
-                <button type="button" @click="openPolicyModal" class="w-full text-center bg-white border border-gray-300 text-gray-700 p-3 rounded-lg shadow-sm hover:bg-gray-100 transition font-medium text-sm">
-                    Leave Policy
-                </button>
-            </div>
+            
 
           </div>
         </div>
@@ -855,46 +875,99 @@ const leaveTypeDetails = [
     </div>
     
     <!-- MODALS (Unchanged) -->
-    <!-- Your Requests Modal -->
-    <div v-if="isRequestsModalVisible" @click.self="closeRequestsModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-auto shadow-lg">
-            <header class="flex justify-between items-center p-4 border-b">
-                <h2 class="text-xl font-semibold text-gray-800">My Recent Leave Requests</h2>
-                <button @click="closeRequestsModal" class="text-gray-500 hover:text-gray-800 text-3xl leading-none font-bold focus:outline-none" aria-label="Close" title="Close">&times;</button>
-            </header>
-            <section class="p-4">
-                <div v-if="recentRequests.length === 0" class="text-center text-gray-600 py-12">No recent leave requests found.</div>
-                <div v-else class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-gray-500 font-medium"><th class="py-2 px-3">Date</th><th class="py-2 px-3">Type</th><th class="py-2 px-3">Duration</th><th class="py-2 px-3">Reason</th><th class="py-2 px-3">Requested</th><th class="py-2 px-3 text-center">Document</th><th class="py-2 px-3 text-right">Actions</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="request in recentRequests" :key="request.id" class="text-gray-700 hover:bg-gray-50">
-                                <td class="py-3 px-3"><p class="font-semibold">{{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</p></td>
-                                <td class="py-3 px-3"><span :class="getTagClass(request.leave_type)" class="px-2 py-1 text-xs font-medium rounded-full capitalize">{{ request.leave_type }}</span></td>
-                                <td class="py-3 px-3 text-center">{{ formatLeaveDays(request.leave_days) }} day<span v-if="request.leave_days !== 1">s</span></td>
-                                <td class="py-3 px-3 max-w-[200px] truncate">{{ request.reason }}</td>
-                                <td class="py-3 px-3"><p>{{ new Date(request.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</p><p class="text-xs text-gray-500">{{ new Date(request.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) }}</p></td>
-                                <td class="py-3 px-3 text-center whitespace-nowrap space-y-1">
-                                    <div><a v-if="request.supporting_document_path" :href="`/storage/${request.supporting_document_path}`" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center justify-center gap-1" title="View supporting document">View</a><span v-else class="text-gray-400 text-xs italic">—</span></div>
-                                    <div v-if="request.leave_type === 'sick' && ['pending', 'approved'].includes(request.status)"><button @click="() => { openUploadModal(request.id); closeRequestsModal(); }" class="text-blue-600 hover:underline text-xs mt-1">{{ request.supporting_document_path ? 'Replace Document' : 'Upload Document' }}</button></div>
-                                </td>
-                                <td class="py-3 px-3 text-right">
-                                    <button v-if="request.status === 'pending'" @click="openEditModal(request)" class="text-blue-600 hover:underline font-semibold text-sm">Edit</button>
-                                    <button v-if="request.status === 'pending'" @click="cancelLeave(request)" class="ml-2 text-red-600 hover:text-red-900 font-semibold text-sm">Cancel</button>
-                                    <span v-else class="text-gray-400">-</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="mt-4 text-center">
-                        <PrimaryButton @click="() => { closeRequestsModal(); router.visit(route('leave.fullRequests')) }" class="inline-block">View All Requests</PrimaryButton>
-                    </div>
+    <!-- ================================================================= -->
+<!-- START: NEW, REDESIGNED "YOUR REQUESTS" MODAL (WITH DOCUMENT COLUMN) -->
+<!-- ================================================================= -->
+<!-- Your Requests Modal -->
+<div v-if="isRequestsModalVisible" @click.self="closeRequestsModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[85vh] flex flex-col">
+        <!-- Modal Header -->
+        <header class="flex-shrink-0 flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">My Recent Leave Requests</h2>
+            <button @click="closeRequestsModal" class="text-gray-400 hover:text-gray-700 transition-colors" aria-label="Close" title="Close">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </header>
+
+        <!-- Modal Body -->
+        <section class="flex-1 p-4 sm:p-6 overflow-y-auto">
+            <div v-if="recentRequests.length === 0" class="text-center text-gray-500 py-16">
+                <div class="inline-block bg-gray-100 p-4 rounded-full">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
                 </div>
-            </section>
-        </div>
+                <h3 class="mt-4 text-lg font-semibold text-gray-900">No Recent Requests</h3>
+                <p class="mt-1 text-sm">When you apply for leave, your 5 most recent requests will appear here.</p>
+            </div>
+            
+            <div v-else class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left">
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <!-- THIS COLUMN IS NOW ADDED BACK -->
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr v-for="request in recentRequests" :key="request.id" class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900">{{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</div>
+                                <div class="text-gray-500">{{ formatLeaveDays(request.leave_days) }} day<span v-if="request.leave_days != 1">s</span></div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span :class="getTagClass(request.leave_type)" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize">
+                                    {{ request.leave_type }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 max-w-xs truncate text-gray-600" :title="request.reason">
+                                {{ request.reason }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span :class="{
+                                    'bg-amber-100 text-amber-800': request.status === 'pending',
+                                    'bg-emerald-100 text-emerald-800': request.status === 'approved',
+                                    'bg-rose-100 text-rose-800': request.status === 'rejected',
+                                }" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
+                                    {{ request.status }}
+                                </span>
+                            </td>
+                            <!-- THIS CELL IS NOW ADDED BACK -->
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <a v-if="request.supporting_document_path" :href="`/storage/${request.supporting_document_path}`" target="_blank"
+                                   class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline" title="View supporting document">
+                                    View
+                                </a>
+                                <span v-else class="text-gray-400 text-xs italic">—</span>
+                                <div v-if="request.leave_type === 'sick' && ['pending', 'approved'].includes(request.status)">
+                                    <button @click="() => { openUploadModal(request.id); closeRequestsModal(); }" class="text-blue-600 hover:underline text-xs mt-1">
+                                        {{ request.supporting_document_path ? 'Replace' : 'Upload' }}
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
+                                <button v-if="request.status === 'pending'" @click="openEditModal(request)" class="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                <button v-if="request.status === 'pending'" @click="cancelLeave(request)" class="ml-4 text-rose-600 hover:text-rose-900">Cancel</button>
+                                <span v-else class="text-gray-400">—</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Modal Footer -->
+        <footer class="flex-shrink-0 flex justify-end p-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+            <PrimaryButton @click="() => { closeRequestsModal(); router.visit(route('leave.fullRequests')) }">
+                View All My Requests
+            </PrimaryButton>
+        </footer>
     </div>
+</div>
+
     <!-- Edit Reason Modal -->
     <div v-if="isEditModalVisible" @click.self="closeEditModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
         <form @submit.prevent="submitEditReason" class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 flex flex-col gap-4">
@@ -908,19 +981,42 @@ const leaveTypeDetails = [
         </form>
     </div>
     <!-- Leave Policy Modal -->
-    <div v-if="isPolicyModalVisible" @click.self="closePolicyModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95" :class="{ 'scale-100': isPolicyModalVisible }">
-            <div class="p-5 border-b flex justify-between items-center"><h3 class="text-xl font-semibold text-gray-800">Company Leave Policy</h3><button @click="closePolicyModal" class="text-gray-400 hover:text-gray-800 text-3xl leading-none">×</button></div>
-            <div class="p-6 overflow-y-auto space-y-6">
-                <div v-for="(policy, type) in leaveTypeDescriptions" :key="type" class="pb-4 border-b last:border-b-0">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2 capitalize">{{ policy.title }}</h4>
-                    <p class="text-sm text-gray-600 mb-3 italic">"{{ policy.summary }}"</p>
-                    <ul class="list-disc list-inside space-y-1.5 text-sm text-gray-700"><li v-for="(detail, index) in policy.details" :key="index">{{ detail }}</li></ul>
-                </div>
+<div v-if="isPolicyModalVisible" @click.self="closePolicyModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+        <!-- Modal Header -->
+        <header class="flex-shrink-0 flex justify-between items-start p-6 border-b border-gray-200">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-800">Company Leave Policy</h3>
+                <p class="text-sm text-gray-500 mt-1">Official company guidelines for all leave types.</p>
             </div>
-            <div class="p-4 bg-gray-50 text-right rounded-b-xl"><button @click="closePolicyModal" class="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm">Close</button></div>
+            <button @click="closePolicyModal" class="text-gray-400 hover:text-gray-700 transition-colors" aria-label="Close" title="Close">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </header>
+        
+        <!-- Modal Body -->
+        <div class="flex-1 p-6 overflow-y-auto space-y-5">
+            <div v-for="(policy, type) in leaveTypeDescriptions" :key="type" class="p-5 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex items-center gap-x-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-white border" v-html="leaveTypeIcons[type] || leaveTypeIcons.default"></div>
+                    <h4 class="text-lg font-semibold text-slate-800">{{ policy.title }}</h4>
+                </div>
+                <p class="mt-3 text-sm italic text-slate-600 pl-14">"{{ policy.summary }}"</p>
+                <ul class="mt-4 space-y-2 text-sm text-slate-700 pl-14">
+                    <li v-for="(detail, index) in policy.details" :key="index" class="flex items-start">
+                        <svg class="flex-shrink-0 w-4 h-4 text-indigo-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <span>{{ detail }}</span>
+                    </li>
+                </ul>
+            </div>
         </div>
+        
+        <!-- Modal Footer -->
+        <footer class="flex-shrink-0 p-4 bg-gray-50 text-right rounded-b-xl border-t border-gray-200">
+            <PrimaryButton @click="closePolicyModal">Close</PrimaryButton>
+        </footer>
     </div>
+</div>
     <!-- Upload Supporting Document Modal -->
     <div v-if="isUploadModalVisible" @click.self="closeUploadModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 transition-opacity duration-300">
         <form @submit.prevent="submitUpload" enctype="multipart/form-data" class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
