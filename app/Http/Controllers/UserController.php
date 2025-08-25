@@ -9,6 +9,7 @@ use App\Actions\User\UpdateUser;
 use App\Actions\User\ImportUsers; // <-- CORRECTED: Points to the Action class
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
+use App\Jobs\ProcessUserImport;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log; // <-- 1. IMPORT THE LOG FACADE
@@ -91,20 +92,33 @@ class UserController extends Controller
     /**
      * Handle the user import process.
      */
-     public function import(Request $request, ImportUsers $importUsers)
+ public function import(Request $request)
      {
+        // 1. Validate the request to ensure a file was uploaded
         try {
-            return $importUsers->handle($request);
+            $request->validate([
+                'file' => 'required|mimes:csv,txt,xlsx'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return Redirect::back()->withErrors($e->errors());
+        }
+
+        try {
+            // 2. Store the file in a temporary location (e.g., storage/app/imports)
+            $path = $request->file('file')->store('imports');
+
+            // 3. Dispatch the job to the queue. This is an instantaneous action.
+            ProcessUserImport::dispatch($path);
+
+            // 4. Redirect back to the user with a success message. No waiting!
+            return Redirect::back()->with('success', 'File uploaded! The users are being imported in the background.');
 
         } catch (\Throwable $e) {
-            // This will catch any errors NOT handled by the ImportUsers action itself,
-            // such as a file system error or a database connection issue.
-            Log::error('A critical error occurred during the user import process: ' . $e->getMessage());
-            Log::error($e);
+            // This will catch rare errors like file system permissions or queue connection issues.
+            Log::critical('Failed to store file or dispatch import job: ' . $e->getMessage());
+            Log::critical($e);
 
-            // The 'ValidationException' is already handled in your ImportUsers action.
-            // This redirect is for all other unexpected errors.
-            return Redirect::back()->with('error', 'A critical error occurred. Please check the log file.');
+            return Redirect::back()->with('error', 'Could not start the import process. Please contact support.');
         }
      }
 }

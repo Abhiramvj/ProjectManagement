@@ -12,7 +12,16 @@ class Project extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'description',
+        'project_manager_id',
+        'team_id',
+        'status',
+        'end_date',
+        'total_hours_required',
+
+    ];
 
     // Automatically include these calculated values when sending the model to the frontend
     protected $appends = ['task_progress', 'hours_progress'];

@@ -6,6 +6,7 @@ import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { debounce } from 'lodash';
+import { onMounted } from 'vue';
 
 // Tell Inertia to use the AuthenticatedLayout by default for this page.
 defineOptions({ layout: AuthenticatedLayout });
@@ -65,6 +66,13 @@ watch(() => form.role, (newRole, oldRole) => {
             form.team_id = '';
         }
     }
+});
+
+onMounted(() => {
+    window.Echo.private('user-import')
+        .listen('UserImportCompleted', (e) => {
+            alert(`Import completed for file: ${e.filePath}`);
+        });
 });
 
 // =========== MODAL CONTROLS ===========

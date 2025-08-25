@@ -2,109 +2,115 @@
 
 namespace App\Imports;
 
+use App\Jobs\RoleAssignmentJob;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Maatwebsite\Excel\Validators\ValidationException;
+use Spatie\Permission\Models\Role;
 
-class UsersImport implements ToModel, WithHeadingRow, WithValidation
+class UsersImport implements ToCollection, WithChunkReading, WithHeadingRow
 {
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-    public function model(array $row)
+    private $roles;
+    private static $emailsInFile = [];
+    private $existingEmails;
+    private $hashedPassword;
+
+    public function __construct()
     {
-        $manager = User::where('name', trim($row['reports_to'] ?? ''))->first();
+        $this->roles = Role::all()->keyBy(fn($role) => strtolower($role->name));
+        self::$emailsInFile = [];
+        $this->existingEmails = User::pluck('email')->map(fn($email) => strtolower($email))->flip();
 
-        $user = new User([
-            'name'        => trim($row['name']),
-            'email'       => trim($row['email']),
-            'designation' => trim($row['designation']),
-            'password'    => Hash::make('password'),
-            'work_mode'   => trim($row['work_mode']),
-            'parent_id'   => $manager ? $manager->id : null,
-            'hire_date'   => $this->transformDate($row['doj']),
-            'birth_date'  => $this->transformDate($row['birth_date']),
-        ]);
-
-        $user->save();
-        $user->assignRole(trim($row['role']));
-        return $user;
+        // Hash the default password once
+        $this->hashedPassword = Hash::make('password');
     }
 
-    /**
-     * @return array
-     */
-    public function rules(): array
+    public function collection(Collection $rows)
     {
-        return [
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'designation' => 'required|string',
-            'role' => 'required|string|exists:roles,name',
-            'doj' => ['required', $this->dateValidationRule()],
-            'birth_date' => ['nullable', $this->dateValidationRule()],
-            'reports_to' => 'nullable|string|exists:users,name',
-            'work_mode' => 'nullable|string',
-        ];
-    }
+        $emailsInChunk = $rows->pluck('email')->filter()->unique()
+            ->map(fn ($email) => strtolower(trim($email)));
 
-    /**
-     * A helper function to parse a date regardless of whether it's an
-     * Excel date number or a date string.
-     */
-    private function transformDate($value): ?Carbon
-    {
-        if (!$value) {
-            return null;
+        $this->validateChunk($rows, $emailsInChunk);
+
+        $usersToInsert = [];
+        $now = now();
+        foreach ($rows as $row) {
+            $usersToInsert[] = [
+                'name' => trim($row['name']),
+                'email' => trim($row['email']),
+                'designation' => trim($row['designation']),
+                'password' => $this->hashedPassword,  // reuse hashed password
+                'work_mode' => trim($row['work_mode']),
+                'temp_reports_to' => trim($row['reports_to'] ?? null),
+                'parent_id' => null,
+                'hire_date' => $this->transformDate($row['doj']),
+                'birth_date' => $this->transformDate($row['birth_date']),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            self::$emailsInFile[strtolower(trim($row['email']))] = true;
         }
+
+        if (empty($usersToInsert)) {
+            return;
+        }
+
+        DB::table('users')->insert($usersToInsert);
+
+        // Instead of immediate role assignment, dispatch a job with inserted emails and roles for async processing
+        $insertedEmails = collect($usersToInsert)->pluck('email');
+        RoleAssignmentJob::dispatch($insertedEmails->toArray(), $rows->pluck('role')->toArray());
+
+    }
+
+    private function validateChunk(Collection $rows, Collection $emailsInChunk)
+    {
+        $errors = [];
+        foreach ($rows as $key => $row) {
+            $rowNumber = $key + 2;
+            $email = strtolower(trim($row['email'] ?? ''));
+            $roleName = strtolower(trim($row['role'] ?? ''));
+
+            if (!$this->roles->has($roleName)) {
+                $errors[$rowNumber][] = 'Role "' . $row['role'] . '" does not exist.';
+            }
+            // Check against preloaded existing emails from DB
+            if ($this->existingEmails->has($email)) {
+                $errors[$rowNumber][] = "Email '{$email}' already exists in the database.";
+            }
+            // Check duplicates within the same import file (across chunks)
+            if (isset(self::$emailsInFile[$email])) {
+                $errors[$rowNumber][] = "Email '{$email}' is duplicated within the import file.";
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
+    }
+
+
+    private function transformDate($value): ?string
+    {
+        if (!$value) return null;
         if (is_numeric($value)) {
-            return Carbon::instance(Date::excelToDateTimeObject($value));
+            return Carbon::createFromTimestamp(intval(($value - 25569) * 86400))->toDateTimeString();
         }
-        // Use createFromFormat for d/m/Y strings, fallback to parse for others
         try {
-            return Carbon::createFromFormat('d/m/Y', $value);
+            return Carbon::createFromFormat('d/m/Y', $value)->toDateTimeString();
         } catch (\Exception $e) {
-            return Carbon::parse($value);
+            return Carbon::parse($value)->toDateTimeString();
         }
-    }
-
-    /**
-     * A reusable, robust custom validation rule for our flexible date checking.
-     * This version is immune to the strtotime() parsing quirk.
-     */
-    private function dateValidationRule(): \Closure
-    {
-        return function ($attribute, $value, $fail) {
-            // Case 1: It's a valid Excel date number. Pass.
-            if (is_numeric($value)) {
-                return;
-            }
-            // Case 2: It's a string. We will try to parse it explicitly.
-            try {
-                // Use Carbon's strict parser. If this succeeds, the date is valid.
-                Carbon::createFromFormat('d/m/Y', $value);
-            } catch (\Exception $e) {
-                // If Carbon throws an exception, the format is wrong. Fail.
-                $fail('The '.$attribute.' is not a valid date or is not in d/m/Y format.');
-            }
-        };
-    }
-
-    /**
-     * @return array
-     */
-    public function customValidationMessages()
-    {
-        return [
-            'email.unique' => 'The email on row :row has already been taken.',
-            'role.exists' => 'The role on row :row is not a valid system role.',
-            'reports_to.exists' => 'The manager on row :row was not found.',
-        ];
     }
 }

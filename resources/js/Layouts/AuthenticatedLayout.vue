@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, shallowRef } from 'vue';
-import { Head, Link, usePage, router } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import FlashMessage from '@/Components/FlashMessage.vue'; // <-- 1. IMPORT THE COMPONENT
 
@@ -25,7 +25,8 @@ onMounted(async () => {
     NavLink.value = navLinkModule.default;
 });
 
-// ... (Notification logic remains the same) ...
+// --- NOTIFICATION LOGIC (OPTIMIZED) ---
+// ... (Your notification logic remains unchanged) ...
 const showingNotificationDropdown = ref(false);
 const unreadNotificationCount = ref(0);
 const notifications = ref([]);
@@ -113,6 +114,7 @@ const user = computed(() => page.props.auth.user);
 const userDesignation = computed(() => user.value?.designation || 'Employee');
 const showingSidebar = ref(false);
 
+// ✅ THIS SECTION IS CLEANED UP AND CORRECTED
 const navigationItems = computed(() => {
     if (!user.value?.permissions) return [];
 
@@ -148,6 +150,7 @@ const icons = {
     'Company Hierarchy': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
 };
 
+// ... (Your lifecycle hooks onMounted and onUnmounted remain unchanged) ...
 onMounted(() => {
     if (user.value) {
         fetchNotifications();

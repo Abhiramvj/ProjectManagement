@@ -54,6 +54,7 @@ const initializeChart = () => {
       nodeMouseClick: OrgChart.action.none,
       mouseScrool: OrgChart.action.zoom,
       layout: OrgChart.mixed,
+      searchInput: { text: "Search" },
       nodeSeparation: 60,
       levelSeparation: 80,
       subtreeSeparation: 70,

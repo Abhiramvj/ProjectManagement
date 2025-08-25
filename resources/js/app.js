@@ -7,6 +7,25 @@ import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 // We no longer need resolvePageComponent because we are writing a clearer custom resolver.
 import { ZiggyVue } from 'ziggy-js';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+window.Pusher = Pusher;
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    forceTLS: true,
+    encrypted: true,
+});
+
+window.Echo.private('user-import')
+    .listen('UserImportCompleted', (e) => {
+        // For example, show a toast notification here
+        alert(`Import completed for file: ${e.filePath}`);
+        // Or trigger a Vue state update or event bus emit
+    });
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 

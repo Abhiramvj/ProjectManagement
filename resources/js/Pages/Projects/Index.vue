@@ -66,11 +66,12 @@ const submit = () => {
 
 // Computed properties
 const filteredProjects = computed(() => {
-    let filtered = props.projects;
+    let filtered = [...props.projects];
+
 
     // Search filter
     if (searchQuery.value) {
-        filtered = filtered.filter(project => 
+        filtered = filtered.filter(project =>
             project.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
             project.team.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
             project.project_manager.name.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -91,7 +92,7 @@ const filteredProjects = computed(() => {
     return filtered.sort((a, b) => {
         const aValue = a[sortBy.value];
         const bValue = b[sortBy.value];
-        
+
         if (sortOrder.value === 'asc') {
             return aValue > bValue ? 1 : -1;
         } else {
@@ -105,7 +106,7 @@ const projectStats = computed(() => {
     const active = props.projects.filter(p => p.status !== 'completed' && (!p.end_date || new Date(p.end_date) >= new Date())).length;
     const completed = props.projects.filter(p => p.status === 'completed').length;
     const overdue = props.projects.filter(p => p.end_date && new Date(p.end_date) < new Date() && p.status !== 'completed').length;
-    
+
     return { total, active, completed, overdue };
 });
 
@@ -247,7 +248,7 @@ const clearFilters = () => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            <input v-model="searchQuery" type="text" placeholder="Search projects..." 
+                            <input v-model="searchQuery" type="text" placeholder="Search projects..."
                                    class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
 
@@ -273,13 +274,13 @@ const clearFilters = () => {
 
                         <!-- View Mode Toggle -->
                         <div class="flex bg-gray-100 rounded-xl p-1">
-                            <button @click="viewMode = 'grid'" :class="[viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900']" 
+                            <button @click="viewMode = 'grid'" :class="[viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900']"
                                     class="p-2 rounded-lg transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                                 </svg>
                             </button>
-                            <button @click="viewMode = 'table'" :class="[viewMode === 'table' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900']" 
+                            <button @click="viewMode = 'table'" :class="[viewMode === 'table' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900']"
                                     class="p-2 rounded-lg transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -303,10 +304,10 @@ const clearFilters = () => {
 
                 <!-- Grid View -->
                 <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" :class="{ 'animate-fade-in-up delay-200': isLoaded }">
-                    <div v-for="(project, index) in filteredProjects" :key="project.id" 
+                    <div v-for="(project, index) in filteredProjects" :key="project.id"
                          class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 group"
                          :style="{ animationDelay: `${index * 50}ms` }">
-                        
+
                         <!-- Project Header -->
                         <div class="flex items-start justify-between mb-4">
                             <div class="flex-1">
@@ -334,7 +335,7 @@ const clearFilters = () => {
                                 <span>{{ getProgressPercentage(project) }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300" 
+                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
                                      :style="{ width: `${getProgressPercentage(project)}%` }"></div>
                             </div>
                         </div>
@@ -363,7 +364,7 @@ const clearFilters = () => {
 
                         <!-- Action Button -->
                         <div class="mt-6 pt-4 border-t border-gray-100">
-                            <Link :href="route('projects.show', project.id)" 
+                            <Link :href="route('projects.show', project.id)"
                                   class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-colors group">
                                 View Project
                                 <svg class="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -426,81 +427,89 @@ const clearFilters = () => {
 
         <!-- Enhanced Create Project Modal -->
         <Modal :show="isCreateModalVisible" @close="closeModal">
-            <div class="p-8">
-                <div class="flex items-center mb-6">
-                    <div class="p-3 bg-blue-100 rounded-lg mr-4">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-900">Create New Project</h2>
-                </div>
-                
-                <form @submit.prevent="submit" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="name" class="form-label">Project Name</label>
-                            <input v-model="form.name" id="name" type="text" required 
-                                   class="form-input" placeholder="Enter project name" />
-                            <InputError class="mt-2" :message="form.errors.name" />
-                        </div>
-                        <div>
-                            <label for="team_id" class="form-label">Assign to Team</label>
-                            <select v-model="form.team_id" id="team_id" required class="form-input">
-                                <option value="" disabled>-- Select a team --</option>
-                                <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.team_id" />
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label for="end_date" class="form-label">Due Date</label>
-                            <input v-model="form.end_date" id="end_date" type="date" required class="form-input" />
-                            <InputError class="mt-2" :message="form.errors.end_date" />
-                        </div>
-                        <div>
-                            <label for="total_hours_required" class="form-label">Estimated Hours</label>
-                            <input v-model="form.total_hours_required" id="total_hours_required" type="number" min="1" required class="form-input" />
-                            <InputError class="mt-2" :message="form.errors.total_hours_required" />
-                        </div>
-                        <div>
-                            <label for="priority" class="form-label">Priority</label>
-                            <select v-model="form.priority" id="priority" class="form-input">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.priority" />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label for="description" class="form-label">Description</label>
-                        <textarea v-model="form.description" id="description" rows="4" 
-                                  class="form-input" placeholder="Describe the project goals and requirements..."></textarea>
-                        <InputError class="mt-2" :message="form.errors.description" />
-                    </div>
+  <div class="p-8 bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-xl mx-auto transition-all duration-300">
+    <!-- Header -->
+    <div class="flex items-center space-x-3 mb-6">
+      <div class="flex items-center justify-center bg-blue-100 rounded-lg h-11 w-11">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v1a3 3 0 006 0V7" />
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z" />
+</svg>
 
-                    <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                        <button type="button" @click="closeModal" 
-                                class="btn-secondary" :disabled="isLoading">
-                            Cancel
-                        </button>
-                        <button type="submit" :disabled="form.processing || isLoading" 
-                                class="btn-primary">
-                            <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            {{ isLoading ? 'Creating...' : 'Create Project' }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </Modal>
+      </div>
+      <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Create New Project</h2>
+    </div>
+
+    <!-- Form Grid -->
+    <form @submit.prevent="submit" class="space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Project Name</label>
+          <input v-model="form.name" id="name" type="text" required
+            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Enter project name" />
+          <InputError class="mt-2" :message="form.errors.name" />
+        </div>
+        <div>
+          <label for="team_id" class="block text-sm font-medium text-gray-700 mb-2">Assign to Team</label>
+          <select v-model="form.team_id" id="team_id" required class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            <option value="" disabled>-- Select a team --</option>
+            <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
+          </select>
+          <InputError class="mt-2" :message="form.errors.team_id" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+          <input v-model="form.end_date" id="end_date" type="date" required
+            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+          <InputError class="mt-2" :message="form.errors.end_date" />
+        </div>
+        <div>
+          <label for="total_hours_required" class="block text-sm font-medium text-gray-700 mb-2">Estimated Hours</label>
+          <input v-model="form.total_hours_required" id="total_hours_required" type="number" min="1" required
+            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+          <InputError class="mt-2" :message="form.errors.total_hours_required" />
+        </div>
+        <div>
+          <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+          <select v-model="form.priority" id="priority"
+            class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+          <InputError class="mt-2" :message="form.errors.priority" />
+        </div>
+      </div>
+
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <textarea v-model="form.description" id="description" rows="4"
+          class="block w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+          placeholder="Describe the project goals and requirements..."></textarea>
+        <InputError class="mt-2" :message="form.errors.description" />
+      </div>
+
+      <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 mt-8">
+        <button type="button" @click="closeModal"
+          class="inline-flex items-center px-6 py-3 rounded-xl border border-gray-300 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" :disabled="isLoading">
+          Cancel
+        </button>
+        <button type="submit" :disabled="form.processing || isLoading"
+          class="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg hover:scale-105 hover:bg-blue-700 transition">
+
+
+
+          {{ isLoading ? 'Creating...' : 'Create Project' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</Modal>
+
     </AuthenticatedLayout>
 </template>
 
