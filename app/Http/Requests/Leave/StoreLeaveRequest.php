@@ -105,7 +105,7 @@ class StoreLeaveRequest extends FormRequest
 
     private function validateSufficientBalance(Validator $validator, array $data, User $user): void
     {
-        $balanceLeaveTypes = ['annual', 'sick', 'personal', 'compensatory'];
+        $balanceLeaveTypes = ['annual','personal', 'compensatory'];
         if (! in_array($data['leave_type'], $balanceLeaveTypes)) {
             return;
         }

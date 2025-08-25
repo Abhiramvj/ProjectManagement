@@ -7,7 +7,7 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveLogController;
-use App\Http\Controllers\MailLogController; // ✅ 1. IMPORT THE NEW CONTROLLER
+use App\Http\Controllers\MailLogController; 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
@@ -94,7 +94,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
 
     // Leave application routes
-    Route::resource('leave', LeaveApplicationController::class)->only(['index', 'store', 'destroy'])->middleware(['can:apply for leave']);
+    Route::resource('leave', LeaveApplicationController::class)->only(['index', 'store', 'destroy']);//->middleware(['can:apply for leave']);
     Route::post('/leave/approve-comp-off/{user}', [LeaveApplicationController::class, 'approveCompOff'])->name('leave.approveCompOff')->middleware('can:manage-leave');
     Route::get('/leave/manageRequests', [LeaveController::class, 'manageRequests'])->name('leave.manageRequests')->middleware(['can:manage leave applications']);
     Route::get('/leave/requests', [LeaveController::class, 'fullRequests'])->name('leave.fullRequests');
