@@ -205,78 +205,115 @@ const handleDateClick = (info) => {
 }
 
 const userRoles = page.props.auth.user.roles || [];
-const isAdminOrHR = userRoles.includes('admin') || userRoles.includes('hr');
+const isAdminOrHR = computed(() => userRoles.includes('admin') || userRoles.includes('hr'));
+// const submitApplication = () => {
+//   if (form.day_type === 'half') {
+//     if (!form.start_half_session) {
+//       alert('Please select morning or afternoon session for start date.');
+//       return;
+//     }
+//     if (form.end_date && form.start_date !== form.end_date && !form.end_half_session) {
+//       alert('Please select morning or afternoon session for end date.');
+//       return;
+//     }
+//   }
+  
+//   if (!form.start_date) {
+//     alert('Please select at least a start date.');
+//     return;
+//   }
+//   if (!form.end_date) {
+//     form.end_date = form.start_date;
+//     selectedDates.value = [new Date(form.start_date), new Date(form.start_date)];
+//     if (form.day_type === 'half') {
+//       form.end_half_session = form.start_half_session;
+//     }
+//   }
+//   if (form.day_type === 'full') {
+//     form.start_half_session = null;
+//     form.end_half_session = null;
+//   }
+
+//   const startDate = new Date(form.start_date);
+//   const timeDiff = startDate.getTime() - today.getTime();
+//   const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+//   // Only enforce advance notice for non-admin/hr users
+//   if (!isAdminOrHR) {
+//     if (form.leave_type === 'annual' && daysDiff < 7) {
+//       if (!confirm('Warning: Annual leaves should be requested at least 7 days in advance. Do you still want to submit?')) return;
+//     }
+//     if (form.leave_type === 'personal' && daysDiff < 3) {
+//       if (!confirm('Warning: Personal leaves should be requested at least 3 days in advance. Do you still want to submit?')) return;
+//     }
+//   }
+
+//   const formData = new FormData();
+//   for (const [key, val] of Object.entries(form.data())) {
+//     formData.append(key, val ?? '');
+//   }
+
+//   // Append user_id if admin/HR selects an employee
+//   if (isAdminOrHR && form.user_id) {
+//     formData.append('user_id', form.user_id);
+//   }
+
+//   if (supportingDocument.value) formData.append('supporting_document', supportingDocument.value);
+
+//   router.post(route('leave.store'), formData, {
+//     preserveScroll: true,
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//     onSuccess: () => {
+//       form.reset();
+//       form.leave_type = 'sick';
+//       form.day_type = 'full';
+//       form.start_half_session = '';
+//       form.end_half_session = '';
+//       selectedDates.value = [null, null];
+//       supportingDocument.value = null;
+//       if (isAdminOrHR) form.user_id = null; // Reset selected employee
+//     },
+//     onError: (errors) => {
+//       if (errors.message) alert(errors.message);
+//     },
+//   });
+// };
 
 const submitApplication = () => {
-  if (form.day_type === 'half') {
-    if (!form.start_half_session) {
-      alert('Please select morning or afternoon session for start date.');
-      return;
-    }
-    if (form.end_date && form.start_date !== form.end_date && !form.end_half_session) {
-      alert('Please select morning or afternoon session for end date.');
-      return;
-    }
+  // Frontend-only validation is removed because the robust backend validator handles it.
+  // This simplifies the function significantly.
+  
+  const formData = new FormData();
+
+  // Ensure end_date is set if only start_date is selected
+  if (form.start_date && !form.end_date) {
+    form.end_date = form.start_date;
   }
   
-  if (!form.start_date) {
-    alert('Please select at least a start date.');
-    return;
-  }
-  if (!form.end_date) {
-    form.end_date = form.start_date;
-    selectedDates.value = [new Date(form.start_date), new Date(form.start_date)];
-    if (form.day_type === 'half') {
-      form.end_half_session = form.start_half_session;
-    }
-  }
-  if (form.day_type === 'full') {
-    form.start_half_session = null;
-    form.end_half_session = null;
-  }
-
-  const startDate = new Date(form.start_date);
-  const timeDiff = startDate.getTime() - today.getTime();
-  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-  // Only enforce advance notice for non-admin/hr users
-  if (!isAdminOrHR) {
-    if (form.leave_type === 'annual' && daysDiff < 7) {
-      if (!confirm('Warning: Annual leaves should be requested at least 7 days in advance. Do you still want to submit?')) return;
-    }
-    if (form.leave_type === 'personal' && daysDiff < 3) {
-      if (!confirm('Warning: Personal leaves should be requested at least 3 days in advance. Do you still want to submit?')) return;
-    }
-  }
-
-  const formData = new FormData();
   for (const [key, val] of Object.entries(form.data())) {
     formData.append(key, val ?? '');
   }
 
-  // Append user_id if admin/HR selects an employee
-  if (isAdminOrHR && form.user_id) {
-    formData.append('user_id', form.user_id);
+  if (supportingDocument.value) {
+    formData.append('supporting_document', supportingDocument.value);
   }
-
-  if (supportingDocument.value) formData.append('supporting_document', supportingDocument.value);
 
   router.post(route('leave.store'), formData, {
     preserveScroll: true,
     headers: { 'Content-Type': 'multipart/form-data' },
     onSuccess: () => {
-      form.reset();
+      // THIS IS THE FIX: We only reset fields related to the specific application.
+      // We DO NOT reset user_id, preserving the admin's context.
+      form.reset('start_date', 'end_date', 'reason', 'leave_type', 'day_type', 'start_half_session', 'end_half_session', 'supporting_document');
+      
+      // Manually set defaults for the next application
       form.leave_type = 'sick';
       form.day_type = 'full';
-      form.start_half_session = '';
-      form.end_half_session = '';
+      
       selectedDates.value = [null, null];
       supportingDocument.value = null;
-      if (isAdminOrHR) form.user_id = null; // Reset selected employee
     },
-    onError: (errors) => {
-      if (errors.message) alert(errors.message);
-    },
+    // onError is handled automatically by Inertia's error bag and our FlashMessage component
   });
 };
 
@@ -559,19 +596,19 @@ const approvedUpcomingRequests = computed(() =>
 )
 
 const selectedLeaveBalance = computed(() => {
-  if (isAdminOrHR && form.user_id) {
-    const employee = props.employees.find(e => e.id === form.user_id);
-    return employee ? employee.leave_balance : 0;
-  }
-  return props.remainingLeaveBalance;
+    if (isAdminOrHR.value && form.user_id) {
+        const employee = props.employees.find(e => e.id === form.user_id);
+        return employee ? employee.leave_balance : props.remainingLeaveBalance;
+    }
+    return props.remainingLeaveBalance;
 });
 
 const selectedCompOffBalance = computed(() => {
-  if (isAdminOrHR && form.user_id) {
-    const employee = props.employees.find(e => e.id === form.user_id);
-    return employee ? employee.comp_off_balance : 0;
-  }
-  return props.compOffBalance;
+    if (isAdminOrHR.value && form.user_id) {
+        const employee = props.employees.find(e => e.id === form.user_id);
+        return employee ? employee.comp_off_balance : props.compOffBalance;
+    }
+    return props.compOffBalance;
 });
 
 
