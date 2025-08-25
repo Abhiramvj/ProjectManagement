@@ -77,22 +77,29 @@ class UserController extends Controller
      */
     public function destroy(User $user, DeleteUser $deleteUser)
     {
-        try {
-            $deleteUser->handle($user);
-            return Redirect::route('users.index')->with('success', 'Employee deleted successfully.');
+        $deleteUser->handle($user);
 
-        } catch (\Throwable $e) {
-            Log::error("Failed to delete user (ID: {$user->id}): " . $e->getMessage());
-            Log::error($e);
-
-            return Redirect::back()->with('error', 'An unexpected error occurred while deleting the user.');
-        }
+        return Redirect::route('users.index')->with('success', 'Employee deleted successfully.');
     }
 
-    /**
-     * Handle the user import process.
-     */
- public function import(Request $request)
+    public function search(Request $request)
+    {
+        $query = $request->input('query', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $users = User::where('name', 'like', "%{$query}%")
+            ->orWhere('email', 'like', "%{$query}%")
+            ->select('id', 'name', 'email')
+            ->limit(10)
+            ->get();
+
+        return response()->json($users);
+    }
+
+     public function import(Request $request)
      {
         // 1. Validate the request to ensure a file was uploaded
         try {

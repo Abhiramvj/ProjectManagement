@@ -11,7 +11,6 @@ class GetLeave
 {
     /**
      * Determine the color category used for frontend display.
-     * (This method is unchanged)
      */
     private function getLeaveColorCategory(LeaveApplication $request): string
     {
@@ -32,49 +31,39 @@ class GetLeave
     }
 
     /**
-     * Fetch leave requests and other data for the frontend.
+     * Fetch all necessary data for the Leave application page.
+     * This version is optimized to NOT load all employees on initial page load.
      */
     public function handle(): array
     {
         $user = Auth::user();
 
-        // 1. Fetch employees list for admin/hr dropdown WITH their leave stats
+        // --- PERFORMANCE FIX ---
+        // The 'employees' prop is now always an empty array on initial load.
+        // The searchable dropdown will fetch users asynchronously as needed.
         $employees = [];
-        if ($user->hasAnyRole(['admin', 'hr'])) {
-            $employees = User::select(
-                'id', 'name', 'leave_balance', 'comp_off_balance',
-                'total_annual_leave', 'total_sick_leave', 'total_personal_leave' // Select new columns
-            )
-                ->withSum('approvedAnnualLeaves', 'leave_days')
-                ->withSum('approvedSickLeaves', 'leave_days')
-                ->withSum('approvedPersonalLeaves', 'leave_days')
-                ->orderBy('name')
-                ->get()
-                ->map(fn ($emp) => [
-                'id' => $emp->id,
-                'name' => $emp->name,
-                'leave_balance' => $emp->leave_balance,
-                'comp_off_balance' => $emp->comp_off_balance,
-                'stats' => [
-                    'annual' => ['taken' => $emp->approved_annual_leaves_sum_leave_days ?? 0, 'total' => $emp->total_annual_leave],
-                    'sick' => ['taken' => $emp->approved_sick_leaves_sum_leave_days ?? 0, 'total' => $emp->total_sick_leave],
-                    'personal' => ['taken' => $emp->approved_personal_leaves_sum_leave_days ?? 0, 'total' => $emp->total_personal_leave],
-                ],
-            ]);
-        }
 
-        // NEW: 2. Get leave stats FOR THE LOGGED-IN USER
+        // Get leave stats ONLY for the currently logged-in user.
         $currentUserStats = [
             'annual' => ['taken' => $user->approvedAnnualLeaves()->sum('leave_days'), 'total' => $user->total_annual_leave],
             'sick' => ['taken' => $user->approvedSickLeaves()->sum('leave_days'), 'total' => $user->total_sick_leave],
             'personal' => ['taken' => $user->approvedPersonalLeaves()->sum('leave_days'), 'total' => $user->total_personal_leave],
         ];
 
-        // 3. Build the query for calendar events (Unchanged)
+        // Build the query for calendar events. This logic is correct.
         $leaveEventsQuery = LeaveApplication::with('user:id,name')
             ->whereIn('status', ['pending', 'approved']);
 
-        if (! $user->hasAnyRole(['admin', 'hr'])) {
+        // The calendar initially shows events for the logged-in user.
+        // If an admin selects another user via the search box, the page will reload
+        // with that user's ID, and this query will correctly show their events.
+        $displayUserId = request('user_id', $user->id);
+
+        if ($user->hasAnyRole(['admin', 'hr'])) {
+             // Admin can see the selected user's calendar, or their own by default
+             $leaveEventsQuery->where('user_id', $displayUserId);
+        } else {
+            // Non-admins can only ever see their own calendar
             $leaveEventsQuery->where('user_id', $user->id);
         }
 
@@ -88,7 +77,7 @@ class GetLeave
                 'color_category' => $this->getLeaveColorCategory($request),
             ]);
 
-        // 4. Get holiday events (Unchanged)
+        // Get holiday events. This is correct.
         $holidayEvents = Holiday::all()->map(fn ($holiday) => [
             'start' => $holiday->date->toDateString(),
             'end' => null,
@@ -100,20 +89,20 @@ class GetLeave
 
         $highlighted = $leaveEvents->merge($holidayEvents)->values()->all();
 
-        // 5. Get paginated requests for "Your Requests" modal (Unchanged)
+        // Get paginated requests for "Your Requests" modal. This is correct.
         $requests = LeaveApplication::with(['user:id,name'])
             ->where('user_id', $user->id)
             ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END")
             ->latest()
             ->paginate(15);
 
-        // 6. Return all data to the Vue component
+        // Return all data to the Vue component.
         return [
             'leaveRequests' => $requests,
             'highlightedDates' => $highlighted,
             'remainingLeaveBalance' => $user->leave_balance,
             'compOffBalance' => $user->comp_off_balance,
-            'employees' => $employees,
+            'employees' => $employees, // This is now an empty array.
             'leaveStats' => $currentUserStats,
             'canManage' => false,
         ];

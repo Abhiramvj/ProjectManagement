@@ -1,12 +1,14 @@
 <script setup>
-import { router } from '@inertiajs/vue3';
+// --- FIX: Import the Link component for pagination ---
+import { Head, router, Link } from '@inertiajs/vue3';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { watch, ref } from 'vue';
+import { watch, ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 // Props from backend
 const props = defineProps({
-  calendarData: Array,
+  // --- FIX: calendarData is now a Paginator Object, not a simple Array ---
+  calendarData: Object,
   dateRange: Array,
   teams: Array,
   filters: Object,
@@ -58,7 +60,6 @@ const resetFilters = () => {
   start_date.value = format(startOfMonth(new Date()), 'yyyy-MM-dd');
   end_date.value = format(endOfMonth(new Date()), 'yyyy-MM-dd');
   absent_only.value = false;
-  // applyFilters will be triggered automatically by the watchers
 };
 
 const setDateRangeAndApply = (period) => {
@@ -79,14 +80,19 @@ const getDay = (dateString) => {
   if (!dateString) return '';
   return format(new Date(dateString), 'd');
 };
+
+// --- FIX: Computed property to safely access pagination links ---
+const paginationLinks = computed(() => props.calendarData.links || []);
+
 </script>
 
 <template>
-    <AuthenticatedLayout title="Leave Calendar">
+    <Head title="Leave Calendar" />
+    <AuthenticatedLayout>
         <div class="p-4 sm:p-6 lg:p-8">
             <h1 class="text-2xl font-bold mb-4 text-gray-800">Leave Calendar</h1>
 
-            <!-- Filter Section -->
+            <!-- Filter Section (Unchanged) -->
             <div class="p-4 bg-white rounded-lg shadow-sm mb-6 border border-gray-200">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
@@ -140,7 +146,6 @@ const getDay = (dateString) => {
                         >
                         <label for="absent_only" class="ml-2 block text-sm text-gray-900">
                             Show absent only
-                            <span v-if="absent_only" class="ml-1 px-1 bg-green-100 text-green-800 text-xs rounded">ON</span>
                         </label>
                     </div>
 
@@ -154,61 +159,79 @@ const getDay = (dateString) => {
             </div>
 
             <!-- Calendar Table -->
-            <div class="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-200">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
                 <div class="p-4 border-b flex justify-between items-center">
                     <p class="font-semibold text-gray-700">
                         Showing period:
                         <span class="font-bold">{{ filters.start_date }}</span>
                         to
                         <span class="font-bold">{{ filters.end_date }}</span>
-                        <span v-if="filters.absent_only" class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">ABSENT ONLY</span>
                     </p>
+                    <!-- FIX: Use the paginator's total count -->
                     <p class="text-sm text-gray-600">
-                        {{ calendarData.length }} employee(s) found
+                        {{ calendarData.total }} employee(s) found
                     </p>
                 </div>
 
-                <table class="min-w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 w-48">Employee</th>
-                            <th v-for="date in dateRange" :key="date" scope="col" class="w-10 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{{ getDay(date) }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="user in calendarData" :key="user.id" class="hover:bg-gray-50">
-                            <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white hover:bg-gray-50 z-10 w-48">
-                                <div>
-                                    <div class="font-medium">{{ user.name }}</div>
-                                    <div v-if="user.teams" class="text-xs text-gray-500">{{ user.teams }}</div>
-                                </div>
-                            </td>
-                            <td v-for="date in dateRange" :key="date" class="text-center py-2">
-                                <div class="flex items-center justify-center h-full">
-                                    <div v-if="user.daily_statuses[date] && user.daily_statuses[date].status === 'Leave'" :title="`Type: ${user.daily_statuses[date].details.leave_type}`" class="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs cursor-help" :style="{ backgroundColor: user.daily_statuses[date].details.color }">{{ user.daily_statuses[date].details.code }}</div>
-                                    <div v-else-if="user.daily_statuses[date] && user.daily_statuses[date].status === 'Working'" class="text-green-500 text-lg" title="Present">✓</div>
-                                    <div v-else-if="user.daily_statuses[date] && user.daily_statuses[date].status === 'Future'" class="text-gray-300 text-sm" title="Future date">○</div>
-                                    <div v-else class="text-gray-400" title="Weekend/Holiday">·</div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr v-if="calendarData.length === 0">
-                             <td :colspan="dateRange.length + 1" class="text-center py-10 text-gray-500">
-                                <div v-if="filters.absent_only">
-                                    <div class="text-lg mb-2">👥</div>
-                                    <div class="font-medium">No employees with absences found</div>
-                                    <div class="text-sm text-gray-400 mt-1">Try expanding the date range or uncheck "Show absent only"</div>
-                                </div>
-                                <div v-else>No data available for the selected period and filters.</div>
-                             </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 w-48">Employee</th>
+                                <th v-for="date in dateRange" :key="date" scope="col" class="w-10 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{{ getDay(date) }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- FIX: Loop over `calendarData.data` instead of `calendarData` -->
+                            <tr v-for="user in calendarData.data" :key="user.id" class="hover:bg-gray-50">
+                                <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white hover:bg-gray-50 z-10 w-48">
+                                    <div>
+                                        <div class="font-medium">{{ user.name }}</div>
+                                        <div v-if="user.teams" class="text-xs text-gray-500">{{ user.teams }}</div>
+                                    </div>
+                                </td>
+                                <td v-for="date in dateRange" :key="date" class="text-center py-2">
+                                    <div class="flex items-center justify-center h-full">
+                                        <div v-if="user.daily_statuses[date] && user.daily_statuses[date].status === 'Leave'" :title="`Type: ${user.daily_statuses[date].details.leave_type}`" class="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs cursor-help" :style="{ backgroundColor: user.daily_statuses[date].details.color }">{{ user.daily_statuses[date].details.code }}</div>
+                                        <div v-else-if="user.daily_statuses[date] && user.daily_statuses[date].status === 'Working'" class="text-green-500 text-lg" title="Present">✓</div>
+                                        <div v-else-if="user.daily_statuses[date] && user.daily_statuses[date].status === 'Future'" class="text-gray-300 text-sm" title="Future date">○</div>
+                                        <div v-else class="text-gray-400" title="Weekend/Holiday">·</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- FIX: Check `calendarData.data.length` for the no results message -->
+                            <tr v-if="calendarData.data.length === 0">
+                                <td :colspan="dateRange.length + 1" class="text-center py-10 text-gray-500">
+                                    <div v-if="filters.absent_only">
+                                        <div class="text-lg mb-2">👥</div>
+                                        <div class="font-medium">No employees with absences found</div>
+                                        <div class="text-sm text-gray-400 mt-1">Try expanding the date range or uncheck "Show absent only"</div>
+                                    </div>
+                                    <div v-else>No data available for the selected period and filters.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- FIX: ADD PAGINATION CONTROLS -->
+                <div v-if="calendarData.total > 0" class="p-4 border-t border-gray-200 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        Showing {{ calendarData.from }} to {{ calendarData.to }} of {{ calendarData.total }} results
+                    </div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                         <template v-for="(link, index) in paginationLinks" :key="index">
+                            <span v-if="!link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed ring-1 ring-inset ring-gray-300" :class="{ 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"/>
+                            <Link v-else :href="link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20" :class="{ 'bg-blue-600 text-white': link.active, 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }" preserve-scroll />
+                        </template>
+                    </nav>
+                </div>
+
             </div>
 
-            <!-- Legend -->
+            <!-- Legend (Unchanged) -->
             <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h3 class="text-sm font-medium text-gray-700 mb-2">Info:</h3>
+                 <h3 class="text-sm font-medium text-gray-700 mb-2">Info:</h3>
                 <div class="flex flex-wrap gap-4 text-xs text-gray-600">
                     <div class="flex items-center gap-1"><span class="text-green-500 text-lg">✓</span><span>Present</span></div>
                     <div class="flex items-center gap-1"><div class="w-4 h-4 rounded bg-red-400 flex items-center justify-center text-white text-xs">A</div><span>Annual Leave</span></div>

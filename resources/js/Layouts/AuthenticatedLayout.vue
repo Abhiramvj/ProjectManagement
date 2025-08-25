@@ -1,6 +1,5 @@
 <script setup>
 // --- SCRIPT SETUP IS UNCHANGED ---
-// All your existing logic for notifications, user data, navigation, etc., remains the same.
 import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -34,7 +33,7 @@ const fetchNotifications = async () => {
 
 const handleNotificationClick = (notification) => {
     const canManageLeaves = user.value?.permissions?.includes('manage leave applications');
-    const targetRoute = canManageLeaves ? 'leave.manageRequests' : 'leave.manageRequests';
+    const targetRoute = canManageLeaves ? 'leave.manageRequests' : 'leave.fullRequests';
     router.visit(route(targetRoute), {
         onSuccess: () => {
             axios.post(route('notifications.read', notification.id)).catch(() => {});
@@ -71,7 +70,7 @@ const navigationItems = computed(() => {
         { name: 'Apply for Leave', route: 'leave.index', active: route().current('leave.index'), show: user.value.permissions.includes('apply for leave'), icon: 'Apply for Leave' },
         { name: 'Your Requests', route: 'leave.fullRequests', active: route().current('leave.fullRequests'), show: true, icon: 'Your Requests'},
         { name: 'Leave Calendar', route: 'leaves.calendar', active: route().current('leaves.calendar'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Calendar' },
-        { name: 'Manage Leave Requests', route: 'leave.manageRequests', active: route().current('leave.manageRequests'), show: user.value.permissions.includes('manage leave applications'), icon: 'Manage Leave Requests' },
+        { name: 'Manage Requests', route: 'leave.manageRequests', active: route().current('leave.manageRequests'), show: user.value.permissions.includes('manage leave applications'), icon: 'Manage Requests' },
         { name: 'Leave Audit Logs', route: 'leave.logs', active: route().current('leave.logs'), show: user.value.permissions.includes('manage leave applications'), icon: 'Leave Logs' },
         { name: 'Manage Users', route: 'users.index', active: route().current('users.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Users' },
         { name: 'Manage Teams', route: 'teams.index', active: route().current('teams.index'), show: user.value.permissions.includes('manage employees'), icon: 'Manage Teams' },
@@ -86,14 +85,14 @@ const icons = {
     'Mail Logs': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
     'Leave Calendar': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`,
     'Manage Roles': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 20.944A12.02 12.02 0 0012 22a12.02 12.02 0 009-1.056c.343-.344.664-.714.944-1.123l-2.432-2.432z" /></svg>`,
-    'Manage Leave Requests': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`,
+    'Manage Requests': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`,
     'Leave Logs': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
     Projects: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`,
     'Apply for Leave': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`,
     'Your Requests': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4-4-4m0 8V5a2 2 0 012-2h6a2 2 0 012 2v14a2 2 0 01-2 2H8a2 2 0 01-2-2z" /></svg>`,
     'Working Hours': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-    'Manage Users': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
-    'Manage Teams': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
+    'Manage Users': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
+    'Manage Teams': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
     'Company Hierarchy': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
 };
 
@@ -115,10 +114,15 @@ onUnmounted(() => { if (notificationInterval) clearInterval(notificationInterval
                         <span class="text-xl font-bold text-gray-800">WorkSphere</span>
                     </div>
                     <nav v-if="user && user.permissions" class="mt-8 flex-1 space-y-2 px-3 pb-4">
-                        <NavLink v-for="item in navigationItems" :key="item.name" :href="route(item.route)" :active="item.active">
-                             <span v-html="icons[item.icon]" class="mr-3 flex-shrink-0 h-6 w-6"></span>
-                            {{ item.name }}
-                        </NavLink>
+                       <NavLink v-for="item in navigationItems"
+         :key="item.name"
+         :href="route(item.route)"
+         :active="item.active"
+         class="nav-link">
+  <span v-html="icons[item.icon]" class="mr-3 flex-shrink-0 h-6 w-6"></span>
+  {{ item.name }}
+</NavLink>
+
                     </nav>
                 </div>
             </div>
@@ -127,8 +131,6 @@ onUnmounted(() => { if (notificationInterval) clearInterval(notificationInterval
             <div class="md:pl-64 flex flex-col min-h-screen">
                 <!-- Top bar -->
                 <header class="sticky top-0 z-10 flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6 lg:px-8">
-                    <!-- START: HEADER FIX -->
-                    <!-- Left side: Hamburger (mobile) + Header Title -->
                     <div class="flex items-center">
                         <button @click="showingSidebar = true" type="button" class="border-r border-gray-200 pr-4 text-gray-500 focus:outline-none md:hidden">
                             <span class="sr-only">Open sidebar</span>
@@ -139,7 +141,6 @@ onUnmounted(() => { if (notificationInterval) clearInterval(notificationInterval
                         </div>
                     </div>
 
-                    <!-- Right side: Notifications + User Dropdown -->
                     <div class="flex items-center space-x-4">
                         <template v-if="user">
                             <!-- Notification Dropdown -->
@@ -174,42 +175,30 @@ onUnmounted(() => { if (notificationInterval) clearInterval(notificationInterval
                                 </div>
                             </div>
 
-                    <!-- ... inside AuthenticatedLayout.vue ... -->
+                            <!-- User Profile Dropdown -->
+                            <Dropdown align="right" width="48">
+                                <template #trigger>
+                                    <button class="flex items-center space-x-3 rounded-lg p-1 transition hover:bg-gray-100">
+                                        <img v-if="user && user.image" class="h-9 w-9 rounded-full object-cover" :src="`/storage/${user.image}`" alt="User Avatar" />
+                                        <img v-else class="h-9 w-9 rounded-full object-cover" src="/storage/defaults/default-avatar.jpg" alt="Default Avatar" />
+                                        <div class="hidden text-left md:block">
+                                            <div class="text-sm font-semibold text-gray-800">{{ user.name }}</div>
+                                            <div class="text-xs text-gray-500">{{ userDesignation }}</div>
+                                        </div>
+                                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                </template>
 
-<!-- User Profile Dropdown -->
-<Dropdown align="right" width="48">
-    <template #trigger>
-        <!-- ... trigger button code is unchanged ... -->
-        <button class="flex items-center space-x-3 rounded-lg p-1 transition hover:bg-gray-100">
-            <img v-if="user && user.image" class="h-9 w-9 rounded-full object-cover" :src="`/storage/${user.image}`" alt="User Avatar" />
-            <img v-else class="h-9 w-9 rounded-full object-cover" src="/storage/defaults/default-avatar.jpg" alt="Default Avatar" />
-            <div class="hidden text-left md:block">
-                <div class="text-sm font-semibold text-gray-800">{{ user.name }}</div>
-                <div class="text-xs text-gray-500">{{ userDesignation }}</div>
-            </div>
-            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-        </button>
-    </template>
-
-    <template #content>
-        <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
-        <DropdownLink :href="route('notifications.index')">Notifications</DropdownLink>
-
-        <!-- A dividing line for better visual separation -->
-        <div class="border-t border-gray-100 my-1"></div>
-
-        <!-- Log Out is now first -->
-        <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
-
-        <!-- A slot for page-specific actions like 'Enter Fullscreen' -->
-        <slot name="page-actions" />
-    </template>
-</Dropdown>
-
-<!-- ... rest of the file is unchanged ... -->
+                                <template #content>
+                                    <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
+                                    <DropdownLink :href="route('notifications.index')">Notifications</DropdownLink>
+                                    <div class="border-t border-gray-100 my-1"></div>
+                                    <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
+                                    <slot name="page-actions" />
+                                </template>
+                            </Dropdown>
                         </template>
                     </div>
-                    <!-- END: HEADER FIX -->
                 </header>
 
                 <main class="flex-1">
@@ -217,56 +206,142 @@ onUnmounted(() => { if (notificationInterval) clearInterval(notificationInterval
                 </main>
             </div>
 
-            <!-- Mobile Sidebar (Overlay) -->
-            <div v-if="showingSidebar" class="relative z-40 md:hidden" role="dialog" aria-modal="true">
-                <div @click="showingSidebar = false" class="fixed inset-0 bg-gray-600 bg-opacity-75"></div>
-                <div class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white">
-                    <div class="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 bg-white pt-5">
-                         <div class="flex flex-shrink-0 items-center px-4 space-x-3">
-                            <Link :href="route('dashboard')">
-                                <ApplicationLogo class="block h-8 w-auto text-indigo-600" />
-                            </Link>
-                            <span class="text-xl font-bold text-gray-800">WorkSphere</span>
+            <!-- Mobile Sidebar (Overlay) with Animations -->
+            <div class="relative z-40 md:hidden" role="dialog" aria-modal="true">
+                <Transition name="fade">
+                    <div v-if="showingSidebar" @click="showingSidebar = false" class="fixed inset-0 bg-gray-600 bg-opacity-75"></div>
+                </Transition>
+                <Transition name="slide-in">
+                    <div v-if="showingSidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white">
+                        <div class="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 bg-white pt-5">
+                             <div class="flex flex-shrink-0 items-center px-4 space-x-3">
+                                <Link :href="route('dashboard')">
+                                    <ApplicationLogo class="block h-8 w-auto text-indigo-600" />
+                                </Link>
+                                <span class="text-xl font-bold text-gray-800">WorkSphere</span>
+                            </div>
+                            <nav v-if="user && user.permissions" class="mt-8 flex-1 space-y-2 px-3 pb-4">
+                                <NavLink v-for="item in navigationItems" :key="item.name" :href="route(item.route)" :active="item.active" @click="showingSidebar = false">
+                                    <span v-html="icons[item.icon]" class="mr-3 flex-shrink-0 h-6 w-6"></span>
+                                    {{ item.name }}
+                                </NavLink>
+                            </nav>
                         </div>
-                        <nav v-if="user && user.permissions" class="mt-8 flex-1 space-y-2 px-3 pb-4">
-                            <NavLink v-for="item in navigationItems" :key="item.name" :href="route(item.route)" :active="item.active" @click="showingSidebar = false">
-                                <span v-html="icons[item.icon]" class="mr-3 flex-shrink-0 h-6 w-6"></span>
-                                {{ item.name }}
-                            </NavLink>
-                        </nav>
                     </div>
-                </div>
+                </Transition>
             </div>
         </div>
     </div>
 </template>
 
 <style>
-/* Styles for NavLink to match the new light theme */
+/*
+ * ===================================================================
+ * START OF CORRECTION: New styles to match the Projects page design
+ * ===================================================================
+ */
+
+/* General (unselected) link style */
 .nav-link {
     display: flex;
     align-items: center;
     width: 100%;
     padding: 0.75rem 1rem; /* 12px 16px */
-    border-radius: 0.5rem; /* 8px */
-    font-size: 0.875rem; /* 14px */
-    font-weight: 500;
-    color: #4b5563; /* text-gray-600 */
-    transition: all 0.15s ease-in-out;
-}
-.nav-link:hover {
-    background-color: #f3f4f6; /* bg-gray-100 */
-    color: #111827; /* text-gray-900 */
-}
-/* Active state */
-.nav-link[aria-current="page"] {
-    background-color: #eef2ff; /* bg-indigo-50 */
-    color: #4338ca; /* text-indigo-700 */
-    font-weight: 600; /* semibold */
+    border-radius: 0.5rem; /* 8px - a nice, subtle curve */
+    font-size: 0.9rem;     /* 14.4px */
+    font-weight: 500;      /* Medium weight */
+    color: #374151;        /* text-gray-700 */
+    transition: all 0.2s ease-in-out;
 }
 
-/* Icon colors are now inherited from the link's text color */
+/* Hover state for UNSELECTED links */
+.nav-link:not([aria-current="page"]):hover {
+    background-color: #F3F4F6; /* bg-gray-100 */
+    color: #111827;            /* text-gray-900 */
+}
+
+/* Active state (selected link) */
+.nav-link[aria-current="page"] {
+    background-color: #3B82F6; /* bg-blue-500, a nice medium blue */
+    color: #FFFFFF;            /* White text and icon */
+    font-weight: 600;          /* Semibold for the active link */
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* Subtle shadow */
+}
+
+/* Ensure SVG icons inherit the link's text color correctly */
 .nav-link svg {
     color: currentColor;
 }
+
+
+/* Styles for the mobile sidebar animation */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-in-enter-active,
+.slide-in-leave-active {
+  transition: transform 0.3s ease-out;
+}
+.slide-in-enter-from,
+.slide-in-leave-to {
+  transform: translateX(-100%);
+}
+
+
+/* Sidebar NavLink: improved selection and hover effects */
+.nav-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+  background: transparent;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.3s;
+  position: relative;
+}
+
+/* Hover effect for non-active links */
+.nav-link:not([aria-current="page"]):hover {
+  background-color: #EFF6FF; /* light blue */
+  color: #2563EB;            /* blue-600 */
+}
+
+/* Active (selected) sidebar item: blue background, white text, left bar */
+.nav-link[aria-current="page"] {
+  background-color: #3B82F6; /* blue-500 */
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 4px 12px -2px rgba(59,130,246,0.10);
+}
+
+/* Optional: Left accent bar for active link */
+.nav-link[aria-current="page"]::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 2px 0 0 2px;
+  background: #2563EB;
+  opacity: 1;
+}
+
+/* Icon inherits current color */
+.nav-link svg {
+  color: currentColor;
+  transition: color 0.2s;
+}
+
+/* ===================================================================
+ * END OF CORRECTION
+ * ===================================================================
+ */
 </style>

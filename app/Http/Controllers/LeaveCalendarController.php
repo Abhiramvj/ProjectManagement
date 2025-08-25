@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,17 +28,7 @@ class LeaveCalendarController extends Controller
         $ledTeamIds = collect();
 
         if ($user->hasAnyRole(['admin', 'hr'])) {
-            // =================================================================
-            // START OF THE FIX
-            // =================================================================
-            // Instead of including specific roles, we can exclude roles we NEVER want to see,
-            // like a "Super Admin" or "System" account. This is more flexible.
-            // If you want to see EVERYONE, you can remove this whereHas clause entirely.
-            $usersQuery->whereHas('roles', fn ($q) => $q->whereNotIn('name', ['super-admin'])); // Example: Exclude a super-admin role
-            // =================================================================
-            // END OF THE FIX
-            // =================================================================
-
+            $usersQuery->whereHas('roles', fn ($q) => $q->whereNotIn('name', ['super-admin']));
         } elseif ($user->hasRole('team-lead')) {
             $ledTeamIds = $user->ledTeams()->pluck('id');
             if ($ledTeamIds->isEmpty()) {
@@ -61,14 +52,20 @@ class LeaveCalendarController extends Controller
             ->orderBy('name');
 
         $this->applyFilters($usersQuery, $filters, $user, $ledTeamIds);
-        $users = $usersQuery->get();
+
+        // --- FIX 1: Paginate the query instead of getting all users ---
+        // withQueryString() ensures that filters are maintained when changing pages.
+        $paginatedUsers = $usersQuery->paginate(50)->withQueryString();
 
         $dateRange = collect(CarbonPeriod::create($startDate, $endDate))->map(fn ($date) => $date->format('Y-m-d'));
-        $calendarData = $this->formatCalendarData($users, $dateRange);
 
-        if ($filters['show_absent_only']) {
-            $calendarData = $calendarData->filter(fn ($userData) => $userData['has_absence'])->values();
-        }
+        // --- FIX 2: Use the `through` method to transform the paginated results ---
+        // This efficiently formats only the 50 users for the current page.
+        $calendarData = $paginatedUsers->through(function ($user) use ($dateRange) {
+            // Re-using the single-user mapping logic from your original `formatCalendarData` method.
+            return $this->formatSingleUserData($user, $dateRange);
+        });
+
 
         $teamsForFilter = collect();
         if ($user->hasAnyRole(['admin', 'hr'])) {
@@ -78,6 +75,7 @@ class LeaveCalendarController extends Controller
         }
 
         return Inertia::render('Leave/Calendar', [
+            // Pass the entire paginated object to the frontend.
             'calendarData' => $calendarData,
             'dateRange' => $dateRange,
             'teams' => $teamsForFilter,
@@ -87,6 +85,7 @@ class LeaveCalendarController extends Controller
 
     private function getValidatedFilters(Request $request): array
     {
+        // ... (This method is unchanged and correct)
         $defaults = [
             'start_date' => now()->startOfMonth()->format('Y-m-d'),
             'end_date' => now()->endOfMonth()->format('Y-m-d'),
@@ -118,49 +117,60 @@ class LeaveCalendarController extends Controller
                 $teamQuery->where('teams.id', $filters['team_id']);
             });
         }
+
+        // --- FIX 3: Move the "absent only" filter to the database query ---
+        // This is far more efficient than filtering in PHP after loading all users.
+        if ($filters['show_absent_only']) {
+            $query->whereHas('leaveApplications', function ($q) use ($filters) {
+                $startDate = Carbon::parse($filters['start_date']);
+                $endDate = Carbon::parse($filters['end_date']);
+                $q->approved()->overlapsWith($startDate, $endDate);
+            });
+        }
     }
 
-    private function formatCalendarData(EloquentCollection $users, Collection $dateRange): Collection
+    // Renamed from `formatCalendarData` to reflect it now processes a single user.
+    private function formatSingleUserData(User $user, Collection $dateRange): array
     {
         $today = now()->startOfDay();
+        $dailyStatuses = [];
+        $hasAbsence = false;
 
-        return $users->map(function ($user) use ($dateRange, $today) {
-            $dailyStatuses = [];
-            $hasAbsence = false;
-            foreach ($dateRange as $dateString) {
-                $date = Carbon::parse($dateString);
-                $status = 'Working';
-                $details = null;
-                $onLeave = $user->leaveApplications->first(
-                    fn ($leave) => $date->betweenIncluded($leave->start_date, $leave->end_date)
-                );
-                if ($onLeave) {
-                    $hasAbsence = true;
-                    $status = 'Leave';
-                    $details = [
-                        'code' => strtoupper(substr($onLeave->leave_type, 0, 1)),
-                        'color' => $this->getLeaveTypeColor($onLeave->leave_type),
-                        'leave_type' => ucfirst($onLeave->leave_type),
-                        'day_type' => $onLeave->day_type,
-                    ];
-                } elseif ($date->isWeekend()) {
-                    $status = 'Weekend';
-                } elseif ($date->isAfter($today)) {
-                    $status = 'Future';
-                }
-                $dailyStatuses[$dateString] = ['status' => $status, 'details' => $details];
+        foreach ($dateRange as $dateString) {
+            $date = Carbon::parse($dateString);
+            $status = 'Working';
+            $details = null;
+            $onLeave = $user->leaveApplications->first(
+                fn ($leave) => $date->betweenIncluded($leave->start_date, $leave->end_date)
+            );
+
+            if ($onLeave) {
+                $hasAbsence = true;
+                $status = 'Leave';
+                $details = [
+                    'code' => strtoupper(substr($onLeave->leave_type, 0, 1)),
+                    'color' => $this->getLeaveTypeColor($onLeave->leave_type),
+                    'leave_type' => ucfirst($onLeave->leave_type),
+                    'day_type' => $onLeave->day_type,
+                ];
+            } elseif ($date->isWeekend()) {
+                $status = 'Weekend';
+            } elseif ($date->isAfter($today)) {
+                $status = 'Future';
             }
+            $dailyStatuses[$dateString] = ['status' => $status, 'details' => $details];
+        }
 
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'teams' => $user->teams->pluck('name')->join(', '),
-                'daily_statuses' => $dailyStatuses,
-                'has_absence' => $hasAbsence,
-            ];
-        });
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'teams' => $user->teams->pluck('name')->join(', '),
+            'daily_statuses' => $dailyStatuses,
+            'has_absence' => $hasAbsence,
+        ];
     }
 
+    // ... (getLeaveTypeColor method is unchanged)
     private function getLeaveTypeColor(string $leaveType): string
     {
         $colors = [

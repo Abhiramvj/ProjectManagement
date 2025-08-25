@@ -7,7 +7,6 @@ use App\Actions\Leave\StoreLeave;
 use App\Actions\Leave\UpdateLeave;
 use App\Http\Requests\Leave\StoreLeaveRequest;
 use App\Http\Requests\Leave\UpdateLeaveRequest;
-use App\Jobs\SendLeaveEmail; // Import the job for queuing emails
 use App\Mail\LeaveApplicationApproved;
 use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
@@ -22,10 +21,6 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
-
-/**
- * @property-read User $user // <-- ADD THIS LINE
- */
 class LeaveApplicationController extends Controller
 {
     public function index(GetLeave $getLeaveRequests)
@@ -35,9 +30,6 @@ class LeaveApplicationController extends Controller
 
     public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
     {
-        // The StoreLeaveRequest has already run and passed at this point.
-        // We now wrap our core logic in a try...catch block.
-
         try {
             $leave_application = $storeLeave->handle($request->validated());
 
@@ -237,7 +229,7 @@ class LeaveApplicationController extends Controller
             'supporting_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
 
-        $path = $request->file('supporting_document')->store('leave_documents/' . auth()->id(), 'public');
+        $path = $request->file('supporting_document')->store('leave_documents/'.auth()->id(), 'public');
 
         if ($leave_application->supporting_document_path) {
             Storage::disk('public')->delete($leave_application->supporting_document_path);

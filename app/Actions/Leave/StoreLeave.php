@@ -9,6 +9,7 @@ use App\Notifications\LeaveRequestSubmitted;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class StoreLeave
@@ -165,7 +166,7 @@ class StoreLeave
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to send leave request notifications', [
+            Log::error('Failed to send leave request notifications', [
                 'error' => $e->getMessage(),
                 'leave_id' => $leaveApplication->id,
             ]);
