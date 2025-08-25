@@ -131,11 +131,12 @@ const formatDate = (dateString) => {
                         <!-- START OF FIX: Log Hours Button Added Back -->
                         <!-- ================================================================= -->
                         <div class="flex items-center justify-end pt-4">
-                             <PrimaryButton :disabled="form.processing">
-                                <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
-                                <span>Log Hours</span>
-                            </PrimaryButton>
-                        </div>
+    <button type="submit" :disabled="form.processing"
+            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+        <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
+        <span>Log Hours</span>
+    </button>
+</div>
                         <!-- ================================================================= -->
                         <!-- END OF FIX -->
                         <!-- ================================================================= -->
