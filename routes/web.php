@@ -1,5 +1,21 @@
 <?php
 
+
+// use Illuminate\Support\Facades\Route;
+// use Illuminate\Support\Facades\Config;
+
+// Route::get('/debug-db-connection', function () {
+//     $defaultConnectionName = Config::get('database.default');
+//     $connectionSettings = Config::get('database.connections.' . $defaultConnectionName);
+
+//     dd([
+//         'ERROR' => 'This is the configuration Laravel is actually using right now.',
+//         'Default Connection Name' => $defaultConnectionName,
+//         'Settings For This Connection' => $connectionSettings,
+//     ]);
+// });
+
+
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
 use App\Http\Controllers\DashboardController;
