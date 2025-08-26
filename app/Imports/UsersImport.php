@@ -17,15 +17,18 @@ use Spatie\Permission\Models\Role;
 class UsersImport implements ToCollection, WithChunkReading, WithHeadingRow
 {
     private $roles;
+
     private static $emailsInFile = [];
+
     private $existingEmails;
+
     private $hashedPassword;
 
     public function __construct()
     {
-        $this->roles = Role::all()->keyBy(fn($role) => strtolower($role->name));
+        $this->roles = Role::all()->keyBy(fn ($role) => strtolower($role->name));
         self::$emailsInFile = [];
-        $this->existingEmails = User::pluck('email')->map(fn($email) => strtolower($email))->flip();
+        $this->existingEmails = User::pluck('email')->map(fn ($email) => strtolower($email))->flip();
 
         // Hash the default password once
         $this->hashedPassword = Hash::make('password');
@@ -77,8 +80,8 @@ class UsersImport implements ToCollection, WithChunkReading, WithHeadingRow
             $email = strtolower(trim($row['email'] ?? ''));
             $roleName = strtolower(trim($row['role'] ?? ''));
 
-            if (!$this->roles->has($roleName)) {
-                $errors[$rowNumber][] = 'Role "' . $row['role'] . '" does not exist.';
+            if (! $this->roles->has($roleName)) {
+                $errors[$rowNumber][] = 'Role "'.$row['role'].'" does not exist.';
             }
             // Check against preloaded existing emails from DB
             if ($this->existingEmails->has($email)) {
@@ -90,7 +93,7 @@ class UsersImport implements ToCollection, WithChunkReading, WithHeadingRow
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
     }
@@ -100,10 +103,11 @@ class UsersImport implements ToCollection, WithChunkReading, WithHeadingRow
         return 500;
     }
 
-
     private function transformDate($value): ?string
     {
-        if (!$value) return null;
+        if (! $value) {
+            return null;
+        }
         if (is_numeric($value)) {
             return Carbon::createFromTimestamp(intval(($value - 25569) * 86400))->toDateTimeString();
         }

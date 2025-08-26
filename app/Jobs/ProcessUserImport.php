@@ -9,8 +9,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException;
 
 class ProcessUserImport implements ShouldQueue
@@ -18,7 +18,9 @@ class ProcessUserImport implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 600;
+
     public $failOnTimeout = true;
+
     protected $filePath;
 
     public function __construct(string $filePath)
@@ -30,13 +32,13 @@ class ProcessUserImport implements ShouldQueue
     {
         try {
             // Step 1: Run the simplified, robust import.
-            Excel::import(new UsersImport(), $this->filePath);
+            Excel::import(new UsersImport, $this->filePath);
 
             Log::info("IMPORT JOB: Successfully finished initial data import for file: {$this->filePath}.");
 
             // Step 2: Dispatch the next job in the pipeline to build the hierarchy.
             UpdateUserHierarchy::dispatch()->onQueue('default');
-            Log::info("IMPORT JOB: Dispatched UpdateUserHierarchy job.");
+            Log::info('IMPORT JOB: Dispatched UpdateUserHierarchy job.');
 
             event(new UserImportCompleted($this->filePath));
 
@@ -54,6 +56,6 @@ class ProcessUserImport implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::emergency("IMPORT JOB FAILED: The import for file {$this->filePath} has failed. Reason: " . $exception->getMessage());
+        Log::emergency("IMPORT JOB FAILED: The import for file {$this->filePath} has failed. Reason: ".$exception->getMessage());
     }
 }

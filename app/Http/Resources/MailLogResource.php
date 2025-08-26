@@ -27,7 +27,7 @@ class MailLogResource extends JsonResource
             //                             THE FIX
             // This line adds the raw HTML body to the data sent to the frontend.
             // =======================================================================
-            'body_html'           => $this->body_html,
+            'body_html' => $this->body_html,
 
             // A dedicated object for the details shown in the gray box
             'details' => [

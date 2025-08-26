@@ -6,9 +6,7 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +63,6 @@ class LeaveCalendarController extends Controller
             // Re-using the single-user mapping logic from your original `formatCalendarData` method.
             return $this->formatSingleUserData($user, $dateRange);
         });
-
 
         $teamsForFilter = collect();
         if ($user->hasAnyRole(['admin', 'hr'])) {

@@ -1,6 +1,7 @@
 <?php
 
 // MAKE SURE THIS NAMESPACE IS CORRECT
+
 namespace App\Actions\User;
 
 use App\Imports\UsersImport;

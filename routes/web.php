@@ -48,22 +48,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // User management routes
-   Route::middleware(['auth', 'verified', 'can:manage employees'])->group(function () {
+    Route::middleware(['auth', 'verified', 'can:manage employees'])->group(function () {
 
-    Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+        Route::post('users/import', [UserController::class, 'import'])->name('users.import');
 
-    // [+] NEW: Add a GET route to download the template file.
-    Route::get('users/import-template', function () {
-        // Make sure you have a file named 'users_template.xlsx' in your /public directory
-        return response()->download(public_path('users_template.xlsx'));
-    })->name('users.import.template');
+        // [+] NEW: Add a GET route to download the template file.
+        Route::get('users/import-template', function () {
+            // Make sure you have a file named 'users_template.xlsx' in your /public directory
+            return response()->download(public_path('users_template.xlsx'));
+        })->name('users.import.template');
 
-    // Your existing resource route remains the same
-    Route::resource('users', UserController::class)->except(['show']);
-       Route::get('/users/search', [UserController::class, 'search'])->middleware([ 'can:manage leave applications'])
-    ->name('users.search');
-});
-
+        // Your existing resource route remains the same
+        Route::resource('users', UserController::class)->except(['show']);
+        Route::get('/users/search', [UserController::class, 'search'])->middleware(['can:manage leave applications'])
+            ->name('users.search');
+    });
 
     Route::get('/performance/{user}', [PerformanceReportController::class, 'show'])
         ->name('performance.show')
@@ -103,6 +102,9 @@ Route::middleware('auth')->group(function () {
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    // Add this route, preferably protected by middleware
+    Route::patch('/projects/{project}/assign-team', [ProjectController::class, 'assignTeam'])
+        ->name('projects.assignTeam');
 
     // Task routes
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');

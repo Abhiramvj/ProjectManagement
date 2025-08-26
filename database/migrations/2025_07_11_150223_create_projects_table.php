@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->foreignId('project_manager_id')->constrained('users');
-            $table->foreignId('team_id')->constrained('teams');
+            $table->foreignId('team_id')->nullable()->constrained('teams');
             $table->string('status')->default('pending');
 
             $table->date('end_date')->nullable();

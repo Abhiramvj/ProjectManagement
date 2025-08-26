@@ -20,7 +20,9 @@ use Inertia\Inertia;
 class DashboardController extends Controller
 {
     protected $taskStatsService;
+
     protected $timeStatsService;
+
     protected $leaveStatsService;
 
     public function __construct(

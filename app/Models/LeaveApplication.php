@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * == Properties for Database Columns ==
+ *
  * @property int $id
  * @property int $user_id
  * @property string $leave_type
@@ -66,6 +67,7 @@ class LeaveApplication extends Model
         'approved_at' => 'datetime',
         'leave_days' => 'float',
     ];
+
     // Set default values for attributes
     protected $attributes = [
         'leave_type' => 'annual',

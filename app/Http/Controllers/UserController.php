@@ -6,7 +6,7 @@ use App\Actions\User\DeleteUser;
 use App\Actions\User\GetUsers;
 use App\Actions\User\StoreUsers;
 use App\Actions\User\UpdateUser;
-use App\Actions\User\ImportUsers; // <-- CORRECTED: Points to the Action class
+// <-- CORRECTED: Points to the Action class
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Jobs\ProcessUserImport;
@@ -29,7 +29,7 @@ class UserController extends Controller
 
         } catch (\Throwable $e) {
             // If any error occurs, log it and re-throw to see the error page
-            Log::error('Failed to load user index page: ' . $e->getMessage());
+            Log::error('Failed to load user index page: '.$e->getMessage());
             Log::error($e); // This logs the full exception details
 
             // During development, re-throwing is useful to see the error screen.
@@ -45,10 +45,11 @@ class UserController extends Controller
     {
         try {
             $storeUsers->handle($request->validated());
+
             return redirect()->route('users.index')->with('success', 'Employee added successfully.');
 
         } catch (\Throwable $e) {
-            Log::error('Failed to store new user: ' . $e->getMessage());
+            Log::error('Failed to store new user: '.$e->getMessage());
             Log::error($e);
 
             return Redirect::back()->with('error', 'An unexpected error occurred while adding the user.');
@@ -62,10 +63,11 @@ class UserController extends Controller
     {
         try {
             $updateUser->handle($user, $request->validated());
+
             return Redirect::route('users.index')->with('success', 'Employee details updated successfully.');
 
         } catch (\Throwable $e) {
-            Log::error("Failed to update user (ID: {$user->id}): " . $e->getMessage());
+            Log::error("Failed to update user (ID: {$user->id}): ".$e->getMessage());
             Log::error($e);
 
             return Redirect::back()->with('error', 'An unexpected error occurred while updating the user.');
@@ -99,12 +101,12 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-     public function import(Request $request)
-     {
+    public function import(Request $request)
+    {
         // 1. Validate the request to ensure a file was uploaded
         try {
             $request->validate([
-                'file' => 'required|mimes:csv,txt,xlsx'
+                'file' => 'required|mimes:csv,txt,xlsx',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return Redirect::back()->withErrors($e->errors());
@@ -122,10 +124,10 @@ class UserController extends Controller
 
         } catch (\Throwable $e) {
             // This will catch rare errors like file system permissions or queue connection issues.
-            Log::critical('Failed to store file or dispatch import job: ' . $e->getMessage());
+            Log::critical('Failed to store file or dispatch import job: '.$e->getMessage());
             Log::critical($e);
 
             return Redirect::back()->with('error', 'Could not start the import process. Please contact support.');
         }
-     }
+    }
 }

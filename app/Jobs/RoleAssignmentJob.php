@@ -8,14 +8,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class RoleAssignmentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $emails;
+
     protected $rolesInFile;
 
     public function __construct(array $emails, array $rolesInFile)
@@ -27,7 +28,7 @@ class RoleAssignmentJob implements ShouldQueue
     public function handle()
     {
         // Load all roles once
-        $roles = Role::all()->keyBy(fn($role) => strtolower($role->name));
+        $roles = Role::all()->keyBy(fn ($role) => strtolower($role->name));
 
         // Fetch users for the given emails
         $users = User::whereIn('email', $this->emails)->get()->keyBy('email');
@@ -46,7 +47,7 @@ class RoleAssignmentJob implements ShouldQueue
             }
         }
 
-        if (!empty($assignments)) {
+        if (! empty($assignments)) {
             // Insert all role assignments at once (avoid duplicates before insert if needed)
             DB::table('model_has_roles')->insert($assignments);
         }

@@ -92,8 +92,13 @@ const formatDate = (dateString) => {
 
                         <div>
                             <label for="description" class="block text-sm font-medium text-slate-700">Description / Tasks</label>
-                            <textarea v-model="form.description" id="description" rows="3" placeholder="What did you work on?"
-                                      class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
+                            <textarea v-model="form.description"
+          id="description"
+          name="description"
+          autocomplete="on"
+          rows="3"
+          placeholder="What did you work on?"
+          class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
                             <InputError class="mt-2" :message="form.errors.description" />
                         </div>
                         

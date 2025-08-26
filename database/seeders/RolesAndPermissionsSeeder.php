@@ -51,7 +51,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Team Lead Role
         $teamLeadRole = Role::firstOrCreate(['name' => 'team-lead']);
         $teamLeadRole->syncPermissions([
-            'assign tasks', 'view team progress', 'log working hours', 'apply for leave', 'view leaves','manage leave applications',
+            'assign tasks', 'view team progress', 'log working hours', 'apply for leave', 'view leaves', 'manage leave applications',
         ]);
 
         // Project Manager Role

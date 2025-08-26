@@ -7,9 +7,11 @@ use App\Actions\Project\ShowProject;
 use App\Actions\Project\StoreProject;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Models\Project;
-use App\Models\User; // <-- Import User model
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Auth; // <-- Import Auth facade
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -75,6 +77,7 @@ class ProjectController extends Controller
      */
     public function store(StoreProjectRequest $request, StoreProject $storeProject)
     {
+
         $storeProject->handle($request->validated());
 
         return Redirect::route('projects.index')->with('success', 'Project created successfully.');
@@ -86,7 +89,48 @@ class ProjectController extends Controller
     public function show(Project $project, ShowProject $showProject): Response
     {
         $projectData = $showProject->handle($project);
+        $user = Auth::user();
+
+      
+        if ($project->project_manager_id === $user->id && ! $project->team_id) {
+
+            
+            // This gives the PM the authority to assign any team in the system.
+            $projectData['userTeams'] = Team::query()->select('id', 'name')->get();
+        }
 
         return Inertia::render('Projects/Show', $projectData);
+    }
+
+    public function assignTeam(Request $request, Project $project)
+    {
+        
+        $this->authorize('update', $project);
+
+        $validated = $request->validate([
+            'team_id' => [
+                'required',
+                'exists:teams,id', // Ensures the team ID exists in the 'teams' table
+            ],
+        ]);
+
+        // 3. Update Logic: Assign the validated team_id to the project.
+        $project->update([
+            'team_id' => $validated['team_id'],
+        ]);
+
+        //    Once a team is assigned, automatically add all members of that team
+        //    to this project's list of members.
+        $team = Team::with('members')->find($validated['team_id']);
+        if ($team) {
+            $memberIds = $team->members()->pluck('users.id')->toArray();
+            // Also ensure the Project Manager is included as a member
+            if (! in_array($project->project_manager_id, $memberIds)) {
+                $memberIds[] = $project->project_manager_id;
+            }
+            $project->members()->sync($memberIds);
+        }
+
+        return Redirect::route('projects.show', $project)->with('success', 'Project assigned to team successfully.');
     }
 }

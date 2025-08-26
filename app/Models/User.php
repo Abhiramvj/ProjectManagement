@@ -4,19 +4,21 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Notifications\DatabaseNotificationCollection;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
+
 /**
  * == Properties for Database Columns ==
+ *
  * @property int $id
  * @property string $name
  * @property string $email
@@ -28,11 +30,11 @@ use Spatie\Permission\Models\Role;
  * @property ?string $image
  * @property ?string $designation
  * @property ?Carbon $hire_date
- * @property ?Carbon $birth_date          // ADDED
- * @property ?string $work_mode           // ADDED
+ * @property ?Carbon $birth_date // ADDED
+ * @property ?string $work_mode // ADDED
  * @property ?int $parent_id
  * @property ?int $leave_approver_id
- * @property ?int $team_id                 // ADDED
+ * @property ?int $team_id // ADDED
  * @property float $leave_balance
  *
  * == Properties for Eloquent Relationships ==
@@ -47,7 +49,6 @@ use Spatie\Permission\Models\Role;
  * @property-read DatabaseNotificationCollection $notifications
  * @property-read DatabaseNotificationCollection $unreadNotifications
  */
-
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable;

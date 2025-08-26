@@ -13,34 +13,30 @@ use PhpOffice\PhpSpreadsheet\Shared\Date; // Use the powerful Excel date helper
 class ImportUsers implements ToModel, WithHeadingRow, WithValidation
 {
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function model(array $row)
     {
         // This part is already correct and robustly handles the date parsing.
         $manager = User::where('name', $row['reports_to'])->first();
 
         $user = new User([
-            'name'        => $row['name'],
-            'email'       => $row['email'],
+            'name' => $row['name'],
+            'email' => $row['email'],
             'designation' => $row['designation'],
-            'password'    => Hash::make('password'),
-            'work_mode'   => $row['work_mode'],
-            'parent_id'   => $manager ? $manager->id : null,
-            'hire_date'   => $row['doj'] ? Carbon::instance(Date::excelToDateTimeObject($row['doj'])) : null,
-            'birth_date'  => $row['birth_date'] ? Carbon::instance(Date::excelToDateTimeObject($row['birth_date'])) : null,
+            'password' => Hash::make('password'),
+            'work_mode' => $row['work_mode'],
+            'parent_id' => $manager ? $manager->id : null,
+            'hire_date' => $row['doj'] ? Carbon::instance(Date::excelToDateTimeObject($row['doj'])) : null,
+            'birth_date' => $row['birth_date'] ? Carbon::instance(Date::excelToDateTimeObject($row['birth_date'])) : null,
         ]);
 
         $user->save();
         $user->assignRole($row['role']);
+
         return $user;
     }
 
-    /**
-     * @return array
-     */
     public function rules(): array
     {
         return [

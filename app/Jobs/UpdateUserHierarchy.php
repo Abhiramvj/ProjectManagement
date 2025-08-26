@@ -16,6 +16,7 @@ class UpdateUserHierarchy implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 600;
+
     public $failOnTimeout = true;
 
     public function handle(): void
@@ -44,7 +45,7 @@ class UpdateUserHierarchy implements ShouldQueue
                         if (isset($managers[$user->temp_reports_to])) {
                             $userIds[] = $user->id;
                             // Use parameter binding with int casting for safety
-                            $cases[$user->id] = (int)$managers[$user->temp_reports_to];
+                            $cases[$user->id] = (int) $managers[$user->temp_reports_to];
                         }
                     }
 
@@ -74,6 +75,6 @@ class UpdateUserHierarchy implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::emergency("HIERARCHY JOB FAILED: The process to build the user hierarchy has failed. Reason: " . $exception->getMessage());
+        Log::emergency('HIERARCHY JOB FAILED: The process to build the user hierarchy has failed. Reason: '.$exception->getMessage());
     }
 }
