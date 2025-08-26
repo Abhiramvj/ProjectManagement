@@ -546,30 +546,17 @@ const approvedUpcomingRequests = computed(() =>
 )
 
 const selectedLeaveBalance = computed(() => {
-  if (isAdminOrHR && form.user_id) {
-    const employee = props.employees.find(e => e.id === form.user_id);
-    return employee ? employee.leave_balance : 0;
-  }
+  // This prop is now always correct for the user being viewed.
   return props.remainingLeaveBalance;
 });
 
 const selectedCompOffBalance = computed(() => {
-  if (isAdminOrHR && form.user_id) {
-    const employee = props.employees.find(e => e.id === form.user_id);
-    return employee ? employee.comp_off_balance : 0;
-  }
+  // This prop is also always correct.
   return props.compOffBalance;
 });
 
-
 const displayedLeaveStats = computed(() => {
-  // If an admin has selected an employee...
-  if (isAdminOrHR && form.user_id) {
-    const selectedEmp = props.employees.find(e => e.id === form.user_id);
-    // Return that employee's stats, or a default if not found
-    return selectedEmp ? selectedEmp.stats : { annual: 0, sick: 0, personal: 0 };
-  }
-  // Otherwise, return the logged-in user's stats
+  // This prop now always contains the correct stats object.
   return props.leaveStats;
 });
 

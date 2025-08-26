@@ -36,36 +36,38 @@ class GetLeave
      */
     public function handle(): array
     {
-        $user = Auth::user();
+        $authUser = Auth::user(); // The person who is logged in (the admin)
 
-        // --- PERFORMANCE FIX ---
-        // The 'employees' prop is now always an empty array on initial load.
-        // The searchable dropdown will fetch users asynchronously as needed.
-        $employees = [];
+        // Determine which user's data we need to display
+        $displayUserId = request('user_id');
+        $displayUser = $authUser; // Default to the logged-in user
 
-        // Get leave stats ONLY for the currently logged-in user.
-        $currentUserStats = [
-            'annual' => ['taken' => $user->approvedAnnualLeaves()->sum('leave_days'), 'total' => $user->total_annual_leave],
-            'sick' => ['taken' => $user->approvedSickLeaves()->sum('leave_days'), 'total' => $user->total_sick_leave],
-            'personal' => ['taken' => $user->approvedPersonalLeaves()->sum('leave_days'), 'total' => $user->total_personal_leave],
+        // If a different user is requested AND the logged-in user has permission...
+        if ($displayUserId && $authUser->hasAnyRole(['admin', 'hr'])) {
+            // ...then find that requested user to be the focus of the page.
+            $displayUser = User::find($displayUserId) ?? $authUser;
+        }
+
+        // --- All calculations below are now correctly based on $displayUser ---
+
+        // Calculate leave stats for the correct user ($displayUser)
+        $leaveStats = [
+            'annual' => ['taken' => $displayUser->approvedAnnualLeaves()->sum('leave_days'), 'total' => $displayUser->total_annual_leave],
+            'sick' => ['taken' => $displayUser->approvedSickLeaves()->sum('leave_days'), 'total' => $displayUser->total_sick_leave],
+            'personal' => ['taken' => $displayUser->approvedPersonalLeaves()->sum('leave_days'), 'total' => $displayUser->total_personal_leave],
         ];
 
-        // Build the query for calendar events. This logic is correct.
-        $leaveEventsQuery = LeaveApplication::with('user:id,name')
-            ->whereIn('status', ['pending', 'approved']);
-
-        // The calendar initially shows events for the logged-in user.
-        // If an admin selects another user via the search box, the page will reload
-        // with that user's ID, and this query will correctly show their events.
-        $displayUserId = request('user_id', $user->id);
-
-        if ($user->hasAnyRole(['admin', 'hr'])) {
-             // Admin can see the selected user's calendar, or their own by default
-             $leaveEventsQuery->where('user_id', $displayUserId);
-        } else {
-            // Non-admins can only ever see their own calendar
-            $leaveEventsQuery->where('user_id', $user->id);
+        // Prepare the employees array for the frontend v-select.
+        // If an employee is selected, we pass their full object so the dropdown displays their name correctly on load.
+        $employees = [];
+        if ($displayUser->id !== $authUser->id) {
+            $employees[] = $displayUser->only('id', 'name', 'email');
         }
+
+        // Build the query for calendar events for the correct user ($displayUser)
+        $leaveEventsQuery = LeaveApplication::with('user:id,name')
+            ->whereIn('status', ['pending', 'approved'])
+            ->where('user_id', $displayUser->id);
 
         $leaveEvents = $leaveEventsQuery->get()
             ->map(fn ($request) => [
@@ -77,7 +79,7 @@ class GetLeave
                 'color_category' => $this->getLeaveColorCategory($request),
             ]);
 
-        // Get holiday events. This is correct.
+        // Get holiday events (this is global and correct)
         $holidayEvents = Holiday::all()->map(fn ($holiday) => [
             'start' => $holiday->date->toDateString(),
             'end' => null,
@@ -89,9 +91,9 @@ class GetLeave
 
         $highlighted = $leaveEvents->merge($holidayEvents)->values()->all();
 
-        // Get paginated requests for "Your Requests" modal. This is correct.
+        // "Your Requests" modal should ALWAYS show the LOGGED-IN user's requests
         $requests = LeaveApplication::with(['user:id,name'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $authUser->id) // Use $authUser here
             ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END")
             ->latest()
             ->paginate(15);
@@ -100,11 +102,12 @@ class GetLeave
         return [
             'leaveRequests' => $requests,
             'highlightedDates' => $highlighted,
-            'remainingLeaveBalance' => $user->leave_balance,
-            'compOffBalance' => $user->comp_off_balance,
-            'employees' => $employees, // This is now an empty array.
-            'leaveStats' => $currentUserStats,
-            'canManage' => false,
+            // These props now correctly contain the data for the $displayUser
+            'remainingLeaveBalance' => $displayUser->leave_balance,
+            'compOffBalance' => $displayUser->comp_off_balance,
+            'employees' => $employees,
+            'leaveStats' => $leaveStats,
+            'canManage' => false, // This seems unused, but we'll leave it
         ];
     }
 }
