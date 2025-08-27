@@ -7,6 +7,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Validator;
 
 class StoreLeaveRequest extends FormRequest
@@ -103,7 +104,7 @@ class StoreLeaveRequest extends FormRequest
         }
     }
 
-    private function validateSufficientBalance(Validator $validator, array $data, User $user): void
+    private function validateSufficientBalance(Validator $validator, array $data, \App\Models\User $user): void
     {
         $balanceLeaveTypes = ['annual', 'personal', 'compensatory'];
         if (! in_array($data['leave_type'], $balanceLeaveTypes)) {
@@ -111,12 +112,14 @@ class StoreLeaveRequest extends FormRequest
         }
 
         $leaveDays = $this->calculateLeaveDays($data);
+        $balance = ($data['leave_type'] === 'compensatory') ? $user->comp_off_balance : $user->leave_balance;
+
+        // Debug log statement for troubleshooting
+        Log::info("Validation check: user={$user->id}, leave_type={$data['leave_type']}, leave_balance={$user->leave_balance}, calculated_leaveDays={$leaveDays}");
 
         if ($leaveDays <= 0) {
             return;
         }
-
-        $balance = ($data['leave_type'] === 'compensatory') ? $user->comp_off_balance : $user->leave_balance;
 
         if ($balance < $leaveDays) {
             $validator->errors()->add(

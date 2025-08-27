@@ -8,7 +8,6 @@ use App\Actions\Project\StoreProject;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Models\Project;
 use App\Models\Team;
-use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -91,10 +90,8 @@ class ProjectController extends Controller
         $projectData = $showProject->handle($project);
         $user = Auth::user();
 
-      
         if ($project->project_manager_id === $user->id && ! $project->team_id) {
 
-            
             // This gives the PM the authority to assign any team in the system.
             $projectData['userTeams'] = Team::query()->select('id', 'name')->get();
         }
@@ -104,7 +101,7 @@ class ProjectController extends Controller
 
     public function assignTeam(Request $request, Project $project)
     {
-        
+
         $this->authorize('update', $project);
 
         $validated = $request->validate([

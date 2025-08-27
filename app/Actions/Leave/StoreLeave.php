@@ -18,9 +18,9 @@ class StoreLeave
     {
         $authUser = Auth::user();
 
-        // Determine target user (Admin/HR can specify, else use auth user)
         $targetUserId = $data['user_id'] ?? Auth::id();
         $targetUser = User::findOrFail($targetUserId);
+        $targetUser->refresh();
 
         $start = Carbon::parse($data['start_date']);
         $end = Carbon::parse($data['end_date']);
@@ -106,11 +106,11 @@ class StoreLeave
         }
 
         // Validate leave balance for target user except exempt leave types
-        if (! in_array($data['leave_type'], ['emergency', 'sick', 'wfh', 'compensatory'])
-            && $leaveDays > $targetUser->getRemainingLeaveBalance()) {
-            $remaining = $targetUser->getRemainingLeaveBalance();
+        // Replace in StoreLeave class, handle() method before throwing ValidationException
+        if (! in_array($data['leave_type'], ['emergency', 'sick', 'wfh', 'compensatory']) &&
+            $leaveDays > $targetUser->leave_balance) {
             throw ValidationException::withMessages([
-                'leave_days' => ["User does not have enough leave balance. Remaining: {$remaining} days."],
+                'leave_days' => ["User does not have enough leave balance. Remaining: {$targetUser->leave_balance} days."],
             ]);
         }
 
@@ -150,6 +150,8 @@ class StoreLeave
             $targetUser->comp_off_balance = max(0, $targetUser->comp_off_balance - $leaveDays);
         }
         $targetUser->save();
+
+        Log::info("After deduction: user={$targetUser->id}, leave_balance={$targetUser->leave_balance}");
 
         $this->sendNotifications($leaveApplication);
 

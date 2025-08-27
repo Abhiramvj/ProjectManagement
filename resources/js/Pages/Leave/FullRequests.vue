@@ -2,39 +2,32 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head, router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
-import { ref } from 'vue'
-import { watch } from 'vue'
-
+import { ref, watch } from 'vue'
 
 // Props
 const props = defineProps({
   leaveRequests: Object,
   filters: Object,
-
 })
 
+// Filter options (no changes needed)
 const statusOptions = [
   { label: 'All', value: '' },
   { label: 'Pending', value: 'pending' },
   { label: 'Approved', value: 'approved' },
   { label: 'Rejected', value: 'rejected' },
 ]
-
 const leaveTypeOptions = [
-  { label: 'All', value: '' },
-  { label: 'Annual', value: 'annual' },
-  { label: 'Sick', value: 'sick' },
-  { label: 'Personal', value: 'personal' },
-  { label: 'Emergency', value: 'emergency' },
-  { label: 'Maternity', value: 'maternity' },
-  { label: 'Paternity', value: 'paternity' },
+  { label: 'All', value: '' }, { label: 'Annual', value: 'annual' }, { label: 'Sick', value: 'sick' },
+  { label: 'Personal', value: 'personal' }, { label: 'Emergency', value: 'emergency' },
+  { label: 'Maternity', value: 'maternity' }, { label: 'Paternity', value: 'paternity' },
 ]
 
-// Current filters reactive refs
+// Current filters (no changes needed)
 const statusFilter = ref(props.filters.status || '')
 const leaveTypeFilter = ref(props.filters.leave_type || '')
 
-// Watch filters and reload page with query params
+// Watch filters function (no changes needed)
 function applyFilters() {
   router.get(route('leave.fullRequests'), {
     status: statusFilter.value || undefined,
@@ -42,245 +35,181 @@ function applyFilters() {
   }, { preserveState: true, replace: true })
 }
 
-// Helper to display capitalized status with badge color
-const statusClass = (status) => {
+// Visual helpers for status and type
+const statusInfo = (status) => {
   return {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-  }[status] || 'bg-gray-100 text-gray-800'
+    pending: { text: 'Pending', color: 'yellow', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    approved: { text: 'Approved', color: 'green', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    rejected: { text: 'Rejected', color: 'red', icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
+  }[status] || { text: 'Unknown', color: 'gray', icon: '' }
+}
+const statusCardBorderClass = (status) => {
+    return {
+        pending: 'border-l-yellow-400',
+        approved: 'border-l-green-500',
+        rejected: 'border-l-red-500',
+    }[status] || 'border-l-gray-300'
 }
 
+// Modal logic (no changes needed)
 const isEditModalVisible = ref(false)
 const editingRequest = ref(null)
 const editingReason = ref('')
 const editProcessing = ref(false)
-
 function openEditModal(req) {
   editingRequest.value = req
   editingReason.value = req.reason
   isEditModalVisible.value = true
 }
-function closeEditModal() {
-  isEditModalVisible.value = false
-  editingRequest.value = null
-  editingReason.value = ''
-  editProcessing.value = false
-}
-
+function closeEditModal() { isEditModalVisible.value = false }
 function submitEditReason() {
   if (!editingRequest.value) return
   editProcessing.value = true
-  router.patch(
-    route('leave.updateReason', { leave_application: editingRequest.value.id }),
-    { reason: editingReason.value },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        editProcessing.value = false
-        closeEditModal()
-        router.reload()
-      },
-      onError: () => { editProcessing.value = false }
-    }
-  )
+  router.patch(route('leave.updateReason', { leave_application: editingRequest.value.id }), { reason: editingReason.value }, {
+    preserveScroll: true,
+    onSuccess: () => closeEditModal(),
+    onFinish: () => { editProcessing.value = false },
+  })
 }
 function cancelRequest(req) {
   if (confirm('Are you sure you want to cancel this leave request?')) {
-    router.delete(route('leave.cancel', { leave_application: req.id }), {
-      preserveScroll: true,
-    })
+    router.delete(route('leave.cancel', { leave_application: req.id }), { preserveScroll: true })
   }
 }
-
 const isReasonModalVisible = ref(false)
 const rejectionReasonToShow = ref('')
-
 function showRejectionReason(reason) {
   rejectionReasonToShow.value = reason
   isReasonModalVisible.value = true
 }
+function closeReasonModal() { isReasonModalVisible.value = false }
+watch(isReasonModalVisible, (visible) => { document.body.style.overflow = visible ? 'hidden' : '' })
+watch(isEditModalVisible, (visible) => { document.body.style.overflow = visible ? 'hidden' : '' })
 
-function closeReasonModal() {
-  isReasonModalVisible.value = false
-  rejectionReasonToShow.value = ''
-}
-
-watch(isReasonModalVisible, (visible) => {
-  if (visible) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
-
+// Formatting helpers
 function formatLeaveDays(days) {
   const num = Number(days)
   if (isNaN(num)) return '0'
-  if (num % 1 === 0.5) return `${Math.floor(num)}.5`
   return num % 1 === 0 ? num.toString() : num.toFixed(1)
 }
-
-
+const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 </script>
 
 <template>
-  <Head title="All Leave Requests" />
+  <Head title="My Leave Requests" />
   <AuthenticatedLayout>
-    <div class="p-6 max-w-5xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6">My Leave Requests</h1>
+    <div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto font-sans">
+      <!-- Page Header -->
+      <header class="mb-8">
+        <h1 class="text-4xl font-bold text-slate-900">My Leave Requests</h1>
+        <p class="text-slate-600 mt-2">View and manage your past and upcoming leave applications.</p>
+      </header>
 
       <!-- Filters -->
-      <div class="flex flex-wrap gap-4 mb-6">
-        <select v-model="statusFilter" @change="applyFilters" class="rounded border-gray-300 px-4 py-2 shadow-sm">
-          <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-        </select>
-        <select v-model="leaveTypeFilter" @change="applyFilters" class="rounded border-gray-300 px-4 py-2 shadow-sm">
-          <option v-for="opt in leaveTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-        </select>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3 16a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"></path></svg>
+            Filter by:
+          </div>
+          <select v-model="statusFilter" @change="applyFilters" class="form-select w-full sm:w-auto">
+            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">Status: {{ opt.label }}</option>
+          </select>
+          <select v-model="leaveTypeFilter" @change="applyFilters" class="form-select w-full sm:w-auto">
+            <option v-for="opt in leaveTypeOptions" :key="opt.value" :value="opt.value">Type: {{ opt.label }}</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Leave Requests Table -->
-      <div class="overflow-auto bg-white rounded shadow">
-        <table class="min-w-full text-left text-sm text-gray-700">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="p-3">Start Date</th>
-              <th class="p-3">End Date</th>
-              <th class="p-3">Duration</th>
-              <th class="p-3">Type</th>
-              <th class="p-3">Reason</th>
-              <th class="p-3">Status</th>
-              <th class="p-3">Requested At</th>
-              <th class="p-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="leaveRequests.data.length === 0">
-              <td colspan="8" class="p-4 text-center text-gray-500">No leave requests found.</td>
-            </tr>
-            <tr v-for="req in leaveRequests.data" :key="req.id" class="border-t hover:bg-gray-50">
-              <td class="p-3">{{ new Date(req.start_date).toLocaleDateString() }}</td>
-              <td class="p-3">{{ req.end_date ? new Date(req.end_date).toLocaleDateString() : '-' }}</td>
-<td class="p-3">{{ formatLeaveDays(req.leave_days) }} day<span v-if="req.leave_days !== 1">s</span></td>
-              <td class="p-3 capitalize">{{ req.leave_type }}</td>
-              <td class="p-3 truncate max-w-[300px]" :title="req.reason">{{ req.reason }}</td>
-              <td class="p-3 flex items-center gap-2">
-  <span :class="statusClass(req.status)" class="inline-block rounded px-2 py-1 text-xs font-semibold">
-    {{ req.status.charAt(0).toUpperCase() + req.status.slice(1) }}
-  </span>
+      <!-- Leave Requests List -->
+      <div class="space-y-4">
+        <div v-if="leaveRequests.data.length === 0" class="text-center bg-white p-12 rounded-xl shadow-sm border border-slate-200">
+          <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <h3 class="mt-2 text-sm font-medium text-slate-900">No leave requests found</h3>
+          <p class="mt-1 text-sm text-slate-500">Try adjusting your filters.</p>
+        </div>
 
-  <!-- Show button for rejected status only -->
-  <button
-    v-if="req.status === 'rejected' && req.rejection_reason"
-    @click="showRejectionReason(req.rejection_reason)"
-    type="button"
-    class="ml-2 px-2 py-1 text-xs text-red-700 bg-red-100 hover:bg-red-200 rounded"
-  >
-    View Reason
-  </button>
-</td>
-
-              <td class="p-3">{{ new Date(req.created_at).toLocaleString() }}</td>
-              <td class="p-3">
-  <button
-    v-if="req.status === 'pending'"
-    @click="openEditModal(req)"
-    class="text-blue-600 hover:underline font-semibold text-sm mr-2"
-  >
-    Edit
-  </button>
-  <button
-    v-if="req.status === 'pending'"
-    @click="cancelRequest(req)"
-    class="text-red-600 hover:underline font-semibold text-sm"
-  >
-    Cancel
-  </button>
-  <span v-else class="text-gray-400">-</span>
-</td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-for="req in leaveRequests.data" :key="req.id"
+             :class="statusCardBorderClass(req.status)"
+             class="bg-white rounded-lg shadow-sm border border-slate-200 border-l-4 transition-all hover:shadow-md hover:border-l-blue-500">
+          <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            <!-- Date & Type -->
+            <div class="md:col-span-3">
+              <p class="font-bold text-slate-800">{{ formatDate(req.start_date) }}
+                <span v-if="req.end_date !== req.start_date"> - {{ formatDate(req.end_date) }}</span>
+              </p>
+              <p class="text-sm text-slate-600">{{ formatLeaveDays(req.leave_days) }} day<span v-if="req.leave_days != 1">s</span>, <span class="capitalize">{{ req.leave_type }}</span></p>
+            </div>
+            <!-- Reason -->
+            <div class="md:col-span-4">
+              <p class="text-sm text-slate-700 truncate" :title="req.reason">{{ req.reason }}</p>
+              <p class="text-xs text-slate-400 mt-1">Requested: {{ new Date(req.created_at).toLocaleString() }}</p>
+            </div>
+            <!-- Status -->
+            <div class="md:col-span-2 flex items-center gap-2">
+              <span :class="`text-${statusInfo(req.status).color}-600`">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="statusInfo(req.status).icon" /></svg>
+              </span>
+              <p :class="`font-semibold text-${statusInfo(req.status).color}-700`">{{ statusInfo(req.status).text }}</p>
+              <button v-if="req.status === 'rejected' && req.rejection_reason" @click="showRejectionReason(req.rejection_reason)" class="text-red-600 hover:underline text-xs ml-1">(reason)</button>
+            </div>
+            <!-- Actions -->
+            <div class="md:col-span-3 flex justify-start md:justify-end items-center gap-3">
+              <template v-if="req.status === 'pending'">
+                <button @click="openEditModal(req)" class="btn-secondary-sm">Edit</button>
+                <button @click="cancelRequest(req)" class="btn-danger-sm">Cancel</button>
+              </template>
+              <span v-else class="text-sm text-slate-400">No actions available</span>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <!-- Edit Reason Modal -->
-<div
-  v-if="isEditModalVisible"
-  @click.self="closeEditModal"
-  class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4"
->
-  <form
-    @submit.prevent="submitEditReason"
-    class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 flex flex-col gap-4"
-  >
-    <h2 class="text-lg font-semibold mb-1">Edit Reason</h2>
-    <p class="text-sm text-gray-600 mb-2">Update the reason for your leave application:</p>
-    <textarea
-      v-model="editingReason"
-      rows="4"
-      required
-      class="w-full border rounded px-3 py-2"
-      :disabled="editProcessing"
-      maxlength="500"
-    ></textarea>
-    <div class="flex gap-2 justify-end pt-2">
-      <button type="button" @click="closeEditModal"
-        class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
-      <PrimaryButton type="submit" :disabled="editProcessing">
-        {{ editProcessing ? 'Saving...' : 'Save' }}
-      </PrimaryButton>
-    </div>
-  </form>
-</div>
-
-      <!-- Rejection Reason Modal -->
-<teleport to="body">
-  <div
-    v-if="isReasonModalVisible"
-    @click.self="closeReasonModal"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-  >
-    <div
-      class="bg-white rounded-lg max-w-md w-full p-6 shadow-lg overflow-auto max-h-[70vh]"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      <h3 id="modal-title" class="text-lg font-semibold mb-4 text-red-700">
-        Reason for Rejection
-      </h3>
-      <p class="whitespace-pre-line text-gray-800 break-words">
-        {{ rejectionReasonToShow }}
-      </p>
-      <div class="mt-6 flex justify-end">
-        <button
-          @click="closeReasonModal"
-          class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 font-semibold"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-</teleport>
-
-
 
       <!-- Pagination -->
-      <div class="mt-6 flex justify-center">
+      <div class="mt-8 flex justify-center" v-if="leaveRequests.links.length > 3">
         <nav class="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
           <template v-for="(link, index) in leaveRequests.links" :key="index">
-            <span v-if="!link.url" class="relative inline-flex items-center rounded-l-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-500 cursor-default"
-              v-html="link.label"></span>
-            <a v-else
-              :href="link.url"
-              class="relative inline-flex items-center border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              :class="{ 'bg-blue-600 text-white': link.active }"
-              v-html="link.label"></a>
+            <span v-if="!link.url" class="relative inline-flex items-center rounded-l-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-500 cursor-default" v-html="link.label"></span>
+            <a v-else :href="link.url" class="relative inline-flex items-center border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" :class="{ 'bg-blue-600 text-white hover:bg-blue-700': link.active }" v-html="link.label"></a>
           </template>
         </nav>
       </div>
     </div>
+
+    <!-- Edit Reason Modal -->
+    <teleport to="body">
+      <div v-if="isEditModalVisible" @click.self="closeEditModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <form @submit.prevent="submitEditReason" class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 flex flex-col gap-4">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="bg-blue-100 rounded-full p-2"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></div>
+            <h2 class="text-xl font-bold text-slate-800">Edit Reason</h2>
+          </div>
+          <textarea v-model="editingReason" rows="4" required class="form-textarea" :disabled="editProcessing" maxlength="500"></textarea>
+          <div class="flex gap-3 justify-end pt-4">
+            <button type="button" @click="closeEditModal" class="btn-secondary">Cancel</button>
+            <PrimaryButton type="submit" :disabled="editProcessing">{{ editProcessing ? 'Saving...' : 'Save Changes' }}</PrimaryButton>
+          </div>
+        </form>
+      </div>
+    </teleport>
+
+    <!-- Rejection Reason Modal -->
+    <teleport to="body">
+      <div v-if="isReasonModalVisible" @click.self="closeReasonModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" role="dialog">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="bg-red-100 rounded-full p-2"><svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg></div>
+            <h3 class="text-xl font-bold text-slate-800">Reason for Rejection</h3>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 max-h-[50vh] overflow-y-auto">
+            <p class="whitespace-pre-line text-slate-700 break-words">{{ rejectionReasonToShow }}</p>
+          </div>
+          <div class="mt-6 flex justify-end">
+            <button @click="closeReasonModal" class="btn-secondary">Close</button>
+          </div>
+        </div>
+      </div>
+    </teleport>
+
   </AuthenticatedLayout>
 </template>

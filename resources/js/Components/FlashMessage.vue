@@ -1,7 +1,11 @@
 <!-- resources/js/Components/FlashMessage.vue -->
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+
+const props = defineProps({
+  flashMessage: Object
+});
 
 const page = usePage();
 const show = ref(false);
@@ -10,6 +14,14 @@ const message = ref('');
 
 const successMessage = computed(() => page.props.flash?.success);
 const errorMessage = computed(() => page.props.flash?.error);
+
+router.on('finish', () => {
+  // Clear flash message after each navigation to allow showing again on next request
+  if (page.props.flash) {
+    page.props.flash.success = null;
+    page.props.flash.error = null;
+  }
+});
 
 watch(successMessage, (newMessage) => {
     if (newMessage) {
@@ -27,6 +39,15 @@ watch(errorMessage, (newMessage) => {
         show.value = true;
         setTimeout(() => show.value = false, 4000);
     }
+});
+
+watch(() => props.flashMessage, (newFlash) => {
+  if(newFlash?.message) {
+    type.value = newFlash.type || 'success';
+    message.value = newFlash.message;
+    show.value = true;
+    setTimeout(() => show.value = false, 4000);
+  }
 });
 
 const alertClasses = computed(() => ({

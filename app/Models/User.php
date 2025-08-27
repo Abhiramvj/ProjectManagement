@@ -109,16 +109,7 @@ class User extends Authenticatable
      */
     public function getRemainingLeaveBalance(): float
     {
-        static $cachedBalance = null;
-        static $cachedUserId = null;
-        static $cachedYear = null;
-
         $currentYear = now()->year;
-
-        // Use cached result if for same user and year
-        if ($cachedBalance !== null && $cachedUserId === $this->id && $cachedYear === $currentYear) {
-            return $cachedBalance;
-        }
 
         $usedLeaveDays = $this->leaveApplications()
             ->approved()
@@ -128,12 +119,32 @@ class User extends Authenticatable
         $totalLeaveBalance = $this->leave_balance ?? 20;
         $remaining = max(0, $totalLeaveBalance - $usedLeaveDays);
 
-        // Cache the result
-        $cachedBalance = $remaining;
-        $cachedUserId = $this->id;
-        $cachedYear = $currentYear;
-
         return $remaining;
+    }
+
+    public function getAvailableLeaveBalance(): float
+    {
+        $currentYear = now()->year;
+
+        // Sum leave days of approved leave applications for current year
+        $approvedLeaves = $this->leaveApplications()
+            ->approved()
+            ->currentYear()
+            ->sum('leave_days');
+
+        // Sum leave days of pending leave applications for current year
+        $pendingLeaves = $this->leaveApplications()
+            ->pending()
+            ->currentYear()
+            ->sum('leave_days');
+
+        // Total entitled leave balance from DB or default
+        $totalLeave = $this->leave_balance ?? 20;
+
+        // Calculate available leave considering approved and pending leaves
+        $availableLeave = max(0, $totalLeave - $approvedLeaves - $pendingLeaves);
+
+        return $availableLeave;
     }
 
     /**
