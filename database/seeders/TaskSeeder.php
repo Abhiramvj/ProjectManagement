@@ -4,39 +4,39 @@ namespace Database\Seeders;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class TaskSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        $project = Project::where('name', 'Project Alpha')->first();
-        if (! $project) {
-            return; // Don't run if the project doesn't exist
+        $projects = Project::all();
+
+        if ($projects->isEmpty()) {
+            return; // No projects, nothing to seed tasks for
         }
 
-        $members = $project->members;
-        if ($members->isEmpty()) {
-            return;
+        $users = User::all();
+
+        if ($users->isEmpty()) {
+            return; // No users to assign tasks to
         }
 
-        $tasks = [
-            'Create a dashboard' => 'in_progress',
-            'Develop authentication module' => 'todo',
-            'Design the UI/UX mockups' => 'completed',
-            'Set up the database schema' => 'in_progress',
-            'Write API documentation' => 'todo',
-            'Implement user profile page' => 'todo',
-            'Test payment gateway integration' => 'completed',
-        ];
+        // Define some sample statuses to assign randomly
+        $statuses = ['todo', 'in_progress', 'completed'];
 
-        foreach ($tasks as $name => $status) {
+        for ($i = 1; $i <= 200; $i++) {
+            // Pick a random project and user
+            $project = $projects->random();
+            $user = $users->random();
+
             Task::factory()->create([
-                'name' => $name,
+                'name' => "Task #{$i}",
                 'project_id' => $project->id,
-                'assigned_to_id' => $members->random()->id,
-                'status' => $status,
-                'due_date' => now()->addDays(rand(5, 30)),
+                'assigned_to_id' => $user->id,
+                'status' => $statuses[array_rand($statuses)],
+                'due_date' => now()->addDays(rand(1, 60)),
             ]);
         }
     }

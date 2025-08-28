@@ -1,6 +1,7 @@
 <script setup>
 // --- FIX: Import the Link component for pagination ---
 import { Head, router, Link } from '@inertiajs/vue3';
+import Pagination from '@/Components/Pagination.vue';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { watch, ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -220,10 +221,7 @@ const paginationLinks = computed(() => props.calendarData.links || []);
                         Showing {{ calendarData.from }} to {{ calendarData.to }} of {{ calendarData.total }} results
                     </div>
                     <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                         <template v-for="(link, index) in paginationLinks" :key="index">
-                            <span v-if="!link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed ring-1 ring-inset ring-gray-300" :class="{ 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"/>
-                            <Link v-else :href="link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20" :class="{ 'bg-blue-600 text-white': link.active, 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }" preserve-scroll />
-                        </template>
+                        <Pagination :links="paginationLinks" />
                     </nav>
                 </div>
 

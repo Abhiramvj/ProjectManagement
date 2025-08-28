@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -13,20 +14,26 @@ const props = defineProps({
 });
 
 const form = useForm({
-    work_date: new Date().toISOString().split('T')[0],
-    hours_worked: '',
-    description: '',
-    project_id: '',
+  project_id: '',
+  work_date: new Date().toISOString().split('T')[0],
+  hours_worked: '',
+  description: '',
 });
 
+
 const submitHours = () => {
-    form.post(route('hours.store'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset('hours_worked', 'description', 'project_id');
-        },
-    });
+  if (!form) {
+    console.error('Form is null or undefined');
+    return;
+  }
+  form.post(route('hours.store'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      form.reset(); // Consider resetting all form fields
+    },
+  });
 };
+
 
 const logs = computed(() => props.timeLogs.data);
 const paginationLinks = computed(() => props.timeLogs.links);
@@ -36,7 +43,7 @@ const formatDate = (dateString) => {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-        timeZone: 'UTC', 
+        timeZone: 'UTC',
     });
 };
 
@@ -96,7 +103,7 @@ const formatDate = (dateString) => {
                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
                             <InputError class="mt-2" :message="form.errors.description" />
                         </div>
-                        
+
                         <div class="flex items-center justify-end pt-2">
                              <button type="submit" :disabled="form.processing"
                                      class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -118,7 +125,7 @@ const formatDate = (dateString) => {
                             </div>
                         </div>
                     </header>
-                    
+
                     <div class="flow-root">
                         <div class="overflow-x-auto">
                             <div class="inline-block min-w-full align-middle">
@@ -161,28 +168,12 @@ const formatDate = (dateString) => {
                     </div>
 
                     <div v-if="paginationLinks.length > 3" class="p-4 sm:p-6 flex items-center justify-between border-t border-slate-200">
-                        <div class="text-sm text-slate-600">
-                            Showing <span class="font-medium">{{ timeLogs.from }}</span> to <span class="font-medium">{{ timeLogs.to }}</span> of <span class="font-medium">{{ timeLogs.total }}</span> results
-                        </div>
-                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                             <Link v-for="(link, index) in paginationLinks" :key="index"
-                                  :href="link.url"
-                                  :class="[
-                                      'relative inline-flex items-center px-3 py-2 text-sm font-semibold focus:z-20',
-                                      { 'bg-blue-600 text-white focus-visible:outline-blue-600': link.active },
-                                      { 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active },
-                                      { 'rounded-l-md': index === 0 },
-                                      { 'rounded-r-md': index === paginationLinks.length - 1 },
-                                      { 'pointer-events-none text-slate-400': !link.url }
-                                  ]"
-                                  preserve-scroll
-                            >
-                                <ChevronLeftIcon v-if="link.label.includes('Previous')" class="h-5 w-5" />
-                                <ChevronRightIcon v-else-if="link.label.includes('Next')" class="h-5 w-5" />
-                                <span v-else>{{ link.label }}</span>
-                            </Link>
-                        </nav>
-                    </div>
+  <div class="text-sm text-slate-600">
+    Showing <span class="font-medium">{{ timeLogs.from }}</span> to <span class="font-medium">{{ timeLogs.to }}</span> of <span class="font-medium">{{ timeLogs.total }}</span> results
+  </div>
+  <Pagination :links="paginationLinks" />
+</div>
+
 
                 </div>
 

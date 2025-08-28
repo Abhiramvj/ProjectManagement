@@ -63,7 +63,7 @@ class UserHierarchyController extends Controller
                 'title' => $user->designation,
                 'image' => $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?background=random&name='.urlencode($user->name)),
                 'color' => $color, 'tags' => $tags, 'employee_id' => $user->employee_id, 'email' => $user->email,
-                'hire_date' => $user->hire_date, 'total_experience_years' => $user->total_experience_years,
+                'hire_date' => $user->hire_date, 'total_experience' => $user->total_experience,
                 'canViewPerformance' => $canViewPerformance, 'performance_summary' => $performanceSummary,
             ];
         })->all();

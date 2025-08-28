@@ -337,10 +337,16 @@ function handleImageUpload(e) {
                         <InputError class="mt-2" :message="form.errors.team_id" />
                     </div>
 
-                    <!-- Password Fields -->
-                    <div class="border-t border-slate-200 pt-6">
-                         <!-- ... content ... -->
-                    </div>
+                   <div v-if="modalMode === 'create'">
+  <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
+  <input v-model="form.password" id="password" type="password" required class="mt-1 block w-full rounded-md border-slate-300" />
+  <InputError :message="form.errors.password" />
+</div>
+<div v-if="modalMode === 'create'">
+  <label for="password_confirmation" class="block text-sm font-medium text-slate-700">Confirm Password</label>
+  <input v-model="form.password_confirmation" id="password_confirmation" type="password" required class="mt-1 block w-full rounded-md border-slate-300" />
+  <InputError :message="form.errors.password_confirmation" />
+</div>
 
                     <!-- Form Actions -->
                     <div class="mt-6 flex justify-end gap-3">

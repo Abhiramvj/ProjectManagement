@@ -14,13 +14,12 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('employee_id')->nullable()->unique();
             $table->string('designation')->nullable();
             $table->string('work_mode')->nullable();
             $table->string('avatar_url')->nullable();
             $table->date('hire_date')->nullable();
             $table->date('birth_date')->nullable();
-            $table->decimal('total_experience_years', 4, 1)->default(0.0);
+            $table->decimal('total_experience', 4, 1)->default(0.0);
             $table->string('email')->unique();
             $table->string('image')->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('users')->cascadeOnDelete();
@@ -59,7 +58,7 @@ return new class extends Migration
             $table->dropColumn('parent_id');
             $table->dropColumn('work_mode');
             $table->dropColumn('leave_balance');
-            $table->dropColumn('total_experience_years');
+            $table->dropColumn('total_experience');
             $table->dropColumn('comp_off_balance');
 
         });

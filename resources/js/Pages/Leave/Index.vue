@@ -721,7 +721,7 @@ const leaveTypeDetails = [
     label="name"
     :reduce="employee => employee.id"
     placeholder="Start typing employee name or email..."
-    class="mt-1 vs-style"
+    class="mt-1 vs-style text-black"
 >
     <template #no-options>
         Type 2 or more characters to search...

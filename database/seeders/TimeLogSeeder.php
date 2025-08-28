@@ -22,7 +22,7 @@ class TimeLogSeeder extends Seeder
             }
 
             // For each project, create 5 time logs with random assigned users
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 500; $i++) {
 
                 TimeLog::factory()->create([
                     'project_id' => $project->id,

@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Pagination from '@/Components/Pagination.vue'
 import { Head, router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { ref } from 'vue'
@@ -201,24 +202,8 @@ function submitRejection() {
         </table>
 
         <!-- Pagination Links -->
-        <div v-if="leaveRequests.links.length > 3" class="px-4 py-5 border-t border-gray-200">
-          <div class="flex flex-wrap justify-center -m-1">
-            <template v-for="(link, index) in leaveRequests.links" :key="index">
-              <span
-                v-if="!link.url"
-                class="m-1 px-4 py-2 text-gray-400 border rounded cursor-default"
-                v-html="link.label"
-              ></span>
-              <a
-                v-else
-                :href="link.url"
-                class="m-1 px-4 py-2 border rounded hover:bg-white hover:text-indigo-600"
-                :class="{ 'bg-indigo-600 text-white': link.active }"
-                v-html="link.label"
-              ></a>
-            </template>
-          </div>
-        </div>
+     <Pagination :links="leaveRequests.links" />
+
       </div>
 
       <!-- Leave Details Modal -->

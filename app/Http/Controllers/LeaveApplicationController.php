@@ -11,7 +11,9 @@ use App\Mail\LeaveApplicationApproved;
 use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
 use App\Models\LeaveApplication;
+use Illuminate\Support\Facades\Mail;
 use App\Models\LeaveLog; // <-- IMPORT THE LEAVELOG MODEL
+use App\Models\MailLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
@@ -204,16 +206,18 @@ class LeaveApplicationController extends Controller
             $user->increment('comp_off_balance', $leave_application->leave_days);
         }
 
-        $leave_application->delete();
-
-        // --- ADD THIS LOGGING BLOCK ---
-        LeaveLog::create([
+         LeaveLog::create([
             'user_id' => $leave_application->user_id,
             'actor_id' => auth()->id(),
             'leave_application_id' => $leave_application->id,
             'action' => 'cancelled',
             'description' => 'User cancelled their pending leave request.',
         ]);
+
+        $leave_application->delete();
+
+        // --- ADD THIS LOGGING BLOCK ---
+
 
         return Redirect::route('leave.index')->with('success', 'Leave request canceled.');
     }
@@ -268,7 +272,7 @@ class LeaveApplicationController extends Controller
 
         try {
             // Send the actual email.
-            Mail::to($recipientEmail)->send($mailable);
+            Mail::to($recipientEmail)->queue($mailable);
 
             // LOG SUCCESS: The $logData array now includes the 'body_html'
             MailLog::create(array_merge($logData, [
