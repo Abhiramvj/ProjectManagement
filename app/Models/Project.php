@@ -19,6 +19,7 @@ class Project extends Model
         'team_id',
         'status',
         'end_date',
+        'priority',
         'total_hours_required',
 
     ];

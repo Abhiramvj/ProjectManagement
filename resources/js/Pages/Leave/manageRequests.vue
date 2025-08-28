@@ -314,7 +314,7 @@ function submitRejection() {
             <button
               type="button"
               @click="closeUploadModal"
-              class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100"
+              class="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100 text-red-800"
             >
               Cancel
             </button>
@@ -347,7 +347,7 @@ function submitRejection() {
           ></textarea>
           <div class="flex gap-2 justify-end pt-2">
             <button type="button" @click="closeRejectModal"
-              class="px-4 py-2 bg-gray-200 rounded text-sm font-semibold text-gray-800 hover:bg-gray-300">Cancel</button>
+              class="px-4 py-2 bg-gray-200 rounded text-sm font-semibold hover:bg-gray-300 ">Cancel</button>
             <PrimaryButton type="submit" :disabled="rejectProcessing || !rejectReason" class="bg-red-600 hover:bg-red-700 focus:ring-red-500">
               {{ rejectProcessing ? 'Rejecting...' : 'Reject Application' }}
             </PrimaryButton>

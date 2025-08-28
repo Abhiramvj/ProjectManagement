@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, DocumentMagnifyingGlassIcon } from '@heroicons/vue/24/solid';
 
@@ -13,7 +13,6 @@ const props = defineProps({
     assignableProjects: Array,
 });
 
-// Your form
 const form = useForm({
   project_id: '',
   work_date: new Date().toISOString().split('T')[0],
@@ -21,17 +20,6 @@ const form = useForm({
   description: '',
 });
 
-// List of previous descriptions for autocomplete
-const previousDescriptions = ref([
-    'Fixed login bug',
-    'Client meeting and notes',
-    'Implemented new feature X',
-    'Code review and unit tests',
-    'Updated documentation',
-    'Refactored old code',
-]);
-
-const showSuggestions = ref(false);
 
 const submitHours = () => {
   if (!form) {
@@ -56,32 +44,9 @@ const formatDate = (dateString) => {
         month: 'long',
         day: 'numeric',
         timeZone: 'UTC',
-        timeZone: 'UTC',
     });
 };
 
-const filteredSuggestions = computed(() => {
-    if (!form.description) return [];
-    return previousDescriptions.value.filter((desc) =>
-        desc.toLowerCase().includes(form.description.toLowerCase())
-    );
-});
-
-const onDescriptionInput = () => {
-    showSuggestions.value = filteredSuggestions.value.length > 0;
-};
-
-const selectSuggestion = (suggestion) => {
-    form.description = suggestion;
-    showSuggestions.value = false;
-};
-
-const hideSuggestions = () => {
-    // Delay hiding so click can register
-    setTimeout(() => {
-        showSuggestions.value = false;
-    }, 100);
-};
 </script>
 
 <template>
@@ -110,7 +75,7 @@ const hideSuggestions = () => {
                             <div class="md:col-span-2">
                                 <label for="project_id" class="block text-sm font-medium text-slate-700">Project</label>
                                 <select v-model="form.project_id" id="project_id" required
-                                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                     <option value="" disabled>-- Select a project --</option>
                                     <option v-for="project in assignableProjects" :key="project.id" :value="project.id">
                                         {{ project.name }}
@@ -121,54 +86,27 @@ const hideSuggestions = () => {
                             <div>
                                 <label for="work_date" class="block text-sm font-medium text-slate-700">Work Date</label>
                                 <input v-model="form.work_date" id="work_date" type="date" required
-                                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
                                 <InputError class="mt-2" :message="form.errors.work_date" />
                             </div>
-                            <div>
+                             <div>
                                 <label for="hours_worked" class="block text-sm font-medium text-slate-700">Hours Worked</label>
                                 <input v-model="form.hours_worked" id="hours_worked" type="number" step="0.25" min="0.25" max="24" required placeholder="e.g., 8"
-                                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
                                 <InputError class="mt-2" :message="form.errors.hours_worked" />
                             </div>
                         </div>
 
-                        <div class="relative">
+                        <div>
                             <label for="description" class="block text-sm font-medium text-slate-700">Description / Tasks</label>
-                            <textarea
-                                v-model="form.description"
-                                id="description"
-                                name="description"
-                                autocomplete="on"
-                                rows="3"
-                                placeholder="What did you work on?"
-                                class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                @input="onDescriptionInput"
-                                @focus="showSuggestions = true"
-                                @blur="hideSuggestions"
-                            ></textarea>
+                            <textarea v-model="form.description" id="description" rows="3" placeholder="What did you work on?"
+                                      class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
                             <InputError class="mt-2" :message="form.errors.description" />
-
-                            <ul 
-                                v-if="showSuggestions && filteredSuggestions.length"
-                                class="absolute z-10 w-full max-h-40 overflow-auto border border-gray-300 bg-white rounded shadow"
-                            >
-                                <li
-                                    v-for="(suggestion, index) in filteredSuggestions"
-                                    :key="index"
-                                    @mousedown.prevent="selectSuggestion(suggestion)"
-                                    class="cursor-pointer px-3 py-1 hover:bg-blue-100"
-                                >
-                                    {{ suggestion }}
-                                </li>
-                            </ul>
                         </div>
 
-
                         <div class="flex items-center justify-end pt-2">
-                            <button type="submit"
-                                :disabled="form.processing"
-                                class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                             <button type="submit" :disabled="form.processing"
+                                     class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
                                 <span>Log Hours</span>
                             </button>
@@ -187,7 +125,6 @@ const hideSuggestions = () => {
                             </div>
                         </div>
                     </header>
-
 
                     <div class="flow-root">
                         <div class="overflow-x-auto">
@@ -231,31 +168,16 @@ const hideSuggestions = () => {
                     </div>
 
                     <div v-if="paginationLinks.length > 3" class="p-4 sm:p-6 flex items-center justify-between border-t border-slate-200">
-                        <div class="text-sm text-slate-600">
-                            Showing <span class="font-medium">{{ timeLogs.from }}</span> to <span class="font-medium">{{ timeLogs.to }}</span> of <span class="font-medium">{{ timeLogs.total }}</span> results
-                        </div>
-                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                            <Link v-for="(link, index) in paginationLinks" :key="index"
-                                :href="link.url"
-                                :class="[
-                                    'relative inline-flex items-center px-3 py-2 text-sm font-semibold focus:z-20',
-                                    { 'bg-blue-600 text-white focus-visible:outline-blue-600': link.active },
-                                    { 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active },
-                                    { 'rounded-l-md': index === 0 },
-                                    { 'rounded-r-md': index === paginationLinks.length - 1 },
-                                    { 'pointer-events-none text-slate-400': !link.url }
-                                ]"
-                                preserve-scroll
-                            >
-                                <ChevronLeftIcon v-if="link.label.includes('Previous')" class="h-5 w-5" />
-                                <ChevronRightIcon v-else-if="link.label.includes('Next')" class="h-5 w-5" />
-                                <span v-else>{{ link.label }}</span>
-                            </Link>
-                        </nav>
-                    </div>
+  <div class="text-sm text-slate-600">
+    Showing <span class="font-medium">{{ timeLogs.from }}</span> to <span class="font-medium">{{ timeLogs.to }}</span> of <span class="font-medium">{{ timeLogs.total }}</span> results
+  </div>
+  <Pagination :links="paginationLinks" />
+</div>
+
+
                 </div>
+
             </div>
         </div>
     </AuthenticatedLayout>
 </template>
-

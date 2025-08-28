@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import InputError from '@/Components/InputError.vue';
+import Pagination from '@/Components/Pagination.vue';
 // Import usePage to access shared data like validation errors from Laravel
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
@@ -238,15 +239,8 @@ function handleImageUpload(e) {
                         </tbody>
                     </table>
                 </div>
-                <div v-if="paginationLinks.length > 3" class="p-4 sm:px-6 border-t border-slate-200 flex items-center justify-between">
-                    <div class="text-sm text-slate-600">Showing {{ users.from }} to {{ users.to }} of {{ users.total }} results</div>
-                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                         <template v-for="(link, index) in paginationLinks" :key="index">
-                            <span v-if="!link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed ring-1 ring-inset ring-slate-300" :class="{ 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }"/>
-                            <Link v-else :href="link.url" v-html="link.label" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20" :class="{ 'bg-slate-900 text-white': link.active, 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50': !link.active, 'rounded-l-md': index === 0, 'rounded-r-md': index === paginationLinks.length - 1 }" preserve-scroll />
-                        </template>
-                    </nav>
-                </div>
+            <Pagination :links="paginationLinks" :meta="users" />
+
             </div>
         </div>
 

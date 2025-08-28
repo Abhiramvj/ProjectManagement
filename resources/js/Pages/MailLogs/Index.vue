@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { defineProps } from 'vue';
 
@@ -71,13 +72,9 @@ const formatDate = (dateString) => {
 
                         <!-- Pagination Links -->
                         <div v-if="mailLogs.links.length > 3" class="mt-6 flex justify-between items-center">
-                            <div class="flex flex-wrap -mb-1">
-                                <template v-for="(link, key) in mailLogs.links" :key="key">
-                                    <div v-if="link.url === null" class="mr-1 mb-1 px-4 py-3 text-sm leading-4 text-gray-400 border rounded" v-html="link.label" />
-                                    <Link v-else class="mr-1 mb-1 px-4 py-3 text-sm leading-4 border rounded hover:bg-white focus:border-indigo-500 focus:text-indigo-500" :class="{ 'bg-blue-700 text-white': link.active }" :href="link.url" v-html="link.label" />
-                                </template>
-                            </div>
-                        </div>
+  <Pagination :links="mailLogs.links" />
+</div>
+
 
                     </div>
                 </div>

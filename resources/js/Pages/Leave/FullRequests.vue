@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Pagination from '@/Components/Pagination.vue'
 import { Head, router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { ref, watch } from 'vue'
@@ -156,8 +157,8 @@ const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-U
             <!-- Actions -->
             <div class="md:col-span-3 flex justify-start md:justify-end items-center gap-3">
               <template v-if="req.status === 'pending'">
-                <button @click="openEditModal(req)" class="btn-secondary-sm">Edit</button>
-                <button @click="cancelRequest(req)" class="btn-danger-sm">Cancel</button>
+                <button @click="openEditModal(req)" class="btn-primary-sm text-blue-600">Edit</button>
+                <button @click="cancelRequest(req)" class="btn-danger-sm text-red-600">Cancel</button>
               </template>
               <span v-else class="text-sm text-slate-400">No actions available</span>
             </div>
@@ -166,14 +167,8 @@ const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-U
       </div>
 
       <!-- Pagination -->
-      <div class="mt-8 flex justify-center" v-if="leaveRequests.links.length > 3">
-        <nav class="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-          <template v-for="(link, index) in leaveRequests.links" :key="index">
-            <span v-if="!link.url" class="relative inline-flex items-center rounded-l-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-500 cursor-default" v-html="link.label"></span>
-            <a v-else :href="link.url" class="relative inline-flex items-center border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" :class="{ 'bg-blue-600 text-white hover:bg-blue-700': link.active }" v-html="link.label"></a>
-          </template>
-        </nav>
-      </div>
+     <Pagination :links="leaveRequests.links" />
+
     </div>
 
     <!-- Edit Reason Modal -->
