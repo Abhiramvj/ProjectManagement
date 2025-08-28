@@ -49,14 +49,12 @@ class GetLeave
             $displayUser = User::find($displayUserId) ?? $authUser;
         }
 
-       if (is_array($displayUser)) {
-    Log::error('displayUser is array:', $displayUser);
-    $displayUser = User::find($displayUser['id']);
-} else {
-    Log::info('displayUser is model', ['id' => $displayUser->id]);
-}
-
-
+        if (is_array($displayUser)) {
+            Log::error('displayUser is array:', $displayUser);
+            $displayUser = User::find($displayUser['id']);
+        } else {
+            Log::info('displayUser is model', ['id' => $displayUser->id]);
+        }
 
         // --- All calculations below are now correctly based on $displayUser ---
 
@@ -100,7 +98,6 @@ class GetLeave
         ]);
 
         $highlighted = $leaveEvents->concat($holidayEvents)->values()->all();
-
 
         // "Your Requests" modal should ALWAYS show the LOGGED-IN user's requests
         $requests = LeaveApplication::with(['user:id,name'])

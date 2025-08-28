@@ -39,10 +39,6 @@ class UpdateLeave
 
         $this->leaveService->clearUserLeaveCache($leaveApplication->user);
 
-        if ($status === 'approved') {
-            $leaveApplication->user->notify(new LeaveRequestApproved($leaveApplication));
-        } elseif ($status === 'rejected') {
-            $leaveApplication->user->notify(new LeaveRequestRejected($leaveApplication));
-        }
+       
     }
 }

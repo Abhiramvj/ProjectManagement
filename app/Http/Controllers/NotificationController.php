@@ -86,40 +86,25 @@ class NotificationController extends Controller
     // --- The following methods for marking notifications as read remain largely unchanged ---
     // They are actions performed by the logged-in user on notifications they have access to.
 
-    public function markAsRead($id)
-    {
-        // Find the notification, but ensure it's one the user is allowed to see.
-        $query = Notification::query();
-        $this->scopeQueryByUserRole($query);
-        $notification = $query->findOrFail($id);
-
-        if ($notification->read_at === null) {
-            $notification->update(['read_at' => now()]);
-        }
-
-        // For individual employees, also update their native unread notifications
-        if ($notification->notifiable_id === auth()->id()) {
-            auth()->user()->notifications()->find($id)?->markAsRead();
-        }
-
-        return response()->json(['success' => true]);
+  public function markAsRead($id)
+{
+    $notification = auth()->user()->notifications()->find($id);
+    if ($notification) {
+        $notification->markAsRead(); // marks only for this user
     }
+
+    return response()->json(['success' => true]);
+}
+
 
     public function markAllAsRead()
-    {
-        // Get all unread notifications the user is allowed to see
-        $query = Notification::query()->whereNull('read_at');
-        $this->scopeQueryByUserRole($query);
-        $notificationsToUpdate = $query->get();
-
-        if ($notificationsToUpdate->isNotEmpty()) {
-            // Mark them as read in the database
-            Notification::whereIn('id', $notificationsToUpdate->pluck('id'))->update(['read_at' => now()]);
-
-            // For individual employees, also update their native unread notifications
-            auth()->user()->unreadNotifications->markAsRead();
-        }
-
-        return response()->json(['success' => true]);
+{
+    $notifications = auth()->user()->unreadNotifications;
+    if ($notifications->isNotEmpty()) {
+        $notifications->markAsRead(); // marks only for current user
     }
+
+    return response()->json(['success' => true]);
+}
+
 }

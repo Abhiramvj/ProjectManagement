@@ -153,7 +153,6 @@ class StoreLeaveRequest extends FormRequest
 
     }
 
-
     public function calculateLeaveDays(array $data): float
     {
         $startDate = Carbon::parse($data['start_date']);

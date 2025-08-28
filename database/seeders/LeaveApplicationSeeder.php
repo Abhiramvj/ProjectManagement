@@ -12,7 +12,7 @@ class LeaveApplicationSeeder extends Seeder
     {
         $users = User::all();
 
-         LeaveApplication::factory()->count(300)->make()->each(function ($leaveApplication) use ($users) {
+        LeaveApplication::factory()->count(300)->make()->each(function ($leaveApplication) use ($users) {
             $leaveApplication->user_id = $users->random()->id;
             $leaveApplication->save();
         });

@@ -31,16 +31,24 @@ const fetchNotifications = async () => {
     } catch (error) { console.error('Error fetching notifications:', error); }
 };
 
-const handleNotificationClick = (notification) => {
-    const canManageLeaves = user.value?.permissions?.includes('manage leave applications');
-    const targetRoute = canManageLeaves ? 'leave.manageRequests' : 'leave.fullRequests';
-    router.visit(route(targetRoute), {
-        onSuccess: () => {
-            axios.post(route('notifications.read', notification.id)).catch(() => {});
-            closeNotificationDropdown();
-        }
-    });
+const handleNotificationClick = async (notification) => {
+  try {
+    // Mark it as read in backend
+    await axios.post(route('notifications.read', notification.id));
+
+    // Remove it from local state immediately
+    notifications.value = notifications.value.filter(n => n.id !== notification.id);
+    unreadNotificationCount.value = Math.max(unreadNotificationCount.value - 1, 0);
+
+    // Redirect to notification link (if any)
+    if (notification.data.url) {
+      window.location.href = notification.data.url;
+    }
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+  }
 };
+
 
 const markAllAsRead = async () => {
     loading.value = true;

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Models\Role;
@@ -379,28 +380,30 @@ class User extends Authenticatable
      * Get users who can approve this user's leave
      */
     public function getLeaveApprovers()
-    {
-        $approvers = collect();
+{
+    $approvers = collect();
 
-        // Primary approver
-        if ($this->leaveApprover) {
-            $approvers->push($this->leaveApprover);
-        }
-
-        // Fallback to parent if no specific approver
-        if ($approvers->isEmpty() && $this->parent) {
-            $approvers->push($this->parent);
-        }
-
-        // Add users with leave management permissions
-        $leaveManagers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'hr', 'project-manager']);
-        })->get();
-
-        $approvers = $approvers->merge($leaveManagers)->unique('id');
-
-        return $approvers;
+    // Primary approver
+    if ($this->leaveApprover) {
+        $approvers->push($this->leaveApprover);
     }
+
+    // Fallback to parent if no specific approver
+    if ($approvers->isEmpty() && $this->parent) {
+        $approvers->push($this->parent);
+    }
+
+    // Add users with leave management permissions (admin, hr, team-lead)
+    $leaveManagers = User::whereHas('roles.permissions', function ($query) {
+    $query->where('name', 'manage leave applications');
+})->get();
+
+
+    $approvers = $approvers->merge($leaveManagers)->unique('id');
+
+    return $approvers;
+}
+
 
     /**
      * Check if user can approve leave for another user
@@ -561,4 +564,22 @@ class User extends Authenticatable
             ->where('status', 'approved')
             ->whereYear('start_date', now()->year);
     }
+
+public function hasPermission($permission): bool
+{
+    if (is_array($permission)) {
+        foreach ($permission as $perm) {
+            if ($this->hasPermissionTo($perm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    return $this->hasPermissionTo($permission);
+}
+
+
+
+
 }

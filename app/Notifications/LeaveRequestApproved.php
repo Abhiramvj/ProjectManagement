@@ -34,15 +34,18 @@ class LeaveRequestApproved extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'title' => 'Leave Request Approved',
-            'message' => 'Your leave request from '.$this->leaveApplication->start_date.' to '.$this->leaveApplication->end_date.' has been approved.',
-            'type' => 'leave_approved', // For the frontend to pick an icon
-            'leave_id' => $this->leaveApplication->id,
-            'approved_by' => Auth::user()->name,
-            'url' => route('leave.index'), // Link to the leave page
-        ];
-    }
+   public function toArray(object $notifiable): array
+{
+    return [
+        'title' => 'Leave Request Approved',
+        'message' => 'Your leave request from ' . $this->leaveApplication->start_date 
+                    . ' to ' . $this->leaveApplication->end_date . ' has been approved.',
+        'type' => 'leave_approved',
+        'leave_id' => $this->leaveApplication->id,
+        'approved_by' => Auth::user()->name,
+        'url' => route('leave.fullRequests'), // employee page
+    ];
+}
+
+
 }

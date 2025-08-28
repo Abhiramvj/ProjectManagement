@@ -171,18 +171,18 @@ class DashboardController extends Controller
 
         // --- RENDER VIEW ---
         return Inertia::render('Dashboard', [
-              'user' => [
-        'id' => $user->id,
-        'name' => $user->name,
-        'email' => $user->email,
-        'designation' => $user->designation,
-        'total_experience' => $user->total_experience,
-        'hire_date' => $user->hire_date,
-        'parent' => $user->parent ? [
-            'id' => $user->parent->id,
-            'name' => $user->parent->name,
-        ] : null,
-              ],
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'designation' => $user->designation,
+                'total_experience' => $user->total_experience,
+                'hire_date' => $user->hire_date,
+                'parent' => $user->parent ? [
+                    'id' => $user->parent->id,
+                    'name' => $user->parent->name,
+                ] : null,
+            ],
             'attendance' => $attendanceData,
             'calendarEvents' => $allCalendarEvents,
             'greeting' => [

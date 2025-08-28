@@ -11,13 +11,12 @@ class ProfileUpdateRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
      */
-  public function rules(): array
-{
-    return [
-        'name' => ['required', 'string', 'max:255'],
-        'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-        'total_experience' => ['nullable', 'numeric', 'min:0', 'max:100'],
-    ];
-}
-
+    public function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'total_experience' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ];
+    }
 }

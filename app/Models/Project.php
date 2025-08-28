@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 // --- ADD THIS IMPORT ---
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Project extends Model
+class   Project extends Model
 {
     use HasFactory;
 
@@ -19,6 +19,7 @@ class Project extends Model
         'team_id',
         'status',
         'end_date',
+        'priority',
         'total_hours_required',
 
     ];

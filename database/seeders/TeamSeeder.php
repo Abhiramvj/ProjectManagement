@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class TeamSeeder extends Seeder
 {
@@ -15,13 +15,14 @@ class TeamSeeder extends Seeder
 
         if ($teamLeads->isEmpty()) {
             $this->command->info('No team leads found. Please seed team leads first.');
+
             return;
         }
 
         // Create 10 teams, each assigned to a distinct team lead
         foreach ($teamLeads->take(10) as $lead) {
             Team::factory()->create([
-                'name' => 'Team ' . $lead->name,
+                'name' => 'Team '.$lead->name,
                 'team_lead_id' => $lead->id,
             ]);
         }
@@ -33,7 +34,7 @@ class TeamSeeder extends Seeder
             for ($i = 0; $i < $remaining; $i++) {
                 $lead = $allLeads->random();
                 Team::factory()->create([
-                    'name' => 'Team ' . $lead->name . ' #' . ($i + 1),
+                    'name' => 'Team '.$lead->name.' #'.($i + 1),
                     'team_lead_id' => $lead->id,
                 ]);
             }
