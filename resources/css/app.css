@@ -193,3 +193,12 @@ select {
         @apply disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
     }
 }
+/* Target input text inside v-select */
+.vs-style input {
+  color: black !important;
+}
+
+/* Optional: also set the placeholder text color */
+.vs-style .vs__placeholder {
+  color: black !important;
+}

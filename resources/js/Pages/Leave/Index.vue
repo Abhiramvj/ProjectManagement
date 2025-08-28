@@ -715,13 +715,13 @@ const statusCardBorderClass = (status) => {
                 </header>
 
                 <div v-if="isAdminOrHR">
-                  <InputLabel for="employee_select" value="Apply for Employee" class="font-semibold" />
+                  <InputLabel for="employee_select" value="Apply for Employee" class="font-semibold text-black" />
                   <v-select id="employee_select" v-model="form.user_id" :options="employeeOptions" :filterable="false" :loading="isLoadingEmployees" @search="searchEmployees" label="name" :reduce="employee => employee.id" placeholder="Start typing employee name..." class="mt-1 vs-style">
                     <template #no-options>Type to search...</template>
                     <template #option="option"><div>{{ option.name }}</div><div class="text-xs text-slate-500">{{ option.email }}</div></template>
                     <template #selected-option="option"><div>{{ option.name }}</div></template>
                   </v-select>
-                  <InputError :message="form.errors.user_id" class="mt-1"/>
+                  <InputError :message="form.errors.user_id" class="mt-1 text-black"/>
                 </div>
 
                 <div>
@@ -740,8 +740,8 @@ const statusCardBorderClass = (status) => {
                 <div>
                   <InputLabel value="Day Type" class="font-semibold mb-2" />
                   <div class="grid grid-cols-2 gap-3">
-                    <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 cursor-pointer"><input type="radio" v-model="form.day_type" value="full" class="form-radio" /><span class="ml-2 text-sm font-medium">Full Day</span></label>
-                    <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 cursor-pointer"><input type="radio" v-model="form.day_type" value="half" class="form-radio" /><span class="ml-2 text-sm font-medium">Half Day</span></label>
+                    <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 cursor-pointer"><input type="radio" v-model="form.day_type" value="full" class="form-radio" /><span class="ml-2 text-sm font-medium text-black">Full Day</span></label>
+                    <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 cursor-pointer"><input type="radio" v-model="form.day_type" value="half" class="form-radio" /><span class="ml-2 text-sm font-medium text-black">Half Day</span></label>
                   </div>
                 </div>
 
@@ -750,8 +750,8 @@ const statusCardBorderClass = (status) => {
                         <div>
                             <InputLabel value="Session for Start Date" class="text-sm font-medium mb-2" />
                             <div class="grid grid-cols-2 gap-3">
-                                <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 bg-white cursor-pointer"><input type="radio" v-model="form.start_half_session" value="morning" class="form-radio" /><span class="ml-2 text-sm">Morning (AM)</span></label>
-                                <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 bg-white cursor-pointer"><input type="radio" v-model="form.start_half_session" value="afternoon" class="form-radio" /><span class="ml-2 text-sm">Afternoon (PM)</span></label>
+                                <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 bg-white cursor-pointer"><input type="radio" v-model="form.start_half_session" value="morning" class="form-radio" /><span class="ml-2 text-sm text-black">Morning (AM)</span></label>
+                                <label class="flex items-center p-3 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 bg-white cursor-pointer"><input type="radio" v-model="form.start_half_session" value="afternoon" class="form-radio" /><span class="ml-2 text-sm text-black">Afternoon (PM)</span></label>
                             </div>
                             <InputError :message="form.errors.start_half_session" class="mt-1" />
                         </div>
@@ -785,8 +785,8 @@ const statusCardBorderClass = (status) => {
                 </div>
               </form>
             </div>
-            
-           
+
+
 
           </div>
         </div>
@@ -799,7 +799,7 @@ const statusCardBorderClass = (status) => {
         <div class="bg-slate-50 rounded-xl shadow-2xl max-w-4xl w-full flex flex-col" style="height: 90vh; max-height: 700px;">
             <header class="flex-shrink-0 flex justify-between items-center p-5 border-b border-slate-200"><div class="flex items-center gap-3"><div class="bg-blue-100 rounded-full p-2"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div><h2 class="text-xl font-bold text-slate-800">My Recent Leave Requests</h2></div><button @click="closeRequestsModal" class="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></header>
             <section class="flex-grow p-5 overflow-y-auto"><div v-if="!recentRequests.length" class="text-center flex flex-col items-center justify-center h-full"><svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="mt-2 text-sm font-medium">All Clear!</h3><p class="mt-1 text-sm text-slate-500">You have no recent leave requests.</p></div>
-                <div v-else class="space-y-4"><div v-for="request in recentRequests" :key="request.id" :class="statusCardBorderClass(request.status)" class="bg-white rounded-lg shadow-sm border border-slate-200 border-l-4"><div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"><div class="md:col-span-3"><p class="font-bold text-slate-800">{{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</p><p class="text-sm text-slate-500">{{ formatLeaveDays(request.leave_days) }} day<span v-if="request.leave_days != 1">s</span></p></div><div class="md:col-span-4"><span :class="getTagClass(request.leave_type)" class="px-2 py-1 text-xs font-medium rounded-full capitalize">{{ request.leave_type }}</span><p class="text-sm text-slate-700 truncate mt-2" :title="request.reason">{{ request.reason }}</p></div><div class="md:col-span-2 text-sm text-center"><a v-if="request.supporting_document_path" :href="`/storage/${request.supporting_document_path}`" target="_blank" class="font-semibold text-indigo-600 hover:underline">View Document</a><span v-else class="text-slate-400 italic">—</span><button v-if="request.leave_type === 'sick'" @click="() => { openUploadModal(request.id); closeRequestsModal(); }" class="block w-full text-blue-600 hover:underline text-xs mt-1">{{ request.supporting_document_path ? 'Replace' : 'Upload' }}</button></div><div class="md:col-span-3 flex justify-start md:justify-end items-center gap-3"><template v-if="request.status === 'pending'"><button @click="openEditModal(request)" class="btn-secondary-sm">Edit</button><button @click="cancelLeave(request)" class="btn-danger-sm">Cancel</button></template><span v-else class="text-sm font-semibold" :class="statusInfo(request.status).textColor">{{ statusInfo(request.status).text }}</span></div></div></div></div>
+                <div v-else class="space-y-4"><div v-for="request in recentRequests" :key="request.id" :class="statusCardBorderClass(request.status)" class="bg-white rounded-lg shadow-sm border border-slate-200 border-l-4"><div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"><div class="md:col-span-3"><p class="font-bold text-slate-800">{{ new Date(request.start_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) }}</p><p class="text-sm text-slate-500">{{ formatLeaveDays(request.leave_days) }} day<span v-if="request.leave_days != 1">s</span></p></div><div class="md:col-span-4"><span :class="getTagClass(request.leave_type)" class="px-2 py-1 text-xs font-medium rounded-full capitalize">{{ request.leave_type }}</span><p class="text-sm text-slate-700 truncate mt-2" :title="request.reason">{{ request.reason }}</p></div><div class="md:col-span-2 text-sm text-center"><a v-if="request.supporting_document_path" :href="`/storage/${request.supporting_document_path}`" target="_blank" class="font-semibold text-indigo-600 hover:underline">View Document</a><span v-else class="text-slate-400 italic">—</span><button v-if="request.leave_type === 'sick'" @click="() => { openUploadModal(request.id); closeRequestsModal(); }" class="block w-full text-blue-600 hover:underline text-xs mt-1">{{ request.supporting_document_path ? 'Replace' : 'Upload' }}</button></div><div class="md:col-span-3 flex justify-start md:justify-end items-center gap-3"><template v-if="request.status === 'pending'"><button @click="openEditModal(request)" class="btn-secondary-sm text-blue-600">Edit</button><button @click="cancelLeave(request)" class="btn-danger-sm text-red-600">Cancel</button></template><span v-else class="text-sm font-semibold" :class="statusInfo(request.status).textColor">{{ statusInfo(request.status).text }}</span></div></div></div></div>
             </section>
             <footer class="flex-shrink-0 flex justify-center p-5 border-t border-slate-200 bg-white/50"><PrimaryButton @click="() => { closeRequestsModal(); router.visit(route('leave.fullRequests')) }">View All My Requests</PrimaryButton></footer>
         </div>
@@ -813,7 +813,7 @@ const statusCardBorderClass = (status) => {
         <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 mt-2"><button type="button" @click="closeEditModal" class="btn-secondary">Cancel</button><PrimaryButton type="submit" :disabled="editProcessing">{{ editProcessing ? 'Saving...' : 'Save Changes' }}</PrimaryButton></div>
       </form>
     </div>
-    
+
     <!-- Leave Policy Modal -->
     <div v-if="isPolicyModalVisible" @click.self="closePolicyModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 font-sans">
       <div class="bg-slate-50 rounded-xl shadow-2xl max-w-2xl w-full flex flex-col" style="height: 90vh; max-height: 750px;">
@@ -839,7 +839,7 @@ const statusCardBorderClass = (status) => {
         <footer class="flex-shrink-0 flex justify-end p-4 bg-white/50 border-t border-slate-200"><button @click="closePolicyModal" class="btn-secondary">Close</button></footer>
       </div>
     </div>
-    
+
     <!-- Upload Document Modal -->
     <div v-if="isUploadModalVisible" @click.self="closeUploadModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 font-sans">
         <form @submit.prevent="submitUpload" enctype="multipart/form-data" class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
