@@ -50,15 +50,24 @@ function submit() {
                 Profile Information
             </h2>
             <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information, email address, experience, and profile image.
+                Update your account's profile information, email address,
+                experience, and profile image.
             </p>
         </header>
 
-        <form @submit.prevent="submit" class="mt-6 space-y-6" enctype="multipart/form-data">
+        <form
+            @submit.prevent="submit"
+            class="mt-6 space-y-6"
+            enctype="multipart/form-data"
+        >
             <!-- Profile Image Preview -->
             <div class="flex items-center">
                 <div v-if="imageUrl" class="mr-4">
-                    <img :src="imageUrl" alt="Profile Image" class="h-20 w-20 rounded-full object-cover" />
+                    <img
+                        :src="imageUrl"
+                        alt="Profile Image"
+                        class="h-20 w-20 rounded-full object-cover"
+                    />
                 </div>
                 <div>
                     <InputLabel for="image" value="Profile Image" />
@@ -89,7 +98,10 @@ function submit() {
 
             <!-- Experience Fields -->
             <div>
-                <InputLabel for="total_experience" value="Total Experience (Years)" />
+                <InputLabel
+                    for="total_experience"
+                    value="Total Experience (Years)"
+                />
                 <input
                     id="total_experience"
                     type="number"
@@ -100,10 +112,16 @@ function submit() {
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                     placeholder="e.g., 3.5"
                 />
-                <InputError class="mt-2" :message="form.errors.total_experience" />
+                <InputError
+                    class="mt-2"
+                    :message="form.errors.total_experience"
+                />
             </div>
 
-            <div v-show="status === 'verification-link-sent'" class="mt-2 text-sm font-medium text-green-600">
+            <div
+                v-show="status === 'verification-link-sent'"
+                class="mt-2 text-sm font-medium text-green-600"
+            >
                 A new verification link has been sent to your email address.
             </div>
 
@@ -115,7 +133,10 @@ function submit() {
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">
+                    <p
+                        v-if="form.recentlySuccessful"
+                        class="text-sm text-gray-600"
+                    >
                         Saved.
                     </p>
                 </Transition>

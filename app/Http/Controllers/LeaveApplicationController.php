@@ -225,7 +225,7 @@ class LeaveApplicationController extends Controller
 
         $leave_application->delete();
 
-        return Redirect::route('leave.index')->with('success', 'Leave request canceled.');
+        return Redirect::route('leave.fullRequests')->with('success', 'Leave request canceled.');
     }
 
     public function uploadDocument(Request $request, LeaveApplication $leave_application)

@@ -1,0 +1,15 @@
+{
+  "singleQuote": true,
+  "semi": true,
+  "tabWidth": 4,
+  "useTabs": false,
+  "plugins": ["prettier-plugin-vue", "prettier-plugin-tailwindcss", "prettier-plugin-blade"],
+  "overrides": [
+    {
+      "files": "*.blade.php",
+      "options": {
+        "parser": "blade"
+      }
+    }
+  ]
+}
