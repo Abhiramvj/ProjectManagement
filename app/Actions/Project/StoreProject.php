@@ -48,7 +48,7 @@ class StoreProject
             $projectData['team_id'] = $data['team_id'];
             $projectData['project_manager_id'] = $user->id;
         }
-\Log::info('Saving project with priority:', ['priority' => $data['priority']]);
+        \Log::info('Saving project with priority:', ['priority' => $data['priority']]);
 
         $project = Project::create($projectData);
 
@@ -62,6 +62,7 @@ class StoreProject
                 $project->members()->sync($memberIds);
             }
         }
+
         return $project;
     }
 }

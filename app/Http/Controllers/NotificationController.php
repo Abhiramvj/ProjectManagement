@@ -86,25 +86,23 @@ class NotificationController extends Controller
     // --- The following methods for marking notifications as read remain largely unchanged ---
     // They are actions performed by the logged-in user on notifications they have access to.
 
-  public function markAsRead($id)
-{
-    $notification = auth()->user()->notifications()->find($id);
-    if ($notification) {
-        $notification->markAsRead(); // marks only for this user
+    public function markAsRead($id)
+    {
+        $notification = auth()->user()->notifications()->find($id);
+        if ($notification) {
+            $notification->markAsRead(); // marks only for this user
+        }
+
+        return response()->json(['success' => true]);
     }
-
-    return response()->json(['success' => true]);
-}
-
 
     public function markAllAsRead()
-{
-    $notifications = auth()->user()->unreadNotifications;
-    if ($notifications->isNotEmpty()) {
-        $notifications->markAsRead(); // marks only for current user
+    {
+        $notifications = auth()->user()->unreadNotifications;
+        if ($notifications->isNotEmpty()) {
+            $notifications->markAsRead(); // marks only for current user
+        }
+
+        return response()->json(['success' => true]);
     }
-
-    return response()->json(['success' => true]);
-}
-
 }

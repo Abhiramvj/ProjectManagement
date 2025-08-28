@@ -158,22 +158,19 @@ class StoreLeave
         return $leaveApplication;
     }
 
-  private function sendNotifications(LeaveApplication $leaveApplication): void
-{
-    try {
-        $approvers = $leaveApplication->user->getLeaveApprovers()->unique('id');
+    private function sendNotifications(LeaveApplication $leaveApplication): void
+    {
+        try {
+            $approvers = $leaveApplication->user->getLeaveApprovers()->unique('id');
 
-        foreach ($approvers as $approver) {
-            $approver->notify(new LeaveRequestSubmitted($leaveApplication));
+            foreach ($approvers as $approver) {
+                $approver->notify(new LeaveRequestSubmitted($leaveApplication));
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send leave request notifications', [
+                'error' => $e->getMessage(),
+                'leave_id' => $leaveApplication->id,
+            ]);
         }
-    } catch (\Exception $e) {
-        Log::error('Failed to send leave request notifications', [
-            'error' => $e->getMessage(),
-            'leave_id' => $leaveApplication->id,
-        ]);
     }
-}
-
-
-
 }

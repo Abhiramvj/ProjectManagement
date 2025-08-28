@@ -7,7 +7,6 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\LeaveRequestApproved;
 use App\Notifications\LeaveRequestRejected;
-use App\Notifications\LeaveRequestSubmitted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -145,5 +144,4 @@ class NotificationTest extends TestCase
         $this->assertEquals('ApproverUser', $array['approved_by']);
         $this->assertStringContainsString(route('leave.index'), $array['url']);
     }
-
 }
