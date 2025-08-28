@@ -92,15 +92,38 @@ class StoreLeaveRequest extends FormRequest
     {
         $startDate = $data['start_date'];
         $endDate = $data['end_date'];
+        $dayType = $data['day_type'] ?? 'full';
+        $startHalf = $data['start_half_session'] ?? null;
+        $endHalf = $data['end_half_session'] ?? null;
 
         $overlapExists = $user->leaveApplications()
             ->whereIn('status', ['pending', 'approved'])
-            ->where('start_date', '<=', $endDate)
-            ->where('end_date', '>=', $startDate)
+            ->where(function ($query) use ($startDate, $endDate, $dayType, $startHalf) {
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    // Check date overlap
+                    $q->whereBetween('start_date', [$startDate, $endDate])
+                        ->orWhereBetween('end_date', [$startDate, $endDate])
+                        ->orWhere(function ($q2) use ($startDate, $endDate) {
+                            $q2->where('start_date', '<=', $startDate)
+                                ->where('end_date', '>=', $endDate);
+                        });
+                });
+
+                if ($dayType === 'half') {
+                    $query->where(function ($q) use ($startHalf) {
+                        // Only block if same half session on the same date
+                        $q->where('day_type', 'half')
+                            ->where(function ($q2) use ($startHalf) {
+                                $q2->where('start_half_session', $startHalf)
+                                    ->orWhere('end_half_session', $startHalf);
+                            });
+                    });
+                }
+            })
             ->exists();
 
         if ($overlapExists) {
-            $validator->errors()->add('start_date', 'The selected dates overlap with another request.');
+            $validator->errors()->add('start_date', 'The selected dates or sessions overlap with another request.');
         }
     }
 
@@ -123,10 +146,11 @@ class StoreLeaveRequest extends FormRequest
 
         if ($balance < $leaveDays) {
             $validator->errors()->add(
-                'end_date',
-                "Insufficient balance. Request requires {$leaveDays} days, but only {$balance} are available."
+                'leave_balance',
+                "Insufficient balance. Request requires {$leaveDays} days, only {$balance} available."
             );
         }
+
     }
 
     public function calculateLeaveDays(array $data): float

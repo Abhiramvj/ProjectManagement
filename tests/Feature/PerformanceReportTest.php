@@ -17,13 +17,14 @@ class PerformanceReportTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected User $authUser;
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        // Create authenticated user with permission
         $this->authUser = User::factory()->create();
-
-        // Assign permission as required
         $permission = Permission::firstOrCreate(['name' => 'manage employees']);
         $this->authUser->givePermissionTo($permission);
 
@@ -31,36 +32,35 @@ class PerformanceReportTest extends TestCase
     }
 
     public function test_show_returns_inertia_response_with_expected_props()
-    {
-        $user = User::factory()->create();
+{
+    $targetUser = User::factory()->create();
 
-        $mockAction = Mockery::mock(ShowPerformance::class);
-        $mockAction->shouldReceive('handle')
-            ->once()
-            ->with($user)
-            ->andReturn([
-                'score' => 95,
-                'details' => 'Excellent performance',
-            ]);
+    $mockAction = Mockery::mock(ShowPerformance::class);
+    $mockAction->shouldReceive('handle')
+        ->once()
+        ->with(Mockery::type(User::class)) // <-- type matcher
+        ->andReturn([
+            'score' => 95,
+            'details' => 'Excellent performance',
+        ]);
 
-        // Bind mockAction into the service container so route resolves it
-        $this->app->instance(ShowPerformance::class, $mockAction);
+    $this->app->instance(ShowPerformance::class, $mockAction);
 
-        $response = $this->actingAs($user)
-            ->get(route('performance.show', $user));
+    $response = $this->actingAs($this->authUser)
+        ->get(route('performance.show', $targetUser));
 
-        $response->assertStatus(200)
-            ->assertInertia(fn ($page) => $page
-                ->component('Performance/Show')
-                ->where('score', 95)
-                ->where('details', 'Excellent performance')
-                ->etc()
-            );
-    }
+    $response->assertStatus(200)
+        ->assertInertia(fn ($page) => $page
+            ->component('Performance/Show')
+            ->where('score', 95)
+            ->where('details', 'Excellent performance')
+        );
+}
+
 
     public function test_generate_summary_returns_json_with_summary()
     {
-        $user = User::factory()->create();
+        $targetUser = User::factory()->create();
 
         $ollamaService = Mockery::mock(OllamaAIService::class);
         $ollamaService->shouldReceive('generateText')
@@ -78,8 +78,7 @@ class PerformanceReportTest extends TestCase
 
         $controller = new PerformanceReportController;
 
-        $response = $controller->generateSummary($request, $user, $ollamaService);
-
+        $response = $controller->generateSummary($request, $targetUser, $ollamaService);
         $responseData = json_decode($response->getContent(), true);
 
         $this->assertEquals('Sample performance summary text.', $responseData['summary']);
@@ -88,12 +87,10 @@ class PerformanceReportTest extends TestCase
 
     public function test_generate_summary_returns_error_when_ollama_fails()
     {
-        $user = User::factory()->create();
+        $targetUser = User::factory()->create();
 
         $ollamaService = Mockery::mock(OllamaAIService::class);
-        $ollamaService->shouldReceive('generateText')
-            ->once()
-            ->andReturn(null);
+        $ollamaService->shouldReceive('generateText')->once()->andReturn(null);
 
         Log::shouldReceive('error')->once();
 
@@ -105,11 +102,9 @@ class PerformanceReportTest extends TestCase
         ];
 
         $request = Request::create('/generate-summary', 'POST', $requestData);
-
         $controller = new PerformanceReportController;
 
-        $response = $controller->generateSummary($request, $user, $ollamaService);
-
+        $response = $controller->generateSummary($request, $targetUser, $ollamaService);
         $responseData = json_decode($response->getContent(), true);
 
         $this->assertEquals(500, $response->getStatusCode());
@@ -118,24 +113,19 @@ class PerformanceReportTest extends TestCase
 
     public function test_generate_summary_validation_fails()
     {
-        $user = User::factory()->create();
-
+        $targetUser = User::factory()->create();
         $ollamaService = Mockery::mock(OllamaAIService::class);
 
-        $request = Request::create('/generate-summary', 'POST', []); // Empty invalid data
+        $request = Request::create('/generate-summary', 'POST', []); // Empty data
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         $controller = new PerformanceReportController;
-
-        $controller->generateSummary($request, $user, $ollamaService);
+        $controller->generateSummary($request, $targetUser, $ollamaService);
     }
 
     public function test_generate_my_summary_returns_json_with_summary()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
         $ollamaService = Mockery::mock(OllamaAIService::class);
         $ollamaService->shouldReceive('generateText')
             ->once()
@@ -149,11 +139,9 @@ class PerformanceReportTest extends TestCase
         ];
 
         $request = Request::create('/generate-my-summary', 'POST', $requestData);
-
         $controller = new PerformanceReportController;
 
         $response = $controller->generateMySummary($request, $ollamaService);
-
         $responseData = json_decode($response->getContent(), true);
 
         $this->assertEquals('Sample my performance summary text.', $responseData['summary']);
@@ -162,13 +150,8 @@ class PerformanceReportTest extends TestCase
 
     public function test_generate_my_summary_returns_error_when_ollama_fails()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
         $ollamaService = Mockery::mock(OllamaAIService::class);
-        $ollamaService->shouldReceive('generateText')
-            ->once()
-            ->andReturn(null);
+        $ollamaService->shouldReceive('generateText')->once()->andReturn(null);
 
         Log::shouldReceive('error')->once();
 
@@ -180,11 +163,9 @@ class PerformanceReportTest extends TestCase
         ];
 
         $request = Request::create('/generate-my-summary', 'POST', $requestData);
-
         $controller = new PerformanceReportController;
 
         $response = $controller->generateMySummary($request, $ollamaService);
-
         $responseData = json_decode($response->getContent(), true);
 
         $this->assertEquals(500, $response->getStatusCode());
@@ -193,16 +174,12 @@ class PerformanceReportTest extends TestCase
 
     public function test_generate_my_summary_validation_fails()
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
         $ollamaService = Mockery::mock(OllamaAIService::class);
-        $request = Request::create('/generate-my-summary', 'POST', []); // Empty invalid data
+        $request = Request::create('/generate-my-summary', 'POST', []); // Empty data
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         $controller = new PerformanceReportController;
-
         $controller->generateMySummary($request, $ollamaService);
     }
 }

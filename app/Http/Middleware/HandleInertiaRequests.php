@@ -20,15 +20,10 @@ class HandleInertiaRequests extends Middleware
                     'designation' => $request->user()->designation,
                     'image' => $request->user()->image,
                     'avatar_url' => $request->user()->avatar_url,
-
                     'permissions' => $request->user()->getAllPermissions()->pluck('name'),
-
-                    // Add roles here
                     'roles' => $request->user()->roles()->pluck('name'),
                 ] : null,
             ],
-
-            // Existing ziggy and flash props...
             'ziggy' => fn () => [
                 ...(new \Tighten\Ziggy\Ziggy)->toArray(),
                 'location' => $request->url(),
@@ -37,6 +32,10 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            // Add this block to share validation errors
+            'errors' => $request->session()->get('errors')
+                ? $request->session()->get('errors')->getBag('default')->getMessages()
+                : (object) [],
         ]);
     }
 }

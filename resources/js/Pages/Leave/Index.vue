@@ -635,6 +635,8 @@ const statusCardBorderClass = (status) => {
                   <FullCalendar :options="calendarOptions" />
                 </div>
                 <InputError :message="form.errors.start_date" class="mt-2" />
+                <InputError :message="form.errors.leave_balance" class="mt-2" />
+
               </div>
             </div>
 

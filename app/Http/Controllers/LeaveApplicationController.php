@@ -19,6 +19,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class LeaveApplicationController extends Controller
@@ -33,7 +34,7 @@ class LeaveApplicationController extends Controller
         try {
             $leave_application = $storeLeave->handle($request->validated());
 
-            // --- ADD THIS LOGGING BLOCK ---
+            // Log leave creation (Good place here, after successful creation)
             LeaveLog::create([
                 'user_id' => $leave_application->user_id,
                 'actor_id' => auth()->id(),
@@ -47,10 +48,6 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-            $recipients = User::whereHas('roles', function ($query) {
-                $query->whereIn('name', ['admin', 'hr']);
-            })->get();
-
             // if ($recipients->isNotEmpty()) {
             //     foreach ($recipients as $recipient) {
             //         $this->sendEmail(
@@ -62,6 +59,9 @@ class LeaveApplicationController extends Controller
             // }
 
             return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
+        } catch (ValidationException $e) {
+            // Validator exceptions will automatically send errors to Inertia
+            return Redirect::back()->withErrors($e->errors())->with('error', 'There were validation errors.');
         } catch (\Exception $e) {
             Log::error('Failed to store leave application: '.$e->getMessage());
 

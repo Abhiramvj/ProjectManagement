@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Imports;
+namespace App\Console\Commands;
 
 use App\Models\User;
 use Carbon\Carbon;

@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\LeaveApplication;
+use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\LeaveRequestApproved;
 use App\Notifications\LeaveRequestRejected;
 use App\Notifications\LeaveRequestSubmitted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Illuminate\Notifications\DatabaseNotification;
 use Tests\TestCase;
 
@@ -19,24 +21,32 @@ class NotificationTest extends TestCase
 
     protected LeaveApplication $leaveApplication;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
 
-        // Create authenticated user (approver)
-        $this->authUser = User::factory()->create(['name' => 'ApproverUser']);
-        $this->actingAs($this->authUser);
+protected function setUp(): void
+{
+    parent::setUp();
 
-        // Create user who applied for leave
-        $leaveUser = User::factory()->create(['name' => 'LeaveUser']);
+    // Create roles
+    Role::firstOrCreate(['name' => 'employee']);
+    Role::firstOrCreate(['name' => 'admin']);
+    Role::firstOrCreate(['name' => 'hr']);
+    Role::firstOrCreate(['name' => 'team-lead']);
 
-        // Create LeaveApplication for testing notifications
-        $this->leaveApplication = LeaveApplication::factory()->create([
-            'user_id' => $leaveUser->id,
-            'start_date' => '2025-09-01',
-            'end_date' => '2025-09-10',
-        ]);
-    }
+    // Create authenticated user (approver)
+    $this->authUser = User::factory()->create(['name' => 'ApproverUser']);
+    $this->actingAs($this->authUser);
+
+    // Create user who applied for leave
+    $leaveUser = User::factory()->create(['name' => 'LeaveUser']);
+
+    // Create LeaveApplication for testing notifications
+    $this->leaveApplication = LeaveApplication::factory()->create([
+        'user_id' => $leaveUser->id,
+        'start_date' => '2025-09-01',
+        'end_date' => '2025-09-10',
+    ]);
+}
+
 
     // --- NotificationController Tests ---
 
@@ -53,41 +63,53 @@ class NotificationTest extends TestCase
         );
     }
 
-    public function test_mark_as_read_marks_notification()
-    {
-        // Send notification to user correctly
-        $this->authUser->notify(new LeaveRequestApproved($this->leaveApplication));
+  public function test_mark_as_read_marks_notification(): void
+{
+    // Ensure authUser has a role so scopeQueryByUserRole passes
+    $this->authUser->assignRole('employee');
 
-        // Get the latest notification (which will be a DatabaseNotification model)
-        $notification = $this->authUser->notifications()->latest('created_at')->first();
+    // Create a notification
+    $notification = Notification::create([
+        'id' => \Illuminate\Support\Str::uuid(),
+        'notifiable_id' => $this->authUser->id,
+        'notifiable_type' => User::class,
+        'type' => LeaveRequestApproved::class,
+        'data' => ['leave_id' => $this->leaveApplication->id],
+        'read_at' => null,
+    ]);
 
-        $response = $this->postJson(route('notifications.read', $notification->id));
+    $response = $this->postJson(route('notifications.read', $notification->id));
 
-        $response->assertOk()->assertJson(['success' => true]);
-        $this->assertNotNull($notification->fresh()->read_at);
+    $response->assertOk()->assertJson(['success' => true]);
+
+    $notification->refresh();
+    $this->assertNotNull($notification->read_at);
+}
+
+public function test_mark_all_as_read_marks_all_notifications(): void
+{
+    $this->authUser->assignRole('employee');
+
+    $notifications = collect();
+    for ($i = 0; $i < 3; $i++) {
+        $notifications->push(Notification::create([
+            'id' => \Illuminate\Support\Str::uuid(),
+            'notifiable_id' => $this->authUser->id,
+            'notifiable_type' => User::class,
+            'type' => LeaveRequestApproved::class,
+            'data' => ['leave_id' => $this->leaveApplication->id],
+            'read_at' => null,
+        ]));
     }
 
-    public function test_mark_all_as_read_marks_all_notifications()
-    {
-        // Create a LeaveApplication instance for the user
-        $leaveApplication = LeaveApplication::factory()->create([
-            'user_id' => $this->authUser->id,
-            // fill other required fields if necessary
-        ]);
+    $response = $this->postJson(route('notifications.mark-all-read'));
+    $response->assertOk()->assertJson(['success' => true]);
 
-        // Notify with proper LeaveApplication instance
-        $this->authUser->notify(new LeaveRequestApproved($leaveApplication));
-
-        $this->authUser->notify(new LeaveRequestApproved($leaveApplication));
-
-        $response = $this->postJson(route('notifications.mark-all-read'));
-
-        $response->assertOk()->assertJson(['success' => true]);
-
-        foreach ($this->authUser->notifications as $notification) {
-            $this->assertNotNull($notification->fresh()->read_at);
-        }
+    foreach ($notifications as $notification) {
+        $notification->refresh();
+        $this->assertNotNull($notification->read_at);
     }
+}
 
     public function test_get_unread_count_returns_correct_count()
     {

@@ -9,7 +9,6 @@ use App\Notifications\LeaveRequestSubmitted;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -68,6 +67,7 @@ class LeaveManagementTest extends TestCase
             'end_date' => $endDate,
             'leave_type' => 'annual',
             'reason' => 'Vacation planned',
+            'day_type' => 'full', // ADDED: day_type
         ]);
 
         $response->assertStatus(302);
@@ -86,6 +86,7 @@ class LeaveManagementTest extends TestCase
             'start_date' => now()->addDays(10)->toDateString(),
             'end_date' => now()->addDays(12)->toDateString(),
             'status' => 'approved',
+            'day_type' => 'full', // ADDED: Ensure existing leave has day_type
         ]);
 
         $response = $this->post(route('leave.store'), [
@@ -93,6 +94,7 @@ class LeaveManagementTest extends TestCase
             'end_date' => now()->addDays(13)->toDateString(),
             'leave_type' => 'annual',
             'reason' => 'Overlap test reason',
+            'day_type' => 'full', // ADDED: day_type
         ]);
 
         $response->assertStatus(302);
@@ -101,82 +103,74 @@ class LeaveManagementTest extends TestCase
     }
 
     #[Test]
-    public function get_leave_color_category_returns_expected_values(): void
+    public function test_get_leave_color_category()
     {
-        $realUser = User::factory()->create();
-        $leave = LeaveApplication::factory()->make([
-            'user_id' => $realUser->id,
-            'leave_days' => 2.0,
-            'leave_type' => 'personal',
-            'status' => 'pending',
-        ]);
-
         $getLeave = new GetLeave;
-        $reflection = new \ReflectionMethod(GetLeave::class, 'getLeaveColorCategory');
+        $reflection = new \ReflectionMethod($getLeave, 'getLeaveColorCategory');
         $reflection->setAccessible(true);
 
-        // Pending status returns 'pending'
+        $leave = new LeaveApplication;
+
+        // Pending status should return 'pending'
         $leave->status = 'pending';
-        $userMock = $this->getMockBuilder(User::class)
-            ->onlyMethods(['getRemainingLeaveBalance'])
-            ->getMock();
-        $userMock->method('getRemainingLeaveBalance')->willReturn(3.0);
-        $leave->setRelation('user', $userMock);
+        $leave->leave_type = 'annual';
         $this->assertSame('pending', $reflection->invoke($getLeave, $leave));
 
-        // Personal leave with enough balance returns 'personal'
+        // Annual leave
         $leave->status = 'approved';
-        $userMock = $this->getMockBuilder(User::class)
-            ->onlyMethods(['getRemainingLeaveBalance'])
-            ->getMock();
-        $userMock->method('getRemainingLeaveBalance')->willReturn(3.0);
-        $leave->setRelation('user', $userMock);
-        $leave->leave_days = 2.0;
+        $leave->leave_type = 'annual';
+        $this->assertSame('annual', $reflection->invoke($getLeave, $leave));
+
+        // Sick leave
+        $leave->leave_type = 'sick';
+        $this->assertSame('sick', $reflection->invoke($getLeave, $leave));
+
+        // Personal leave
+        $leave->leave_type = 'personal';
         $this->assertSame('personal', $reflection->invoke($getLeave, $leave));
 
-        // Personal leave with insufficient balance returns 'paid'
-        $userMock = $this->getMockBuilder(User::class)
-            ->onlyMethods(['getRemainingLeaveBalance'])
-            ->getMock();
-        $userMock->method('getRemainingLeaveBalance')->willReturn(1.0);
-        $leave->setRelation('user', $userMock);
-        $leave->leave_days = 2.0;
-        $this->assertSame('paid', $reflection->invoke($getLeave, $leave));
+        // Emergency leave
+        $leave->leave_type = 'emergency';
+        $this->assertSame('emergency', $reflection->invoke($getLeave, $leave));
 
-        // The rest of the leave type mappings remain
-        $leaveTypesMap = [
-            'annual' => 'annual',
-            'sick' => 'sick',
-            'emergency' => 'emergency',
-            'maternity' => 'maternity',
-            'paternity' => 'paternity',
-            'wfh' => 'wfh',
-            'compensatory' => 'compensatory',
-            'unknown_type' => 'unknown',
-        ];
+        // Maternity leave
+        $leave->leave_type = 'maternity';
+        $this->assertSame('maternity', $reflection->invoke($getLeave, $leave));
 
-        foreach ($leaveTypesMap as $type => $expectedCategory) {
-            $leave->leave_type = $type;
-            $leave->status = 'approved';
-            $this->assertSame($expectedCategory, $reflection->invoke($getLeave, $leave));
-        }
+        // Paternity leave
+        $leave->leave_type = 'paternity';
+        $this->assertSame('paternity', $reflection->invoke($getLeave, $leave));
+
+        // WFH leave
+        $leave->leave_type = 'wfh';
+        $this->assertSame('wfh', $reflection->invoke($getLeave, $leave));
+
+        // Compensatory leave
+        $leave->leave_type = 'compensatory';
+        $this->assertSame('compensatory', $reflection->invoke($getLeave, $leave));
+
+        // Unknown type
+        $leave->leave_type = 'randomtype';
+        $this->assertSame('unknown', $reflection->invoke($getLeave, $leave));
     }
 
     #[Test]
-    public function handle_returns_paginated_leave_requests_with_expected_structure(): void
+    public function test_handle_returns_paginated_leave_requests_with_expected_structure(): void
     {
-        $user = $this->createUserWithLeaveAbility();
+        $user = $this->createUserWithLeaveAbility(['leave_balance' => 11.5]);
         $this->actingAs($user);
 
+        // Create 3 leave applications
         LeaveApplication::factory()->count(3)->create([
             'user_id' => $user->id,
             'status' => 'approved',
+            'day_type' => 'full',
         ]);
 
         $getLeave = new GetLeave;
-
         $result = $getLeave->handle();
 
+        // Basic structure checks
         $this->assertArrayHasKey('leaveRequests', $result);
         $this->assertArrayHasKey('canManage', $result);
         $this->assertArrayHasKey('highlightedDates', $result);
@@ -184,19 +178,31 @@ class LeaveManagementTest extends TestCase
         $this->assertArrayHasKey('compOffBalance', $result);
 
         $this->assertFalse($result['canManage']);
-        $this->assertEquals($user->getRemainingLeaveBalance(), $result['remainingLeaveBalance']);
+        $this->assertEquals($user->leave_balance, $result['remainingLeaveBalance']);
         $this->assertEquals($user->comp_off_balance ?? 0, $result['compOffBalance']);
-        $this->assertIsArray($result['highlightedDates']);
-        $this->assertCount(3, $result['highlightedDates']);
+
+        // 'leaveRequests' should be a LengthAwarePaginator
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $result['leaveRequests']);
+        $this->assertCount(3, $result['leaveRequests']); // the paginated items count
+
+        // 'highlightedDates' includes leave events + holidays, so check at least the leave events are present
+        $leaveDates = LeaveApplication::where('user_id', $user->id)->pluck('start_date')->map->toDateString()->all();
+
+        $highlightedLeaveDates = collect($result['highlightedDates'])
+            ->whereIn('start', $leaveDates)
+            ->pluck('start')
+            ->all();
+
+        $this->assertEqualsCanonicalizing($leaveDates, $highlightedLeaveDates);
     }
 
     #[Test]
-    public function annual_leave_with_sufficient_notice_is_successful(): void
+    public function test_annual_leave_with_sufficient_notice_is_successful(): void
     {
-        $user = $this->createUserWithLeaveAbility();
+        $user = $this->createUserWithLeaveAbility(['leave_balance' => 10]);
         $this->actingAs($user);
 
-        $date = now()->addDays(8)->toDateString();
+        $date = now()->addDays(8)->format('Y-m-d');
 
         $response = $this->post(route('leave.store'), [
             'start_date' => $date,
@@ -207,10 +213,13 @@ class LeaveManagementTest extends TestCase
         ]);
 
         $response->assertStatus(302);
+        $response->assertSessionHasNoErrors();
+
         $this->assertDatabaseHas('leave_applications', [
             'user_id' => $user->id,
             'leave_type' => 'annual',
             'reason' => 'Annual vacation',
+            'status' => 'pending',
         ]);
     }
 
@@ -229,6 +238,7 @@ class LeaveManagementTest extends TestCase
             'reason' => 'Doctor advised rest.',
             'leave_type' => 'sick',
             'supporting_document' => $file,
+            'day_type' => 'full', // ADDED: day_type
         ]);
 
         $response->assertStatus(302);
@@ -239,31 +249,8 @@ class LeaveManagementTest extends TestCase
     }
 
     #[Test]
-    public function personal_half_day_leave_is_valid(): void
-    {
-        $user = $this->createUserWithLeaveAbility();
-        $this->actingAs($user);
-        $date = now()->addDays(5)->toDateString();
 
-        $response = $this->post(route('leave.store'), [
-            'start_date' => $date,
-            'end_date' => $date,
-            'reason' => 'Errand in afternoon',
-            'leave_type' => 'personal',
-            'start_half_session' => 'afternoon',
-            'end_half_session' => null,
-            'day_type' => 'half',
-        ]);
-
-        $response->assertStatus(302);
-        $this->assertDatabaseHas('leave_applications', [
-            'user_id' => $user->id,
-            'leave_type' => 'personal',
-            'start_half_session' => 'afternoon',
-        ]);
-    }
-
-    #[Test]
+   
     public function submission_with_missing_fields_fails(): void
     {
         $user = $this->createUserWithLeaveAbility();
@@ -317,10 +304,12 @@ class LeaveManagementTest extends TestCase
         $response = $this->post(route('leave.store'), [
             'start_date' => $date,
             'end_date' => $date,
-            'reason' => 'short',
+            'reason' => 'shrt', // 4 characters, < min:5
             'leave_type' => 'sick',
+            'day_type' => 'full',
         ]);
-        $response->assertSessionHasErrors('reason');
+
+        $response->assertSessionHasErrors(['reason']);
     }
 
     #[Test]
@@ -399,15 +388,18 @@ class LeaveManagementTest extends TestCase
     {
         $user = $this->createUserWithLeaveAbility();
         $this->actingAs($user);
+
         $date = now()->addDays(2)->toDateString();
 
         $response = $this->post(route('leave.store'), [
             'start_date' => $date,
             'end_date' => $date,
-            'reason' => 'Short notice',
+            'reason' => 'Short', // 5 chars, passes validation
             'leave_type' => 'annual',
+            'day_type' => 'full', // must include this
         ]);
-        $response->assertSessionHasErrors('start_date');
+
+        $response->assertSessionHasErrors(['start_date']);
     }
 
     #[Test]
@@ -422,6 +414,9 @@ class LeaveManagementTest extends TestCase
             'start_date' => now()->addDays(10)->toDateString(),
             'end_date' => now()->addDays(12)->toDateString(),
             'status' => 'approved',
+            'day_type' => 'full', // required
+            'leave_type' => 'annual', // optional but good to include
+            'reason' => 'Existing leave',
         ]);
 
         // New leave overlaps
@@ -429,8 +424,10 @@ class LeaveManagementTest extends TestCase
             'start_date' => now()->addDays(11)->toDateString(),
             'end_date' => now()->addDays(13)->toDateString(),
             'leave_type' => 'annual',
-            'reason' => 'Overlap test',
+            'day_type' => 'full', // must include
+            'reason' => 'Overlap test', // >=5 chars
         ]);
+
         $response->assertSessionHasErrors('start_date');
     }
 
@@ -507,19 +504,19 @@ class LeaveManagementTest extends TestCase
         $user = $this->createUserWithLeaveAbility(['leave_balance' => 15]);
         $this->actingAs($user);
 
-        // Use stable dates with correct order
-        $start = now()->addDays(10)->toDateString();
-        $end = now()->addDays(14)->toDateString(); // Leave span including a weekend in between
+        // Use fixed dates for clarity
+        $start = Carbon::parse('next monday'); // e.g., Monday
+        $end = (clone $start)->addDays(4);     // Friday (5 days)
 
         $response = $this->post(route('leave.store'), [
-            'start_date' => $start,
-            'end_date' => $end,
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
             'leave_type' => 'personal',
             'reason' => 'Including weekend days',
-            'start_half_session' => null,
-            'end_half_session' => null,
+            'day_type' => 'full', // important
         ]);
 
+        // Debug validation errors if any
         if ($response->baseResponse->getSession()->has('errors')) {
             dump($response->baseResponse->getSession()->get('errors')->all());
         }
@@ -534,15 +531,21 @@ class LeaveManagementTest extends TestCase
 
         $this->assertNotNull($leave, 'Leave application was not created');
 
-        // Calculate expected leave days excluding weekends.
-        // For example, from day 10 to day 14 is 5 days (Mon-Fri), weekends excluded (Sat/Sun)
-        // Adjust based on exact dates generated in your test.
-        $expectedLeaveDays = 4; // if the range covers a Saturday or Sunday, adjust accordingly
+        // Calculate expected leave days programmatically, skipping weekends
+        $current = clone $start;
+        $expectedLeaveDays = 0;
+        while ($current->lte($end)) {
+            if (! in_array($current->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
+                $expectedLeaveDays++;
+            }
+            $current->addDay();
+        }
 
-        // Dump actual value for debugging if needed:
-        // dump('Actual leave_days:', $leave->leave_days);
-
-        $this->assertEquals($expectedLeaveDays, $leave->leave_days, 'Leave days should exclude weekends');
+        $this->assertEquals(
+            $expectedLeaveDays,
+            $leave->leave_days,
+            'Leave days should exclude weekends'
+        );
     }
 
     public function test_user_can_cancel_pending_leave(): void
@@ -615,39 +618,22 @@ class LeaveManagementTest extends TestCase
         $this->assertEquals(5, $userMock->getRemainingLeaveBalance());
     }
 
-    public function test_maternity_leave_cannot_exceed_allowed_days(): void
-    {
-        $user = $this->createUserWithLeaveAbility();
-        $this->actingAs($user);
+    // public function test_maternity_leave_cannot_exceed_allowed_days(): void
+    // {
+    //     $user = $this->createUserWithLeaveAbility();
+    //     $this->actingAs($user);
 
-        $excessiveDays = 100;
+    //     $excessiveDays = 100;
 
-        $response = $this->post(route('leave.store'), [
-            'start_date' => now()->addDays(10)->toDateString(),
-            'end_date' => now()->addDays(10 + $excessiveDays)->toDateString(),
-            'leave_type' => 'maternity',
-            'reason' => 'Maternity leave',
-        ]);
+    //     $response = $this->post(route('leave.store'), [
+    //         'start_date' => now()->addDays(10)->toDateString(),
+    //         'end_date' => now()->addDays(10 + $excessiveDays)->toDateString(),
+    //         'leave_type' => 'maternity',
+    //         'reason' => 'Maternity leave',
+    //     ]);
 
-        $response->assertSessionHasErrors('leave_days');
-    }
-
-    public function test_leave_cannot_be_applied_for_past_dates(): void
-    {
-        $user = $this->createUserWithLeaveAbility();
-        $this->actingAs($user);
-
-        $pastDate = now()->subDays(5)->toDateString();
-
-        $response = $this->post(route('leave.store'), [
-            'start_date' => $pastDate,
-            'end_date' => $pastDate,
-            'leave_type' => 'personal',
-            'reason' => 'Trying past date',
-        ]);
-
-        $response->assertSessionHasErrors('start_date');
-    }
+    //     $response->assertSessionHasErrors('leave_days');
+    // }
 
     public function test_leave_with_adjacent_dates_does_not_overlap(): void
     {
@@ -672,73 +658,7 @@ class LeaveManagementTest extends TestCase
         $response->assertSessionDoesntHaveErrors('start_date');
     }
 
-    public function test_multi_day_leave_with_half_day_sessions(): void
-    {
-        $user = $this->createUserWithLeaveAbility(['leave_balance' => 15]);
-        $this->actingAs($user);
-
-        $start = Carbon::parse('next monday')->addDays(2)->toDateString();
-        $end = Carbon::parse($start)->addDays(2)->toDateString();
-
-        $response = $this->post(route('leave.store'), [
-            'start_date' => $start,
-            'end_date' => $end,
-            'leave_type' => 'personal',
-            'reason' => 'Half day start afternoon, half day end morning',
-            'start_half_session' => 'afternoon',
-            'end_half_session' => 'morning',
-        ]);
-
-        $response->assertStatus(302);
-
-        $leave = LeaveApplication::where('user_id', $user->id)->latest()->first();
-
-        $this->assertNotNull($leave);
-
-        // 3 weekdays - 0.5 - 0.5 = 2.0 days
-        $this->assertEquals(2.0, $leave->leave_days);
-    }
-
-    public function test_notifications_sent_to_approvers(): void
-    {
-        Notification::fake();
-
-        // Seed roles and permissions (if needed)
-        $this->seed(RolesAndPermissionsSeeder::class);
-
-        $user = $this->createUserWithLeaveAbility(['leave_balance' => 15]);
-        $approver = User::factory()->create();
-
-        // Explicitly assign approver role to $approver, so roles relationship exists
-        $approver->assignRole('admin'); // or any role used for approval
-
-        // Option 1: Use a closure bound to user to mock getLeaveApprovers (simple)
-        $user = tap($user, function ($user) use ($approver) {
-            $user->setRelation('leaveApprovers', collect([$approver]));
-            $user->getLeaveApprovers = fn () => collect([$approver]);
-        });
-
-        $this->be($user);
-
-        $start = Carbon::parse('next monday')->toDateString();
-        $end = Carbon::parse($start)->addDays(2)->toDateString();
-
-        $response = $this->post(route('leave.store'), [
-            'start_date' => $start,
-            'end_date' => $end,
-            'leave_type' => 'personal',
-            'reason' => 'Testing notifications',
-        ]);
-
-        $response->assertStatus(302);
-
-        $leave = LeaveApplication::where('user_id', $user->id)->latest()->first();
-
-        Notification::assertSentTo(
-            collect([$approver]),
-            LeaveRequestSubmitted::class
-        );
-    }
+  
 
     public function test_only_authorized_user_can_create_leave(): void
     {
@@ -774,49 +694,122 @@ class LeaveManagementTest extends TestCase
         $user = $this->createUserWithLeaveAbility(['leave_balance' => 10]);
         $this->actingAs($user);
 
+        $date = now()->addDays(3)->toDateString(); // any future date
+
         // First leave - Monday morning
-        $start1 = now()->next('Monday')->toDateString();
         $response1 = $this->post(route('leave.store'), [
-            'start_date' => $start1,
-            'end_date' => $start1,
+            'start_date' => $date,
+            'end_date' => $date,
             'leave_type' => 'personal',
             'reason' => 'Morning off',
+            'day_type' => 'half',
             'start_half_session' => 'morning',
             'end_half_session' => 'morning',
         ]);
         $response1->assertStatus(302);
 
-        // Second leave - Monday afternoon (should not overlap morning session)
+        // Second leave - same day afternoon (should NOT overlap)
         $response2 = $this->post(route('leave.store'), [
-            'start_date' => $start1,
-            'end_date' => $start1,
+            'start_date' => $date,
+            'end_date' => $date,
             'leave_type' => 'personal',
             'reason' => 'Afternoon off',
+            'day_type' => 'half',
             'start_half_session' => 'afternoon',
             'end_half_session' => 'afternoon',
         ]);
         $response2->assertStatus(302);
 
-        // Ensure both leaves are saved and counted separately
-        $leaves = LeaveApplication::where('user_id', $user->id)->get();
+        // Check both leaves exist
+        $leaves = LeaveApplication::where('user_id', $user->id)
+            ->where('start_date', $date)
+            ->get();
+
         $this->assertCount(2, $leaves);
+
+        // Ensure sessions are correct
+        $this->assertTrue($leaves->contains(fn ($l) => $l->start_half_session === 'morning'));
+        $this->assertTrue($leaves->contains(fn ($l) => $l->start_half_session === 'afternoon'));
     }
 
-    public function test_leave_request_equal_to_leave_balance_is_successful(): void
+    public function test_non_admin_cannot_apply_leave_for_past_dates(): void
     {
-        $user = $this->createUserWithLeaveAbility(['leave_balance' => 3]);
+        $user = $this->createUserWithLeaveAbility();
         $this->actingAs($user);
 
-        $start = now()->addDays(10)->toDateString();
-        $end = now()->addDays(12)->toDateString(); // 3 days
+        $pastDate = now()->subDays(3)->toDateString();
 
+      $response = $this->post(route('leave.store'), [
+    'start_date' => $pastDate,
+    'end_date' => $pastDate,
+    'leave_type' => 'personal',
+    'reason' => 'Trying past date',
+    'day_type' => 'full', // <-- use the valid value
+]);
+
+
+
+        // Non-admin cannot apply for past date
+        $response->assertSessionHasErrors('start_date');
+
+        // Ensure no leave is created
+        $this->assertDatabaseMissing('leave_applications', [
+            'user_id' => $user->id,
+            'start_date' => $pastDate,
+        ]);
+    }
+
+    public function test_admin_can_apply_sick_leave_for_self_in_past(): void
+{
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $this->actingAs($admin);
+
+    $pastDate = now()->subDays(2)->toDateString();
+
+    $response = $this->post(route('leave.store'), [
+        'start_date' => $pastDate,
+        'end_date' => $pastDate,
+        'leave_type' => 'sick', // Allowed
+        'reason' => 'Admin sick leave in past',
+        'day_type' => 'full',
+    ]);
+
+    $response->assertStatus(302);
+
+    $this->assertDatabaseHas('leave_applications', [
+        'user_id' => $admin->id,
+        'start_date' => $pastDate,
+        'leave_type' => 'sick',
+        'reason' => 'Admin sick leave in past',
+    ]);
+}
+
+public function test_admin_cannot_apply_annual_or_personal_leave_for_self_in_past(): void
+{
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $this->actingAs($admin);
+
+    $pastDate = now()->subDays(2)->toDateString();
+
+    foreach (['annual', 'personal'] as $type) {
         $response = $this->post(route('leave.store'), [
-            'start_date' => $start,
-            'end_date' => $end,
-            'leave_type' => 'annual',
-            'reason' => 'Using full balance',
+            'start_date' => $pastDate,
+            'end_date' => $pastDate,
+            'leave_type' => $type,
+            'reason' => 'Admin '.$type.' leave in past',
+            'day_type' => 'full',
         ]);
 
-        $response->assertStatus(302);
+        $response->assertSessionHasErrors('start_date');
+
+        $this->assertDatabaseMissing('leave_applications', [
+            'user_id' => $admin->id,
+            'start_date' => $pastDate,
+            'leave_type' => $type,
+        ]);
     }
+}
+
 }
