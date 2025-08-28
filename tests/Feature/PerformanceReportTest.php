@@ -32,31 +32,30 @@ class PerformanceReportTest extends TestCase
     }
 
     public function test_show_returns_inertia_response_with_expected_props()
-{
-    $targetUser = User::factory()->create();
+    {
+        $targetUser = User::factory()->create();
 
-    $mockAction = Mockery::mock(ShowPerformance::class);
-    $mockAction->shouldReceive('handle')
-        ->once()
-        ->with(Mockery::type(User::class)) // <-- type matcher
-        ->andReturn([
-            'score' => 95,
-            'details' => 'Excellent performance',
-        ]);
+        $mockAction = Mockery::mock(ShowPerformance::class);
+        $mockAction->shouldReceive('handle')
+            ->once()
+            ->with(Mockery::type(User::class)) // <-- type matcher
+            ->andReturn([
+                'score' => 95,
+                'details' => 'Excellent performance',
+            ]);
 
-    $this->app->instance(ShowPerformance::class, $mockAction);
+        $this->app->instance(ShowPerformance::class, $mockAction);
 
-    $response = $this->actingAs($this->authUser)
-        ->get(route('performance.show', $targetUser));
+        $response = $this->actingAs($this->authUser)
+            ->get(route('performance.show', $targetUser));
 
-    $response->assertStatus(200)
-        ->assertInertia(fn ($page) => $page
-            ->component('Performance/Show')
-            ->where('score', 95)
-            ->where('details', 'Excellent performance')
-        );
-}
-
+        $response->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->component('Performance/Show')
+                ->where('score', 95)
+                ->where('details', 'Excellent performance')
+            );
+    }
 
     public function test_generate_summary_returns_json_with_summary()
     {

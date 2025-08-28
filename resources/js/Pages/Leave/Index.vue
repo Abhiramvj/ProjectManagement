@@ -415,6 +415,19 @@ compensatory: {
 
 }
 
+const leaveTypeIcons = {
+  annual: '🌴',
+  personal: '📝',
+  sick: '🤒',
+  emergency: '🚨',
+  maternity: '🤰',
+  paternity: '👨‍🍼',
+  wfh: '💻',
+  compensatory: '⏰',
+  default: '📌',
+};
+
+
 const leaveTypeTags = {
   sick: 'bg-pink-100 text-pink-600',
   casual: 'bg-blue-100 text-blue-600',
@@ -640,6 +653,13 @@ const statusCardBorderClass = (status) => {
               </div>
             </div>
 
+
+             <!-- Secondary Action Buttons -->
+            <div class="grid grid-cols-2 gap-4">
+                <button type="button" @click="openRequestsModal" class="btn-secondary w-full">My Requests</button>
+                <button type="button" @click="openPolicyModal" class="btn-secondary w-full">Leave Policy</button>
+            </div>
+
             <!-- Card 2: Upcoming Approved Leave -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
               <h2 class="text-lg font-semibold text-slate-800 mb-4">Upcoming Approved Leave</h2>
@@ -766,11 +786,7 @@ const statusCardBorderClass = (status) => {
               </form>
             </div>
             
-            <!-- Secondary Action Buttons -->
-            <div class="grid grid-cols-2 gap-4">
-                <button type="button" @click="openRequestsModal" class="btn-secondary w-full">My Requests</button>
-                <button type="button" @click="openPolicyModal" class="btn-secondary w-full">Leave Policy</button>
-            </div>
+           
 
           </div>
         </div>
@@ -802,7 +818,24 @@ const statusCardBorderClass = (status) => {
     <div v-if="isPolicyModalVisible" @click.self="closePolicyModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 font-sans">
       <div class="bg-slate-50 rounded-xl shadow-2xl max-w-2xl w-full flex flex-col" style="height: 90vh; max-height: 750px;">
         <header class="flex-shrink-0 flex justify-between items-center p-5 border-b border-slate-200"><div class="flex items-center gap-3"><div class="bg-indigo-100 rounded-full p-2"><svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div><h3 class="text-xl font-bold text-slate-800">Company Leave Policy</h3></div><button @click="closePolicyModal" class="p-2 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></header>
-        <div class="flex-grow p-6 overflow-y-auto space-y-6"><div v-for="(policy, type) in leaveTypeDescriptions" :key="type" class="bg-white p-5 rounded-lg border border-slate-200"><div class="flex items-center gap-3 mb-3"><span class="bg-slate-100 rounded-full p-2"><svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></span><h4 class="text-lg font-semibold text-slate-700 capitalize">{{ policy.title }}</h4></div><blockquote class="p-4 bg-slate-50/70 border-l-4 border-slate-300 rounded-r-lg mb-4"><p class="text-sm text-slate-600 italic">"{{ policy.summary }}"</p></blockquote><ul class="list-disc list-inside space-y-2 text-sm text-slate-600 leading-relaxed"><li v-for="(detail, index) in policy.details" :key="index">{{ detail }}</li></ul></div></div>
+        <div class="flex-grow p-6 overflow-y-auto space-y-6">
+          <div v-for="(policy, type) in leaveTypeDescriptions" :key="type" class="p-4 bg-white rounded-lg shadow border border-slate-200 flex items-start gap-4">
+  <!-- Icon for the leave type -->
+  <div class="text-3xl">
+    {{ leaveTypeIcons[type] || leaveTypeIcons.default }}
+  </div>
+
+  <!-- Policy text -->
+  <div>
+    <h4 class="font-semibold text-slate-800 text-sm mb-1">{{ policy.title }}</h4>
+    <p class="text-xs text-slate-600 mb-2">{{ policy.summary }}</p>
+    <ul class="list-disc pl-4 text-xs text-slate-500 space-y-1">
+      <li v-for="(detail, index) in policy.details" :key="index">{{ detail }}</li>
+    </ul>
+  </div>
+</div>
+
+        </div>
         <footer class="flex-shrink-0 flex justify-end p-4 bg-white/50 border-t border-slate-200"><button @click="closePolicyModal" class="btn-secondary">Close</button></footer>
       </div>
     </div>

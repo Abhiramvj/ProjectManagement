@@ -14,12 +14,14 @@ class Notification extends Model
      */
     protected $table = 'notifications';
 
-    public $incrementing = false;  
-    protected $keyType = 'string';   
+    public $incrementing = false;
 
-      protected $fillable = [
+    protected $keyType = 'string';
+
+    protected $fillable = [
         'id', 'notifiable_id', 'notifiable_type', 'type', 'data', 'read_at',
     ];
+
     /**
      * The attributes that should be cast.
      *

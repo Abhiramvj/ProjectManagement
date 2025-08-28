@@ -137,21 +137,20 @@ class UserTest extends TestCase
 
     #[Test]
     public function test_user_with_manage_leave_permission_can_approve_leave(): void
-{
-    // Create a user and give them the role/permission
-    $manager = User::factory()->create();
-    $manager->assignRole('admin'); // ensure role has 'manage leave applications' permission
+    {
+        // Create a user and give them the role/permission
+        $manager = User::factory()->create();
+        $manager->assignRole('admin'); // ensure role has 'manage leave applications' permission
 
-    // Create an employee
-    $employee = User::factory()->create();
+        // Create an employee
+        $employee = User::factory()->create();
 
-    // Make sure the manager has the permission
-    $this->assertTrue($manager->can('manage leave applications'));
+        // Make sure the manager has the permission
+        $this->assertTrue($manager->can('manage leave applications'));
 
-    // Assert they can approve the employee's leave
-    $this->assertTrue($manager->canApproveLeaveFor($employee));
-}
-
+        // Assert they can approve the employee's leave
+        $this->assertTrue($manager->canApproveLeaveFor($employee));
+    }
 
     #[Test]
     public function admin_or_hr_can_approve_leave_for_any_user(): void

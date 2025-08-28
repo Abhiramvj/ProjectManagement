@@ -21,28 +21,27 @@ class ProfileTest extends TestCase
         $response->assertOk();
     }
 
-  public function test_profile_information_can_be_updated()
-{
-    $user = User::factory()->create();
+    public function test_profile_information_can_be_updated()
+    {
+        $user = User::factory()->create();
 
-    // acting as normal user (no special permission)
-    $response = $this
-        ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => 'test@example.com', // will be ignored for normal users
-        ]);
+        // acting as normal user (no special permission)
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => 'Test User',
+                'email' => 'test@example.com', // will be ignored for normal users
+            ]);
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
 
-    $user->refresh();
+        $user->refresh();
 
-    $this->assertSame('Test User', $user->name); // updated
-    $this->assertNotSame('test@example.com', $user->email); // email unchanged
-}
-
+        $this->assertSame('Test User', $user->name); // updated
+        $this->assertNotSame('test@example.com', $user->email); // email unchanged
+    }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {

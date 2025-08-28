@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Actions\Leave\GetLeave;
 use App\Models\LeaveApplication;
 use App\Models\User;
-use App\Notifications\LeaveRequestSubmitted;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -249,8 +248,6 @@ class LeaveManagementTest extends TestCase
     }
 
     #[Test]
-
-   
     public function submission_with_missing_fields_fails(): void
     {
         $user = $this->createUserWithLeaveAbility();
@@ -658,8 +655,6 @@ class LeaveManagementTest extends TestCase
         $response->assertSessionDoesntHaveErrors('start_date');
     }
 
-  
-
     public function test_only_authorized_user_can_create_leave(): void
     {
         $unauthorizedUser = User::factory()->create();
@@ -739,15 +734,13 @@ class LeaveManagementTest extends TestCase
 
         $pastDate = now()->subDays(3)->toDateString();
 
-      $response = $this->post(route('leave.store'), [
-    'start_date' => $pastDate,
-    'end_date' => $pastDate,
-    'leave_type' => 'personal',
-    'reason' => 'Trying past date',
-    'day_type' => 'full', // <-- use the valid value
-]);
-
-
+        $response = $this->post(route('leave.store'), [
+            'start_date' => $pastDate,
+            'end_date' => $pastDate,
+            'leave_type' => 'personal',
+            'reason' => 'Trying past date',
+            'day_type' => 'full', // <-- use the valid value
+        ]);
 
         // Non-admin cannot apply for past date
         $response->assertSessionHasErrors('start_date');
@@ -760,56 +753,55 @@ class LeaveManagementTest extends TestCase
     }
 
     public function test_admin_can_apply_sick_leave_for_self_in_past(): void
-{
-    $admin = User::factory()->create();
-    $admin->assignRole('admin');
-    $this->actingAs($admin);
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $this->actingAs($admin);
 
-    $pastDate = now()->subDays(2)->toDateString();
+        $pastDate = now()->subDays(2)->toDateString();
 
-    $response = $this->post(route('leave.store'), [
-        'start_date' => $pastDate,
-        'end_date' => $pastDate,
-        'leave_type' => 'sick', // Allowed
-        'reason' => 'Admin sick leave in past',
-        'day_type' => 'full',
-    ]);
-
-    $response->assertStatus(302);
-
-    $this->assertDatabaseHas('leave_applications', [
-        'user_id' => $admin->id,
-        'start_date' => $pastDate,
-        'leave_type' => 'sick',
-        'reason' => 'Admin sick leave in past',
-    ]);
-}
-
-public function test_admin_cannot_apply_annual_or_personal_leave_for_self_in_past(): void
-{
-    $admin = User::factory()->create();
-    $admin->assignRole('admin');
-    $this->actingAs($admin);
-
-    $pastDate = now()->subDays(2)->toDateString();
-
-    foreach (['annual', 'personal'] as $type) {
         $response = $this->post(route('leave.store'), [
             'start_date' => $pastDate,
             'end_date' => $pastDate,
-            'leave_type' => $type,
-            'reason' => 'Admin '.$type.' leave in past',
+            'leave_type' => 'sick', // Allowed
+            'reason' => 'Admin sick leave in past',
             'day_type' => 'full',
         ]);
 
-        $response->assertSessionHasErrors('start_date');
+        $response->assertStatus(302);
 
-        $this->assertDatabaseMissing('leave_applications', [
+        $this->assertDatabaseHas('leave_applications', [
             'user_id' => $admin->id,
             'start_date' => $pastDate,
-            'leave_type' => $type,
+            'leave_type' => 'sick',
+            'reason' => 'Admin sick leave in past',
         ]);
     }
-}
 
+    public function test_admin_cannot_apply_annual_or_personal_leave_for_self_in_past(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $this->actingAs($admin);
+
+        $pastDate = now()->subDays(2)->toDateString();
+
+        foreach (['annual', 'personal'] as $type) {
+            $response = $this->post(route('leave.store'), [
+                'start_date' => $pastDate,
+                'end_date' => $pastDate,
+                'leave_type' => $type,
+                'reason' => 'Admin '.$type.' leave in past',
+                'day_type' => 'full',
+            ]);
+
+            $response->assertSessionHasErrors('start_date');
+
+            $this->assertDatabaseMissing('leave_applications', [
+                'user_id' => $admin->id,
+                'start_date' => $pastDate,
+                'leave_type' => $type,
+            ]);
+        }
+    }
 }
