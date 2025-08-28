@@ -71,6 +71,13 @@ class User extends Authenticatable
         'team_id',
         'image',
         'leave_balance',
+        'total_experience',
+        'company_experience',
+        'comp_off_balance',
+        'total_annual_leave',
+        'total_sick_leave',
+        'total_personal_leave',
+
     ];
 
     /**
@@ -286,10 +293,10 @@ class User extends Authenticatable
     /**
      * Get the parent user (manager/supervisor)
      */
-    // public function parent()
-    // {
-    //     return $this->belongsTo(User::class, 'parent_id');
-    // }
+    public function parent()
+    {
+        return $this->belongsTo(User::class, 'parent_id');
+    }
 
     /**
      * Get direct subordinates
@@ -504,11 +511,11 @@ class User extends Authenticatable
         return $this->hasMany(CalendarNote::class);
     }
 
-    public function parent()
-    {
-        // A user BELONGS TO another user (their parent/manager).
-        return $this->belongsTo(User::class, 'parent_id');
-    }
+    // public function parent()
+    // {
+    //     // A user BELONGS TO another user (their parent/manager).
+    //     return $this->belongsTo(User::class, 'parent_id');
+    // }
 
     protected function avatarUrl(): Attribute
     {

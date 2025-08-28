@@ -78,7 +78,7 @@ const initializeChart = () => {
         id: "id",
         email: "email",
         hire_date: "hire_date",
-        total_experience_years: "total_experience_years",
+        total_experience: "total_experience",
         canViewPerformance: "canViewPerformance",
         performance_summary: "performance_summary"
       },
@@ -147,7 +147,7 @@ const getTaskProgress = (summary) => {
     </p>
     <p>
         <strong class="font-semibold text-gray-700 w-32 inline-block">Experience:</strong>
-        <span class="text-gray-800">{{ selectedEmployee.total_experience_years ? `${selectedEmployee.total_experience_years} years` : 'N/A' }}</span>
+        <span class="text-gray-800">{{ selectedEmployee.total_experience ? `${selectedEmployee.total_experience} years` : 'N/A' }}</span>
     </p>
 </div>
 

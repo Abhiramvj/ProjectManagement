@@ -11,7 +11,9 @@ use App\Mail\LeaveApplicationApproved;
 use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
 use App\Models\LeaveApplication;
+use Illuminate\Support\Facades\Mail;
 use App\Models\LeaveLog; // <-- IMPORT THE LEAVELOG MODEL
+use App\Models\MailLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;

@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -14,10 +15,10 @@ const props = defineProps({
 
 // Your form
 const form = useForm({
-    work_date: new Date().toISOString().split('T')[0],
-    hours_worked: '',
-    description: '',
-    project_id: '',
+  project_id: '',
+  work_date: new Date().toISOString().split('T')[0],
+  hours_worked: '',
+  description: '',
 });
 
 // List of previous descriptions for autocomplete
@@ -33,13 +34,18 @@ const previousDescriptions = ref([
 const showSuggestions = ref(false);
 
 const submitHours = () => {
-    form.post(route('hours.store'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset('hours_worked', 'description', 'project_id');
-        },
-    });
+  if (!form) {
+    console.error('Form is null or undefined');
+    return;
+  }
+  form.post(route('hours.store'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      form.reset(); // Consider resetting all form fields
+    },
+  });
 };
+
 
 const logs = computed(() => props.timeLogs.data);
 const paginationLinks = computed(() => props.timeLogs.links);
@@ -49,6 +55,7 @@ const formatDate = (dateString) => {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'UTC',
         timeZone: 'UTC',
     });
 };
@@ -156,6 +163,7 @@ const hideSuggestions = () => {
                             </ul>
                         </div>
 
+
                         <div class="flex items-center justify-end pt-2">
                             <button type="submit"
                                 :disabled="form.processing"
@@ -179,6 +187,7 @@ const hideSuggestions = () => {
                             </div>
                         </div>
                     </header>
+
 
                     <div class="flow-root">
                         <div class="overflow-x-auto">
@@ -249,3 +258,4 @@ const hideSuggestions = () => {
         </div>
     </AuthenticatedLayout>
 </template>
+

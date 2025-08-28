@@ -44,10 +44,6 @@ class ImportUsers implements ToModel, WithHeadingRow, WithValidation
             'email' => 'required|email|unique:users,email',
             'designation' => 'required|string',
             'role' => 'required|string|exists:roles,name',
-
-            // ====================================================================
-            // === THE KEY FIX IS HERE ===
-            // Change the strict 'date_format' rule to the flexible 'date' rule.
             'doj' => 'required|date',
             'birth_date' => 'nullable|date',
             // ====================================================================
