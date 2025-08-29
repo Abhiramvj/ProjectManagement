@@ -15,6 +15,8 @@ class LeaveApplicationApproved extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public string $eventType = 'leave_approved';
+
     public function __construct(public LeaveApplication $leaveApplication) {}
 
     public function envelope(): Envelope
@@ -29,21 +31,9 @@ class LeaveApplicationApproved extends Mailable
 
     public function headers(): Headers
     {
-        return new Headers(
-            text: [
-                'X-Leave-Application-ID' => $this->leaveApplication->id,
-                'X-Event-Type' => 'leave_approved',
-            ],
-        );
-    }
-
-    // --- ADD THIS BUILD METHOD ---
-    public function build()
-    {
-        $this->withSwiftMessage(function ($message) {
-            $message->getHeaders()->addTextHeader('X-Leave-Application-ID', $this->leaveApplication->id);
-            $message->getHeaders()->addTextHeader('X-Event-Type', 'leave_approved');
-        });
-        return $this;
+        return new Headers(text: [
+            'X-Leave-Application-ID' => $this->leaveApplication->id,
+            'X-Event-Type' => $this->eventType,
+        ]);
     }
 }
