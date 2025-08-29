@@ -271,7 +271,7 @@ class LeaveApplicationController extends Controller
         }
     }
 
-    private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
+      private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
     {
         // --- STEP 1: RENDER THE MAIL TO HTML ---
         // This is the most important new line. It takes your Markdown template
@@ -298,7 +298,7 @@ class LeaveApplicationController extends Controller
 
         try {
             // Send the actual email.
-            Mail::to($recipientEmail)->queue($mailable);
+            Mail::to($recipientEmail)->send($mailable);
 
             // LOG SUCCESS: The $logData array now includes the 'body_html'
             MailLog::create(array_merge($logData, [
