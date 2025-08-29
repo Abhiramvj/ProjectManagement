@@ -5,10 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Illuminate\Notifications\DatabaseNotification;
-
 
 class NotificationController extends Controller
 {
@@ -16,28 +15,27 @@ class NotificationController extends Controller
      * The main notifications page, scoped by user role.
      */
     public function index()
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    // Start building the query using our new Notification model
-    $query = Notification::query();
+        // Start building the query using our new Notification model
+        $query = Notification::query();
 
-    $this->scopeQueryByUserRole($query);
+        $this->scopeQueryByUserRole($query);
 
-    // Exclude self-generated notifications
-    if ($user->hasRole('team-lead')) {
-        $query->where('notifiable_id', '!=', $user->id);
+        // Exclude self-generated notifications
+        if ($user->hasRole('team-lead')) {
+            $query->where('notifiable_id', '!=', $user->id);
+        }
+
+        $notifications = $query->with('user:id,name') // Eager load the user's name
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return Inertia::render('Notifications/Index', [
+            'notifications' => $notifications,
+        ]);
     }
-
-    $notifications = $query->with('user:id,name') // Eager load the user's name
-        ->orderBy('created_at', 'desc')
-        ->paginate(20);
-
-    return Inertia::render('Notifications/Index', [
-        'notifications' => $notifications,
-    ]);
-}
-
 
     /**
      * Get recent notifications for the dropdown, scoped by user role.
@@ -93,26 +91,18 @@ class NotificationController extends Controller
         }
     }
 
-  
-public function markAsRead($id)
-{
-    $notification = DatabaseNotification::findOrFail($id);
-    $notification->update(['read_at' => now()]);
+    public function markAsRead($id)
+    {
+        $notification = DatabaseNotification::findOrFail($id);
+        $notification->update(['read_at' => now()]);
 
-    return back()->with('success', 'Notification marked as read.');
-}
+        return back()->with('success', 'Notification marked as read.');
+    }
 
+    public function markAllAsRead()
+    {
+        auth()->user()->unreadNotifications->markAsRead();
 
-
-
-public function markAllAsRead()
-{
-    auth()->user()->unreadNotifications->markAsRead();
-
-    return back();
-}
-
-
-
-
+        return back();
+    }
 }

@@ -44,6 +44,7 @@ class LeaveApplicationApproved extends Mailable
             $message->getHeaders()->addTextHeader('X-Leave-Application-ID', $this->leaveApplication->id);
             $message->getHeaders()->addTextHeader('X-Event-Type', 'leave_approved');
         });
+
         return $this;
     }
 }
