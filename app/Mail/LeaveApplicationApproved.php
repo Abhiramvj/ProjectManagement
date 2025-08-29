@@ -27,18 +27,23 @@ class LeaveApplicationApproved extends Mailable
         return new Content(markdown: 'emails.leave.approved');
     }
 
-    /**
-     * Get the message headers.
-     *
-     * THIS IS THE CRUCIAL PART
-     */
     public function headers(): Headers
     {
         return new Headers(
             text: [
                 'X-Leave-Application-ID' => $this->leaveApplication->id,
-                'X-Event-Type' => 'leave_approved', // A custom name for this event
+                'X-Event-Type' => 'leave_approved',
             ],
         );
+    }
+
+    // --- ADD THIS BUILD METHOD ---
+    public function build()
+    {
+        $this->withSwiftMessage(function ($message) {
+            $message->getHeaders()->addTextHeader('X-Leave-Application-ID', $this->leaveApplication->id);
+            $message->getHeaders()->addTextHeader('X-Event-Type', 'leave_approved');
+        });
+        return $this;
     }
 }

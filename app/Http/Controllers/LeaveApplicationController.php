@@ -50,15 +50,15 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-            // if ($recipients->isNotEmpty()) {
-            //     foreach ($recipients as $recipient) {
-            //         $this->sendEmail(
-            //             $leave_application,
-            //             new LeaveApplicationSubmitted($leave_application),
-            //             $recipient->email
-            //         );
-            //     }
-            // }
+            if ($recipients->isNotEmpty()) {
+                foreach ($recipients as $recipient) {
+                    $this->sendEmail(
+                        $leave_application,
+                        new LeaveApplicationSubmitted($leave_application),
+                        $recipient->email
+                    );
+                }
+            }
 
             return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
         } catch (ValidationException $e) {
@@ -132,11 +132,12 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-            // $employee = $leave_application->user;
-            // if ($employee) {
-            //     $mailable = new LeaveApplicationApproved($leave_application);
-            //     $this->sendEmail($leave_application, $mailable, $employee->email);
-            // }
+       $employee = $leave_application->user;
+if ($employee && !empty($employee->email)) { // add email existence check
+    $mailable = new LeaveApplicationApproved($leave_application);
+    $this->sendEmail($leave_application, $mailable, $employee->email);
+}
+
 
         } elseif ($status === 'rejected') {
             $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
@@ -173,11 +174,11 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-            // D. Prepare and send the rejection email.
-            // if ($user) {
-            //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
-            //     $this->sendEmail($leave_application, $mailable, $user->email);
-            // }
+
+            if ($user) {
+                $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+                $this->sendEmail($leave_application, $mailable, $user->email);
+            }
         }
 
         return Redirect::back()->with('success', 'Application status updated.');
@@ -244,72 +245,72 @@ class LeaveApplicationController extends Controller
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
     }
 
-    // private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
-    // {
-    //     // --- STEP 1: RENDER THE MAIL TO HTML ---
-    //     // This is the most important new line. It takes your Markdown template
-    //     // and converts it into a complete HTML string, exactly as it will be sent.
-    //     $emailHtmlContent = $mailable->render();
+    private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
+    {
+        // --- STEP 1: RENDER THE MAIL TO HTML ---
+        // This is the most important new line. It takes your Markdown template
+        // and converts it into a complete HTML string, exactly as it will be sent.
+        $emailHtmlContent = $mailable->render();
 
-    //     // Get the event type directly from the mailable's public property.
-    //     $eventType = $mailable->eventType ?? 'unknown_event';
+        // Get the event type directly from the mailable's public property.
+        $eventType = $mailable->eventType ?? 'unknown_event';
 
-    //     // --- STEP 2: PREPARE DATA FOR MONGODB ---
-    //     // Now we prepare the data array that will be saved to your database.
-    //     $logData = [
-    //         'leave_application_id' => $leaveApplication->id,
-    //         'recipient_email' => $recipientEmail,
-    //         'subject' => $mailable->subject ?? 'Leave Application Notification',
-    //         'event_type' => $eventType,
-    //         'sent_at' => now(),
-    //         'reason' => $leaveApplication->reason,
-    //         'leave_period' => $leaveApplication->start_date->format('M d, Y').' to '.$leaveApplication->end_date->format('M d, Y'),
+        // --- STEP 2: PREPARE DATA FOR MONGODB ---
+        // Now we prepare the data array that will be saved to your database.
+        $logData = [
+            'leave_application_id' => $leaveApplication->id,
+            'recipient_email' => $recipientEmail,
+            'subject' => $mailable->subject ?? 'Leave Application Notification',
+            'event_type' => $eventType,
+            'sent_at' => now(),
+            'reason' => $leaveApplication->reason,
+            'leave_period' => $leaveApplication->start_date->format('M d, Y').' to '.$leaveApplication->end_date->format('M d, Y'),
 
-    //         // --- Add the rendered HTML to the log data ---
-    //         'body_html' => $emailHtmlContent,
-    //     ];
+            // --- Add the rendered HTML to the log data ---
+            'body_html' => $emailHtmlContent,
+        ];
 
-    //     try {
-    //         // Send the actual email.
-    //         Mail::to($recipientEmail)->send($mailable);
+        try {
+            // Send the actual email.
+            Mail::to($recipientEmail)->send($mailable);
 
-    //         // LOG SUCCESS: The $logData array now includes the 'body_html'
-    //         MailLog::create(array_merge($logData, [
-    //             'status' => 'sent',
-    //             'error_message' => null,
-    //         ]));
+            // LOG SUCCESS: The $logData array now includes the 'body_html'
+            MailLog::create(array_merge($logData, [
+                'status' => 'sent',
+                'error_message' => null,
+            ]));
 
-    //     } catch (\Exception $e) {
-    //         // LOG FAILURE
-    //         Log::error(
-    //             'Mail sending failed for LeaveApplication ID '.$leaveApplication->id.
-    //             ' to '.$recipientEmail.': '.$e->getMessage()
-    //         );
-    //         // The log data still includes the HTML, so you can see what was supposed to be sent.
-    //         MailLog::create(array_merge($logData, [
-    //             'status' => 'failed',
-    //             'error_message' => $e->getMessage(),
-    //         ]));
-    //     }
-    // }
+        } catch (\Exception $e) {
+            // LOG FAILURE
+            Log::error(
+                'Mail sending failed for LeaveApplication ID '.$leaveApplication->id.
+                ' to '.$recipientEmail.': '.$e->getMessage()
+            );
+            // The log data still includes the HTML, so you can see what was supposed to be sent.
+            MailLog::create(array_merge($logData, [
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+            ]));
+        }
+    }
 
-    // private function getEventTypeFromMailable(Mailable $mailable): string
-    // {
-    //     // This handles modern Laravel Mailables (Laravel 9+)
-    //     if (method_exists($mailable, 'headers')) {
-    //         // NEW, CORRECT WAY: get the header and check if the result is not null.
-    //         $header = $mailable->headers()->get('X-Event-Type');
+    private function getEventTypeFromMailable(Mailable $mailable): string
+    {
+        // This handles modern Laravel Mailables (Laravel 9+)
+        if (method_exists($mailable, 'headers')) {
+            // NEW, CORRECT WAY: get the header and check if the result is not null.
+            $header = $mailable->headers()->get('X-Event-Type');
 
-    //         if ($header) {
-    //             // The getBodyAsString() method safely returns the header's value.
-    //             return $header->getBodyAsString();
-    //         }
-    //     }
+            if ($header) {
+                // The getBodyAsString() method safely returns the header's value.
+                return $header->getBodyAsString();
+            }
+        }
 
-    //     // Fallback if the header isn't set or for older mailables.
-    //     // It uses the Mailable's class name as the event type.
-    //     $path = explode('\\', get_class($mailable));
+        // Fallback if the header isn't set or for older mailables.
+        // It uses the Mailable's class name as the event type.
+        $path = explode('\\', get_class($mailable));
 
-    //     return array_pop($path);
-    // }
+        return array_pop($path);
+    }
 }
