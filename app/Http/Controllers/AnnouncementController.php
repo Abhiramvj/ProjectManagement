@@ -63,3 +63,4 @@ class AnnouncementController extends Controller
         return redirect()->back()->with('success', 'Announcement deleted successfully.');
     }
 }
+
