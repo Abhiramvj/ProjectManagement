@@ -56,4 +56,15 @@ class LeaveApplicationPolicy
     {
         return false; // No one can delete for now
     }
+
+    public function approveOrReject(User $user, LeaveApplication $leaveApplication): bool
+    {
+        // team-lead can approve/reject only if NOT their own request
+        if ($user->hasRole('team-lead') && $user->id !== $leaveApplication->user_id) {
+            return true;
+        }
+
+        // Otherwise, deny
+        return false;
+    }
 }

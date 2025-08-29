@@ -161,9 +161,14 @@ class StoreLeave
     private function sendNotifications(LeaveApplication $leaveApplication): void
     {
         try {
+            $applicantId = $leaveApplication->user_id;
+
             $approvers = $leaveApplication->user->getLeaveApprovers()->unique('id');
 
             foreach ($approvers as $approver) {
+                if ($approver->id === $applicantId) {
+                    continue; // skip notifying self
+                }
                 $approver->notify(new LeaveRequestSubmitted($leaveApplication));
             }
         } catch (\Exception $e) {

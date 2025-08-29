@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Mail;
 use App\Models\LeaveLog; // <-- IMPORT THE LEAVELOG MODEL
 use App\Models\MailLog;
-use App\Models\User;
+use App\Models\User; // <-- IMPORT THE LEAVELOG MODEL
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Routing\Controller;
@@ -32,6 +34,8 @@ use Inertia\Inertia;
 
 class LeaveApplicationController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(GetLeave $getLeaveRequests)
     {
         return Inertia::render('Leave/Index', $getLeaveRequests->handle());
@@ -375,7 +379,7 @@ public function update(UpdateLeaveRequest $request, LeaveApplication $leave_appl
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
     }
 
-      private function notifyLeaveStatus(LeaveApplication $leaveApplication, string $status): void
+    private function notifyLeaveStatus(LeaveApplication $leaveApplication, string $status): void
     {
         try {
             $user = $leaveApplication->user; // the requester

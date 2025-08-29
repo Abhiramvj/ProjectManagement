@@ -2,40 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\DatabaseNotification;
 
-class Notification extends Model
+class Notification extends DatabaseNotification
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'notifications';
+    // You don’t need to redefine fillables/casts since
+    // DatabaseNotification already has them.
+    // But if you want custom relationships or scopes, add here.
 
-    public $incrementing = false;
-
-    protected $keyType = 'string';
-
-    protected $fillable = [
-        'id', 'notifiable_id', 'notifiable_type', 'type', 'data', 'read_at',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'data' => 'array',
-        'read_at' => 'datetime',
-    ];
-
-    /**
-     * Get the user that the notification belongs to.
-     */
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class, 'notifiable_id');
     }

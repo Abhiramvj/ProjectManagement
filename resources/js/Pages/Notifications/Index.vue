@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Pagination from '@/Components/Pagination.vue'; 
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -221,43 +222,7 @@ const getDetailsRoute = () =>
                             {{ notifications.to }} of
                             {{ notifications.total }} results
                         </div>
-                        <!-- This nav block is now safe because it uses v-if/v-else -->
-                        <nav
-                            class="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                        >
-                            <template
-                                v-for="(link, index) in paginationLinks"
-                                :key="index"
-                            >
-                                <div
-                                    v-if="link.url === null"
-                                    v-html="link.label"
-                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-400 ring-1 ring-inset ring-gray-300"
-                                    :class="{
-                                        'rounded-l-md': index === 0,
-                                        'rounded-r-md':
-                                            index ===
-                                            paginationLinks.length - 1,
-                                    }"
-                                />
-                                <Link
-                                    v-else
-                                    :href="link.url"
-                                    v-html="link.label"
-                                    :class="{
-                                        'bg-slate-900 text-white': link.active,
-                                        'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50':
-                                            !link.active,
-                                        'rounded-l-md': index === 0,
-                                        'rounded-r-md':
-                                            index ===
-                                            paginationLinks.length - 1,
-                                    }"
-                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20"
-                                    preserve-scroll
-                                />
-                            </template>
-                        </nav>
+                        <Pagination :links="paginationLinks" />
                     </div>
                     <!-- ================================================================= -->
                     <!-- END OF THE FIX -->

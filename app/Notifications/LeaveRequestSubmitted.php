@@ -31,8 +31,8 @@ class LeaveRequestSubmitted extends Notification
             'leave_id' => $this->leaveApplication->id,
             'user_name' => $this->leaveApplication->user->name,
             'url' => $notifiable->hasPermissionTo('manage leave applications')
-                ? route('leave.manageRequests')
-                : route('leave.index'),
+                ? route('notifications.index')
+                : route('leave.manageRequests'),
         ];
     }
 }
