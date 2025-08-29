@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Notifications\DatabaseNotification;
+
 
 class NotificationController extends Controller
 {
@@ -14,20 +16,28 @@ class NotificationController extends Controller
      * The main notifications page, scoped by user role.
      */
     public function index()
-    {
-        // Start building the query using our new Notification model
-        $query = Notification::query();
+{
+    $user = Auth::user();
 
-        $this->scopeQueryByUserRole($query);
+    // Start building the query using our new Notification model
+    $query = Notification::query();
 
-        $notifications = $query->with('user:id,name') // Eager load the user's name
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+    $this->scopeQueryByUserRole($query);
 
-        return Inertia::render('Notifications/Index', [
-            'notifications' => $notifications,
-        ]);
+    // Exclude self-generated notifications
+    if ($user->hasRole('team-lead')) {
+        $query->where('notifiable_id', '!=', $user->id);
     }
+
+    $notifications = $query->with('user:id,name') // Eager load the user's name
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+
+    return Inertia::render('Notifications/Index', [
+        'notifications' => $notifications,
+    ]);
+}
+
 
     /**
      * Get recent notifications for the dropdown, scoped by user role.
@@ -83,26 +93,26 @@ class NotificationController extends Controller
         }
     }
 
-    // --- The following methods for marking notifications as read remain largely unchanged ---
-    // They are actions performed by the logged-in user on notifications they have access to.
+  
+public function markAsRead($id)
+{
+    $notification = DatabaseNotification::findOrFail($id);
+    $notification->update(['read_at' => now()]);
 
-    public function markAsRead($id)
-    {
-        $notification = auth()->user()->notifications()->find($id);
-        if ($notification) {
-            $notification->markAsRead(); // marks only for this user
-        }
+    return back()->with('success', 'Notification marked as read.');
+}
 
-        return response()->json(['success' => true]);
-    }
 
-    public function markAllAsRead()
-    {
-        $notifications = auth()->user()->unreadNotifications;
-        if ($notifications->isNotEmpty()) {
-            $notifications->markAsRead(); // marks only for current user
-        }
 
-        return response()->json(['success' => true]);
-    }
+
+public function markAllAsRead()
+{
+    auth()->user()->unreadNotifications->markAsRead();
+
+    return back();
+}
+
+
+
+
 }
