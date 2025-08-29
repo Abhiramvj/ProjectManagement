@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class LeaveApplicationController extends Controller
@@ -54,22 +53,24 @@ class LeaveApplicationController extends Controller
                 $query->whereIn('name', ['admin', 'hr']);
             })->get();
 
-            if ($recipients->isNotEmpty()) {
-                foreach ($recipients as $recipient) {
+            foreach ($recipients as $recipient) {
+                try {
                     $this->sendEmail(
                         $leave_application,
                         new LeaveApplicationSubmitted($leave_application),
                         $recipient->email
                     );
+                } catch (\Throwable $e) {
+                    Log::error("Mail sending failed for {$recipient->email}: ".$e->getMessage());
+                    // Don't break the flow if mail fails
                 }
             }
 
-            return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
-        } catch (ValidationException $e) {
-            // Validator exceptions will automatically send errors to Inertia
-            return Redirect::back()->withErrors($e->errors())->with('error', 'There were validation errors.');
-        } catch (\Exception $e) {
-            Log::error('Failed to store leave application: '.$e->getMessage());
+            return Redirect::route('leave.index')
+                ->with('success', 'Leave application submitted successfully.');
+
+        } catch (\Throwable $e) {
+            Log::error('Leave submission failed: '.$e->getMessage());
 
             return Redirect::back()->with('error', 'An unexpected server error occurred. Please try again later.');
         }
