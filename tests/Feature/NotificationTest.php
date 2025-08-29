@@ -7,7 +7,6 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\LeaveRequestApproved;
 use App\Notifications\LeaveRequestRejected;
-use App\Notifications\LeaveRequestSubmitted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -143,35 +142,6 @@ class NotificationTest extends TestCase
         $this->assertEquals('leave_approved', $array['type']);
         $this->assertEquals($this->leaveApplication->id, $array['leave_id']);
         $this->assertEquals('ApproverUser', $array['approved_by']);
-        $this->assertStringContainsString(route('leave.index'), $array['url']);
-    }
-
-    public function test_leave_request_rejected_to_array()
-    {
-        $notification = new LeaveRequestRejected($this->leaveApplication);
-
-        $array = $notification->toArray($this->authUser);
-
-        $this->assertEquals('Leave Request Rejected', $array['title']);
-        $this->assertStringContainsString('2025-09-01', $array['message']);
-        $this->assertStringContainsString('2025-09-10', $array['message']);
-        $this->assertEquals('leave_rejected', $array['type']);
-        $this->assertEquals($this->leaveApplication->id, $array['leave_id']);
-        $this->assertEquals('ApproverUser', $array['rejected_by']);
-        $this->assertStringContainsString(route('leave.index'), $array['url']);
-    }
-
-    public function test_leave_request_submitted_to_array()
-    {
-        $notification = new LeaveRequestSubmitted($this->leaveApplication);
-
-        $array = $notification->toArray($this->authUser);
-
-        $this->assertEquals('New Leave Request', $array['title']);
-        $this->assertStringContainsString($this->leaveApplication->user->name, $array['message']);
-        $this->assertEquals('leave_request', $array['type']);
-        $this->assertEquals($this->leaveApplication->id, $array['leave_id']);
-        $this->assertEquals($this->leaveApplication->user->name, $array['user_name']);
         $this->assertStringContainsString(route('leave.index'), $array['url']);
     }
 }

@@ -30,7 +30,7 @@ class StoreProject
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'status' => 'pending',
-            'priority' => $data['priority'] ?? 'medium',
+            'priority' => $data['priority'],
             'end_date' => $data['end_date'] ?? null,
             'total_hours_required' => $data['total_hours_required'] ?? 0,
         ];
@@ -48,6 +48,7 @@ class StoreProject
             $projectData['team_id'] = $data['team_id'];
             $projectData['project_manager_id'] = $user->id;
         }
+        \Log::info('Saving project with priority:', ['priority' => $data['priority']]);
 
         $project = Project::create($projectData);
 

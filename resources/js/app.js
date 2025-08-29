@@ -17,12 +17,11 @@ window.Echo = new Echo({
     encrypted: true,
 });
 
-window.Echo.private('user-import')
-    .listen('UserImportCompleted', (e) => {
-        // For example, show a toast notification here
-        alert(`Import completed for file: ${e.filePath}`);
-        // Or trigger a Vue state update or event bus emit
-    });
+window.Echo.private('user-import').listen('UserImportCompleted', (e) => {
+    // For example, show a toast notification here
+    alert(`Import completed for file: ${e.filePath}`);
+    // Or trigger a Vue state update or event bus emit
+});
 
 // Global Inertia event listener: clear flash messages after each Inertia navigation
 router.on('finish', () => {
@@ -33,7 +32,8 @@ router.on('finish', () => {
     }
 });
 
-const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
+const appName =
+    window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -41,7 +41,9 @@ createInertiaApp({
         const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
         const page = pages[`./Pages/${name}.vue`];
         if (!page) {
-            throw new Error(`Vue page not found: The page component for '${name}' was not found at './Pages/${name}.vue'.`);
+            throw new Error(
+                `Vue page not found: The page component for '${name}' was not found at './Pages/${name}.vue'.`,
+            );
         }
         return page;
     },

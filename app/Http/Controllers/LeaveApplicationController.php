@@ -11,17 +11,16 @@ use App\Mail\LeaveApplicationApproved;
 use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
 use App\Models\LeaveApplication;
-use Illuminate\Support\Facades\Mail;
-use App\Models\LeaveLog; // <-- IMPORT THE LEAVELOG MODEL
-use App\Models\MailLog;
+use App\Models\LeaveLog;
+use App\Models\MailLog; // <-- IMPORT THE LEAVELOG MODEL
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class LeaveApplicationController extends Controller
@@ -66,6 +65,28 @@ class LeaveApplicationController extends Controller
             return Redirect::back()->withErrors($e->errors())->with('error', 'There were validation errors.');
         } catch (\Exception $e) {
             Log::error('Failed to store leave application: '.$e->getMessage());
+            $recipients = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['admin', 'hr']);
+            })->get();
+
+            foreach ($recipients as $recipient) {
+                try {
+                    $this->sendEmail(
+                        $leave_application,
+                        new LeaveApplicationSubmitted($leave_application),
+                        $recipient->email
+                    );
+                } catch (\Throwable $e) {
+                    Log::error("Mail sending failed for {$recipient->email}: ".$e->getMessage());
+                    // Don't break the flow if mail fails
+                }
+            }
+
+            return Redirect::route('leave.index')
+                ->with('success', 'Leave application submitted successfully.');
+
+        } catch (\Throwable $e) {
+            Log::error('Leave submission failed: '.$e->getMessage());
 
             return Redirect::back()->with('error', 'An unexpected server error occurred. Please try again later.');
         }
@@ -132,12 +153,13 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-       $employee = $leave_application->user;
-if ($employee && !empty($employee->email)) { // add email existence check
-    $mailable = new LeaveApplicationApproved($leave_application);
-    $this->sendEmail($leave_application, $mailable, $employee->email);
-}
+            $this->notifyLeaveStatus($leave_application, 'approved');
 
+            $employee = $leave_application->user;
+            if ($employee) {
+                $mailable = new LeaveApplicationApproved($leave_application);
+                $this->sendEmail($leave_application, $mailable, $employee->email);
+            }
 
         } elseif ($status === 'rejected') {
             $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
@@ -174,7 +196,8 @@ if ($employee && !empty($employee->email)) { // add email existence check
                 ],
             ]);
 
-
+            $this->notifyLeaveStatus($leave_application, 'rejected');
+            // D. Prepare and send the rejection email.
             if ($user) {
                 $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
                 $this->sendEmail($leave_application, $mailable, $user->email);
@@ -219,7 +242,7 @@ if ($employee && !empty($employee->email)) { // add email existence check
 
         $leave_application->delete();
 
-        return Redirect::route('leave.index')->with('success', 'Leave request canceled.');
+        return Redirect::route('leave.fullRequests')->with('success', 'Leave request canceled.');
     }
 
     public function uploadDocument(Request $request, LeaveApplication $leave_application)
@@ -243,6 +266,25 @@ if ($employee && !empty($employee->email)) { // add email existence check
         ]);
 
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
+    }
+
+    private function notifyLeaveStatus(LeaveApplication $leaveApplication, string $status): void
+    {
+        try {
+            $user = $leaveApplication->user; // the requester
+
+            if ($status === 'approved') {
+                $user->notify(new \App\Notifications\LeaveRequestApproved($leaveApplication));
+            } elseif ($status === 'rejected') {
+                $user->notify(new \App\Notifications\LeaveRequestRejected($leaveApplication));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send leave status notification', [
+                'error' => $e->getMessage(),
+                'leave_id' => $leaveApplication->id,
+                'status' => $status,
+            ]);
+        }
     }
 
     private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailable, string $recipientEmail): void
@@ -272,7 +314,7 @@ if ($employee && !empty($employee->email)) { // add email existence check
 
         try {
             // Send the actual email.
-            Mail::to($recipientEmail)->send($mailable);
+            Mail::to($recipientEmail)->queue($mailable);
 
             // LOG SUCCESS: The $logData array now includes the 'body_html'
             MailLog::create(array_merge($logData, [

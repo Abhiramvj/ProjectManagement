@@ -9,11 +9,9 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 window.Pusher = Pusher;
 
-
-
 window.Echo = new Echo({
     broadcaster: 'pusher',
-    key: import.meta.env.VITE_PUSHER_APP_KEY,       // <-- CORRECT VITE SYNTAX
+    key: import.meta.env.VITE_PUSHER_APP_KEY, // <-- CORRECT VITE SYNTAX
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER, // <-- CORRECT VITE SYNTAX
-    forceTLS: true
+    forceTLS: true,
 });

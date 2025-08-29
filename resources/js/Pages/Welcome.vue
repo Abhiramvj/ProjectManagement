@@ -18,34 +18,60 @@ defineProps({
 <template>
     <Head title="Welcome to WorkSphere" />
 
-    <div class="min-h-screen antialiased bg-gray-50 dark:bg-gray-900 flex">
+    <div class="flex min-h-screen bg-gray-50 antialiased dark:bg-gray-900">
         <!-- Left Panel: Branding & Visuals with Auth Links -->
-        <div class="w-full lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-800 relative flex items-center justify-center overflow-hidden">
-            
+        <div
+            class="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-800 lg:w-1/2"
+        >
             <!-- Animated Shapes -->
             <div class="absolute inset-0 z-0">
-                <div class="absolute w-32 h-32 bg-white/10 rounded-full -top-10 -left-10 animate-float" style="animation-duration: 15s;"></div>
-                <div class="absolute w-48 h-48 bg-white/5 rounded-full -bottom-20 -right-10 animate-float" style="animation-duration: 12s; animation-delay: 3s;"></div>
-                <div class="absolute w-24 h-24 bg-white/10 rounded-full top-1/2 -right-12 animate-float" style="animation-duration: 18s; animation-delay: 5s;"></div>
-                <div class="absolute w-20 h-20 bg-white/10 rounded-lg bottom-1/4 -left-16 animate-float" style="animation-duration: 20s; animation-delay: 1s;"></div>
+                <div
+                    class="animate-float absolute -left-10 -top-10 h-32 w-32 rounded-full bg-white/10"
+                    style="animation-duration: 15s"
+                ></div>
+                <div
+                    class="animate-float absolute -bottom-20 -right-10 h-48 w-48 rounded-full bg-white/5"
+                    style="animation-duration: 12s; animation-delay: 3s"
+                ></div>
+                <div
+                    class="animate-float absolute -right-12 top-1/2 h-24 w-24 rounded-full bg-white/10"
+                    style="animation-duration: 18s; animation-delay: 5s"
+                ></div>
+                <div
+                    class="animate-float absolute -left-16 bottom-1/4 h-20 w-20 rounded-lg bg-white/10"
+                    style="animation-duration: 20s; animation-delay: 1s"
+                ></div>
             </div>
 
             <!-- Content -->
-            <div class="relative z-10 text-center text-white px-8 sm:px-12 py-12">
-                <svg class="h-24 w-24 mx-auto mb-6 opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div
+                class="relative z-10 px-8 py-12 text-center text-white sm:px-12"
+            >
+                <svg
+                    class="mx-auto mb-6 h-24 w-24 opacity-90"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                 </svg>
                 <h1 class="text-4xl font-bold tracking-tight">WorkSphere</h1>
-                <p class="mt-4 text-lg max-w-md opacity-80 mb-10">
-                    The effortless way for your team to track time, manage projects, and boost productivity.
+                <p class="mb-10 mt-4 max-w-md text-lg opacity-80">
+                    The effortless way for your team to track time, manage
+                    projects, and boost productivity.
                 </p>
-                
+
                 <!-- Auth Links -->
-                <div class="space-y-4 max-w-xs mx-auto">
+                <div class="mx-auto max-w-xs space-y-4">
                     <template v-if="$page.props.auth.user">
                         <Link
                             :href="route('dashboard')"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-blue-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition"
+                            class="flex w-full justify-center rounded-md border border-transparent bg-white px-4 py-3 text-base font-medium text-blue-700 shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                         >
                             Go to Dashboard
                         </Link>
@@ -54,58 +80,112 @@ defineProps({
                         <Link
                             v-if="canLogin"
                             :href="route('login')"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-500 hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-300 transition"
+                            class="flex w-full justify-center rounded-md border border-transparent bg-blue-500 px-4 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2"
                         >
                             Log In
                         </Link>
                         <Link
                             v-if="canRegister"
                             :href="route('register')"
-                            class="w-full flex justify-center py-3 px-4 border border-white rounded-md shadow-sm text-base font-medium text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition"
+                            class="flex w-full justify-center rounded-md border border-white px-4 py-3 text-base font-medium text-white shadow-sm transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                         >
                             Register
                         </Link>
                     </template>
                 </div>
-                 <!-- <p class="text-xs text-white/50 mt-12">
+                <!-- <p class="text-xs text-white/50 mt-12">
                     Laravel v{{ laravelVersion }} · PHP v{{ phpVersion }}
                  </p> -->
             </div>
         </div>
 
         <!-- Right Panel: UI Mockup -->
-        <div class="hidden lg:flex w-1/2 items-center justify-center p-12">
-            <div class="w-full max-w-lg transform transition-transform duration-300 hover:scale-105">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="p-4 bg-gray-100 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
-                        <span class="w-3 h-3 bg-red-400 rounded-full"></span>
-                        <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                        <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+        <div class="hidden w-1/2 items-center justify-center p-12 lg:flex">
+            <div
+                class="w-full max-w-lg transform transition-transform duration-300 hover:scale-105"
+            >
+                <div
+                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
+                >
+                    <div
+                        class="flex items-center space-x-2 border-b border-gray-200 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-700/50"
+                    >
+                        <span class="h-3 w-3 rounded-full bg-red-400"></span>
+                        <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+                        <span class="h-3 w-3 rounded-full bg-green-400"></span>
                     </div>
                     <div class="p-6">
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-white">Dashboard Overview</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Weekly Progress</p>
-                        <div class="flex items-end space-x-2 h-32">
-                            <div class="w-full bg-blue-200 dark:bg-blue-800/50 rounded-t-lg" style="height: 40%;"></div>
-                            <div class="w-full bg-blue-300 dark:bg-blue-700/50 rounded-t-lg" style="height: 60%;"></div>
-                            <div class="w-full bg-blue-200 dark:bg-blue-800/50 rounded-t-lg" style="height: 50%;"></div>
-                            <div class="w-full bg-blue-400 dark:bg-blue-600/50 rounded-t-lg" style="height: 80%;"></div>
-                            <div class="w-full bg-blue-300 dark:bg-blue-700/50 rounded-t-lg" style="height: 70%;"></div>
-                            <div class="w-full bg-blue-200 dark:bg-blue-800/50 rounded-t-lg" style="height: 55%;"></div>
-                            <div class="w-full bg-blue-400 dark:bg-blue-600/50 rounded-t-lg" style="height: 75%;"></div>
+                        <h3
+                            class="text-lg font-bold text-gray-800 dark:text-white"
+                        >
+                            Dashboard Overview
+                        </h3>
+                        <p
+                            class="mb-6 text-sm text-gray-500 dark:text-gray-400"
+                        >
+                            Weekly Progress
+                        </p>
+                        <div class="flex h-32 items-end space-x-2">
+                            <div
+                                class="w-full rounded-t-lg bg-blue-200 dark:bg-blue-800/50"
+                                style="height: 40%"
+                            ></div>
+                            <div
+                                class="w-full rounded-t-lg bg-blue-300 dark:bg-blue-700/50"
+                                style="height: 60%"
+                            ></div>
+                            <div
+                                class="w-full rounded-t-lg bg-blue-200 dark:bg-blue-800/50"
+                                style="height: 50%"
+                            ></div>
+                            <div
+                                class="w-full rounded-t-lg bg-blue-400 dark:bg-blue-600/50"
+                                style="height: 80%"
+                            ></div>
+                            <div
+                                class="w-full rounded-t-lg bg-blue-300 dark:bg-blue-700/50"
+                                style="height: 70%"
+                            ></div>
+                            <div
+                                class="w-full rounded-t-lg bg-blue-200 dark:bg-blue-800/50"
+                                style="height: 55%"
+                            ></div>
+                            <div
+                                class="w-full rounded-t-lg bg-blue-400 dark:bg-blue-600/50"
+                                style="height: 75%"
+                            ></div>
                         </div>
                         <div class="mt-8 space-y-4">
                             <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs">✓</span>
-                                <p class="ml-3 text-gray-600 dark:text-gray-300 ">Design new dashboard layout</p>
+                                <span
+                                    class="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500 text-xs text-white"
+                                    >✓</span
+                                >
+                                <p
+                                    class="ml-3 text-gray-600 dark:text-gray-300"
+                                >
+                                    Design new dashboard layout
+                                </p>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border-2 border-purple-500"></span>
-                                <p class="ml-3 text-gray-800 dark:text-gray-100 font-medium">Develop API endpoints</p>
+                                <span
+                                    class="h-5 w-5 rounded-full border-2 border-purple-500"
+                                ></span>
+                                <p
+                                    class="ml-3 font-medium text-gray-800 dark:text-gray-100"
+                                >
+                                    Develop API endpoints
+                                </p>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600"></span>
-                                <p class="ml-3 text-gray-600 dark:text-gray-300">User testing & feedback</p>
+                                <span
+                                    class="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-600"
+                                ></span>
+                                <p
+                                    class="ml-3 text-gray-600 dark:text-gray-300"
+                                >
+                                    User testing & feedback
+                                </p>
                             </div>
                         </div>
                     </div>

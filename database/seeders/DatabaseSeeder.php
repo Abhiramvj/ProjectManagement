@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             HolidaySeeder::class,
             ProjectSeeder::class,
             TimeLogSeeder::class,
-            TeamSeeder::class
+            TeamSeeder::class,
         ]);
     }
 }

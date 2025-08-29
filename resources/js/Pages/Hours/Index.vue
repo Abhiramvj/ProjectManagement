@@ -5,7 +5,12 @@ import InputError from '@/Components/InputError.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, DocumentMagnifyingGlassIcon } from '@heroicons/vue/24/solid';
+import {
+    PlusIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    DocumentMagnifyingGlassIcon,
+} from '@heroicons/vue/24/solid';
 
 const props = defineProps({
     timeLogs: Object,
@@ -14,26 +19,24 @@ const props = defineProps({
 });
 
 const form = useForm({
-  project_id: '',
-  work_date: new Date().toISOString().split('T')[0],
-  hours_worked: '',
-  description: '',
+    project_id: '',
+    work_date: new Date().toISOString().split('T')[0],
+    hours_worked: '',
+    description: '',
 });
 
-
 const submitHours = () => {
-  if (!form) {
-    console.error('Form is null or undefined');
-    return;
-  }
-  form.post(route('hours.store'), {
-    preserveScroll: true,
-    onSuccess: () => {
-      form.reset(); // Consider resetting all form fields
-    },
-  });
+    if (!form) {
+        console.error('Form is null or undefined');
+        return;
+    }
+    form.post(route('hours.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset(); // Consider resetting all form fields
+        },
+    });
 };
-
 
 const logs = computed(() => props.timeLogs.data);
 const paginationLinks = computed(() => props.timeLogs.links);
@@ -46,67 +49,141 @@ const formatDate = (dateString) => {
         timeZone: 'UTC',
     });
 };
-
 </script>
 
 <template>
     <Head title="Working Hours" />
 
     <AuthenticatedLayout>
-        <div class="bg-slate-50 min-h-full font-sans">
-            <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-
+        <div class="min-h-full bg-slate-50 font-sans">
+            <div class="mx-auto max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
                 <header>
-                    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Working Hours</h1>
-                    <p class="mt-1 text-md text-slate-600">
-                        {{ canViewAll ? 'Review and manage all employee time entries.' : 'Log your daily work and view your history.' }}
+                    <h1
+                        class="text-3xl font-bold tracking-tight text-slate-900"
+                    >
+                        Working Hours
+                    </h1>
+                    <p class="text-md mt-1 text-slate-600">
+                        {{
+                            canViewAll
+                                ? 'Review and manage all employee time entries.'
+                                : 'Log your daily work and view your history.'
+                        }}
                     </p>
                 </header>
 
-                <div v-if="!canViewAll" class="bg-white p-6 rounded-xl shadow-lg border border-slate-200/80">
+                <div
+                    v-if="!canViewAll"
+                    class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-lg"
+                >
                     <header>
-                        <h2 class="text-xl font-semibold text-slate-900">Log New Entry</h2>
+                        <h2 class="text-xl font-semibold text-slate-900">
+                            Log New Entry
+                        </h2>
                         <p class="mt-1 text-sm text-slate-500">
-                            Fill out the details below to record your work for a specific project and date.
+                            Fill out the details below to record your work for a
+                            specific project and date.
                         </p>
                     </header>
                     <form @submit.prevent="submitHours" class="mt-6 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div
+                            class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+                        >
                             <div class="md:col-span-2">
-                                <label for="project_id" class="block text-sm font-medium text-slate-700">Project</label>
-                                <select v-model="form.project_id" id="project_id" required
-                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                    <option value="" disabled>-- Select a project --</option>
-                                    <option v-for="project in assignableProjects" :key="project.id" :value="project.id">
+                                <label
+                                    for="project_id"
+                                    class="block text-sm font-medium text-slate-700"
+                                    >Project</label
+                                >
+                                <select
+                                    v-model="form.project_id"
+                                    id="project_id"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                >
+                                    <option value="" disabled>
+                                        -- Select a project --
+                                    </option>
+                                    <option
+                                        v-for="project in assignableProjects"
+                                        :key="project.id"
+                                        :value="project.id"
+                                    >
                                         {{ project.name }}
                                     </option>
                                 </select>
-                                <InputError class="mt-2" :message="form.errors.project_id" />
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.project_id"
+                                />
                             </div>
                             <div>
-                                <label for="work_date" class="block text-sm font-medium text-slate-700">Work Date</label>
-                                <input v-model="form.work_date" id="work_date" type="date" required
-                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-                                <InputError class="mt-2" :message="form.errors.work_date" />
+                                <label
+                                    for="work_date"
+                                    class="block text-sm font-medium text-slate-700"
+                                    >Work Date</label
+                                >
+                                <input
+                                    v-model="form.work_date"
+                                    id="work_date"
+                                    type="date"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.work_date"
+                                />
                             </div>
-                             <div>
-                                <label for="hours_worked" class="block text-sm font-medium text-slate-700">Hours Worked</label>
-                                <input v-model="form.hours_worked" id="hours_worked" type="number" step="0.25" min="0.25" max="24" required placeholder="e.g., 8"
-                                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-                                <InputError class="mt-2" :message="form.errors.hours_worked" />
+                            <div>
+                                <label
+                                    for="hours_worked"
+                                    class="block text-sm font-medium text-slate-700"
+                                    >Hours Worked</label
+                                >
+                                <input
+                                    v-model="form.hours_worked"
+                                    id="hours_worked"
+                                    type="number"
+                                    step="0.25"
+                                    min="0.25"
+                                    max="24"
+                                    required
+                                    placeholder="e.g., 8"
+                                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.hours_worked"
+                                />
                             </div>
                         </div>
 
                         <div>
-                            <label for="description" class="block text-sm font-medium text-slate-700">Description / Tasks</label>
-                            <textarea v-model="form.description" id="description" rows="3" placeholder="What did you work on?"
-                                      class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
-                            <InputError class="mt-2" :message="form.errors.description" />
+                            <label
+                                for="description"
+                                class="block text-sm font-medium text-slate-700"
+                                >Description / Tasks</label
+                            >
+                            <textarea
+                                v-model="form.description"
+                                id="description"
+                                rows="3"
+                                placeholder="What did you work on?"
+                                class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            ></textarea>
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.description"
+                            />
                         </div>
 
                         <div class="flex items-center justify-end pt-2">
-                             <button type="submit" :disabled="form.processing"
-                                     class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button
+                                type="submit"
+                                :disabled="form.processing"
+                                class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
                                 <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
                                 <span>Log Hours</span>
                             </button>
@@ -114,52 +191,140 @@ const formatDate = (dateString) => {
                     </form>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-lg border border-slate-200/80">
-                    <header class="p-6 border-b border-slate-200">
+                <div
+                    class="rounded-xl border border-slate-200/80 bg-white shadow-lg"
+                >
+                    <header class="border-b border-slate-200 p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h2 class="text-xl font-semibold text-slate-900">{{ canViewAll ? 'All Employee Hours' : 'My Logged Hours' }}</h2>
-                                <p class="mt-1 text-sm text-slate-500">A list of all time entries recorded in the system.</p>
+                                <h2
+                                    class="text-xl font-semibold text-slate-900"
+                                >
+                                    {{
+                                        canViewAll
+                                            ? 'All Employee Hours'
+                                            : 'My Logged Hours'
+                                    }}
+                                </h2>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    A list of all time entries recorded in the
+                                    system.
+                                </p>
                             </div>
-                            <div class="relative">
-                            </div>
+                            <div class="relative"></div>
                         </div>
                     </header>
 
                     <div class="flow-root">
                         <div class="overflow-x-auto">
                             <div class="inline-block min-w-full align-middle">
-                                <table class="min-w-full divide-y divide-slate-200">
+                                <table
+                                    class="min-w-full divide-y divide-slate-200"
+                                >
                                     <thead class="bg-slate-50">
                                         <tr>
-                                            <th v-if="canViewAll" scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Employee</th>
-                                            <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Project</th>
-                                            <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
-                                            <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Hours</th>
-                                            <th scope="col" class="py-3.5 px-6 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</th>
+                                            <th
+                                                v-if="canViewAll"
+                                                scope="col"
+                                                class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600"
+                                            >
+                                                Employee
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600"
+                                            >
+                                                Project
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600"
+                                            >
+                                                Date
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600"
+                                            >
+                                                Hours
+                                            </th>
+                                            <th
+                                                scope="col"
+                                                class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600"
+                                            >
+                                                Description
+                                            </th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-100 bg-white">
+                                    <tbody
+                                        class="divide-y divide-slate-100 bg-white"
+                                    >
                                         <tr v-if="!logs.length">
-                                            <td :colspan="canViewAll ? 5 : 4" class="px-6 py-24 text-center">
-                                                <DocumentMagnifyingGlassIcon class="mx-auto h-12 w-12 text-slate-400" />
-                                                <h3 class="mt-2 text-sm font-semibold text-slate-900">No time logs found</h3>
-                                                <p class="mt-1 text-sm text-slate-500">
-                                                    {{ canViewAll ? 'No employees have logged hours yet.' : 'Get started by logging your first time entry above.' }}
+                                            <td
+                                                :colspan="canViewAll ? 5 : 4"
+                                                class="px-6 py-24 text-center"
+                                            >
+                                                <DocumentMagnifyingGlassIcon
+                                                    class="mx-auto h-12 w-12 text-slate-400"
+                                                />
+                                                <h3
+                                                    class="mt-2 text-sm font-semibold text-slate-900"
+                                                >
+                                                    No time logs found
+                                                </h3>
+                                                <p
+                                                    class="mt-1 text-sm text-slate-500"
+                                                >
+                                                    {{
+                                                        canViewAll
+                                                            ? 'No employees have logged hours yet.'
+                                                            : 'Get started by logging your first time entry above.'
+                                                    }}
                                                 </p>
                                             </td>
                                         </tr>
-                                        <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-50 transition-colors">
-                                            <td v-if="canViewAll" class="whitespace-nowrap py-4 px-6 text-sm font-medium text-slate-800">{{ log.user.name }}</td>
-                                            <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600">
-                                                <span v-if="log.project" class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                        <tr
+                                            v-for="log in logs"
+                                            :key="log.id"
+                                            class="transition-colors hover:bg-slate-50"
+                                        >
+                                            <td
+                                                v-if="canViewAll"
+                                                class="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-800"
+                                            >
+                                                {{ log.user.name }}
+                                            </td>
+                                            <td
+                                                class="whitespace-nowrap px-6 py-4 text-sm text-slate-600"
+                                            >
+                                                <span
+                                                    v-if="log.project"
+                                                    class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"
+                                                >
                                                     {{ log.project.name }}
                                                 </span>
-                                                <span v-else class="text-slate-400">N/A</span>
+                                                <span
+                                                    v-else
+                                                    class="text-slate-400"
+                                                    >N/A</span
+                                                >
                                             </td>
-                                            <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-600">{{ formatDate(log.work_date) }}</td>
-                                            <td class="whitespace-nowrap py-4 px-6 text-sm text-slate-900 font-bold tabular-nums">{{ log.hours_worked }}</td>
-                                            <td class="py-4 px-6 text-sm text-slate-600 max-w-md truncate" :title="log.description">{{ log.description || '–' }}</td>
+                                            <td
+                                                class="whitespace-nowrap px-6 py-4 text-sm text-slate-600"
+                                            >
+                                                {{ formatDate(log.work_date) }}
+                                            </td>
+                                            <td
+                                                class="whitespace-nowrap px-6 py-4 text-sm font-bold tabular-nums text-slate-900"
+                                            >
+                                                {{ log.hours_worked }}
+                                            </td>
+                                            <td
+                                                class="max-w-md truncate px-6 py-4 text-sm text-slate-600"
+                                                :title="log.description"
+                                            >
+                                                {{ log.description || '–' }}
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -167,16 +332,24 @@ const formatDate = (dateString) => {
                         </div>
                     </div>
 
-                    <div v-if="paginationLinks.length > 3" class="p-4 sm:p-6 flex items-center justify-between border-t border-slate-200">
-  <div class="text-sm text-slate-600">
-    Showing <span class="font-medium">{{ timeLogs.from }}</span> to <span class="font-medium">{{ timeLogs.to }}</span> of <span class="font-medium">{{ timeLogs.total }}</span> results
-  </div>
-  <Pagination :links="paginationLinks" />
-</div>
-
-
+                    <div
+                        v-if="paginationLinks.length > 3"
+                        class="flex items-center justify-between border-t border-slate-200 p-4 sm:p-6"
+                    >
+                        <div class="text-sm text-slate-600">
+                            Showing
+                            <span class="font-medium">{{ timeLogs.from }}</span>
+                            to
+                            <span class="font-medium">{{ timeLogs.to }}</span>
+                            of
+                            <span class="font-medium">{{
+                                timeLogs.total
+                            }}</span>
+                            results
+                        </div>
+                        <Pagination :links="paginationLinks" />
+                    </div>
                 </div>
-
             </div>
         </div>
     </AuthenticatedLayout>

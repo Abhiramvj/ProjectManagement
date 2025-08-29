@@ -13,7 +13,9 @@ class ShowProject
      */
     public function handle(Project $project): array
     {
-        Auth::user()->can('view', $project) || abort(403);
+        if (! Auth::user()->can('view', $project)) {
+            throw new AuthorizationException('Not authorized to view this project.');
+        }
 
         $project->load('team.members', 'team.teamLead');
 

@@ -5,7 +5,6 @@ namespace App\Notifications;
 use App\Models\LeaveApplication;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestRejected extends Notification
 {
@@ -34,15 +33,16 @@ class LeaveRequestRejected extends Notification
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toArray($notifiable)
     {
         return [
             'title' => 'Leave Request Rejected',
-            'message' => 'Your leave request from '.$this->leaveApplication->start_date.' to '.$this->leaveApplication->end_date.' has been rejected.',
-            'type' => 'leave_rejected', // For the frontend to pick an icon
+            'message' => 'Your leave request from '.$this->leaveApplication->start_date.
+                         ' to '.$this->leaveApplication->end_date.' has been rejected.',
+            'type' => 'leave_rejected',
             'leave_id' => $this->leaveApplication->id,
-            'rejected_by' => Auth::user()->name,
-            'url' => route('leave.index'),
+            'approved_by' => auth()->user()->name,
+            'url' => route('leave.fullRequests'), // always employee page
         ];
     }
 }

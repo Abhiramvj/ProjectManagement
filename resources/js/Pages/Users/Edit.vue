@@ -36,62 +36,141 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Edit Employee: {{ form.name }}</h2>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                Edit Employee: {{ form.name }}
+            </h2>
         </template>
 
         <div class="py-12">
-            <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
+                <div
+                    class="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg"
+                >
                     <form @submit.prevent="submit" class="space-y-6">
                         <div>
                             <InputLabel for="name" value="Name" />
-                            <TextInput id="name" type="text" class="mt-1 block w-full" v-model="form.name" required autofocus />
-                            <InputError class="mt-2" :message="form.errors.name" />
+                            <TextInput
+                                id="name"
+                                type="text"
+                                class="mt-1 block w-full"
+                                v-model="form.name"
+                                required
+                                autofocus
+                            />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.name"
+                            />
                         </div>
 
                         <div>
                             <InputLabel for="email" value="Email" />
-                            <TextInput id="email" type="email" class="mt-1 block w-full" v-model="form.email" required />
-                            <InputError class="mt-2" :message="form.errors.email" />
+                            <TextInput
+                                id="email"
+                                type="email"
+                                class="mt-1 block w-full"
+                                v-model="form.email"
+                                required
+                            />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.email"
+                            />
                         </div>
 
                         <div>
-                            <InputLabel for="password" value="New Password (optional)" />
-                            <TextInput id="password" type="password" class="mt-1 block w-full" v-model="form.password" />
-                            <InputError class="mt-2" :message="form.errors.password" />
+                            <InputLabel
+                                for="password"
+                                value="New Password (optional)"
+                            />
+                            <TextInput
+                                id="password"
+                                type="password"
+                                class="mt-1 block w-full"
+                                v-model="form.password"
+                            />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.password"
+                            />
                         </div>
 
                         <div>
-                            <InputLabel for="password_confirmation" value="Confirm New Password" />
-                            <TextInput id="password_confirmation" type="password" class="mt-1 block w-full" v-model="form.password_confirmation" />
-                            <InputError class="mt-2" :message="form.errors.password_confirmation" />
+                            <InputLabel
+                                for="password_confirmation"
+                                value="Confirm New Password"
+                            />
+                            <TextInput
+                                id="password_confirmation"
+                                type="password"
+                                class="mt-1 block w-full"
+                                v-model="form.password_confirmation"
+                            />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.password_confirmation"
+                            />
                         </div>
 
                         <div>
                             <InputLabel for="role" value="Role" />
-                            <select id="role" v-model="form.roles[0]" required class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                <option disabled value="">-- Select a role --</option>
-                                <option v-for="role in roles" :key="role.id" :value="role.id">
+                            <select
+                                id="role"
+                                v-model="form.roles[0]"
+                                required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            >
+                                <option disabled value="">
+                                    -- Select a role --
+                                </option>
+                                <option
+                                    v-for="role in roles"
+                                    :key="role.id"
+                                    :value="role.id"
+                                >
                                     {{ role.name }}
                                 </option>
                             </select>
-                            <InputError class="mt-2" :message="form.errors.roles" />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.roles"
+                            />
                         </div>
 
                         <div>
-                            <InputLabel for="team" value="Assigned Team (optional)" />
-                            <select id="team" v-model="form.team_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                            <InputLabel
+                                for="team"
+                                value="Assigned Team (optional)"
+                            />
+                            <select
+                                id="team"
+                                v-model="form.team_id"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            >
                                 <option value="">-- Not Assigned --</option>
-                                <option v-for="team in teams" :key="team.id" :value="team.id">
+                                <option
+                                    v-for="team in teams"
+                                    :key="team.id"
+                                    :value="team.id"
+                                >
                                     {{ team.name }}
                                 </option>
                             </select>
-                            <InputError class="mt-2" :message="form.errors.team_id" />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.team_id"
+                            />
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <PrimaryButton :disabled="form.processing">Save Changes</PrimaryButton>
-                            <Link :href="route('users.index')" class="text-gray-600 hover:text-gray-900">Cancel</Link>
+                            <PrimaryButton :disabled="form.processing"
+                                >Save Changes</PrimaryButton
+                            >
+                            <Link
+                                :href="route('users.index')"
+                                class="text-gray-600 hover:text-gray-900"
+                                >Cancel</Link
+                            >
                         </div>
                     </form>
                 </div>

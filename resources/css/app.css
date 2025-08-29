@@ -3,134 +3,132 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 /* 2. Critical CSS - Load first */
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+    html {
+        scroll-behavior: smooth;
+    }
 
-  body {
-    @apply antialiased;
-  }
+    body {
+        @apply antialiased;
+    }
 }
 
 /* 3. Component styles */
 @layer components {
-  /* Form inputs */
-  input,
-  textarea,
-  select {
-    @apply bg-white text-black placeholder-gray-400 border border-gray-300 rounded;
-  }
+    /* Form inputs */
+    input,
+    textarea,
+    select {
+        @apply rounded border border-gray-300 bg-white text-black placeholder-gray-400;
+    }
 
-  /* Prose styling */
-  .prose-style div,
-  .prose-style span {
-    @apply text-gray-700;
-  }
+    /* Prose styling */
+    .prose-style div,
+    .prose-style span {
+        @apply text-gray-700;
+    }
 
-  /* Loading spinner */
-  .loading-spinner {
-    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary;
-  }
+    /* Loading spinner */
+    .loading-spinner {
+        @apply h-8 w-8 animate-spin rounded-full border-b-2 border-primary;
+    }
 
-  /* Card styles */
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-slate-200;
-  }
+    /* Card styles */
+    .card {
+        @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    }
 
-  .card-header {
-    @apply p-6 border-b border-slate-100;
-  }
+    .card-header {
+        @apply border-b border-slate-100 p-6;
+    }
 
-  .card-body {
-    @apply p-6;
-  }
+    .card-body {
+        @apply p-6;
+    }
 }
 
 /* 4. Org Chart Styles - Only load when needed */
 .chart-container .boc-light {
-  background: transparent !important;
+    background: transparent !important;
 }
 
 .boc-isla .boc-node-rect {
-  fill: #ffffff;
-  stroke: #e5e7eb;
-  stroke-width: 1px;
-  rx: 16px;
-  transition: all 0.3s ease;
+    fill: #ffffff;
+    stroke: #e5e7eb;
+    stroke-width: 1px;
+    rx: 16px;
+    transition: all 0.3s ease;
 }
 
 .boc-node:hover .boc-node-rect {
-  stroke: #6366f1;
-  stroke-width: 2px;
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+    stroke: #6366f1;
+    stroke-width: 2px;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
 .boc-node.highlighted-user .boc-node-rect {
-  fill: rgba(255, 255, 255, 0.6);
-  stroke: rgba(255, 255, 255, 0.3);
-  stroke-width: 2px;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    fill: rgba(255, 255, 255, 0.6);
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 2px;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 }
 
 .boc-node-level-0 .boc-node-rect {
-  fill: #f5f3ff;
-  stroke: #818cf8;
+    fill: #f5f3ff;
+    stroke: #818cf8;
 }
 
 .boc-isla .boc-img-0 {
-  width: 80px;
-  height: 80px;
-  border-radius: 9999px;
-  border: 4px solid white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    width: 80px;
+    height: 80px;
+    border-radius: 9999px;
+    border: 4px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .boc-isla .boc-field-0 {
-  font-size: 16px;
-  font-weight: 600;
-  fill: #1f2937;
-  transform: translateY(15px);
+    font-size: 16px;
+    font-weight: 600;
+    fill: #1f2937;
+    transform: translateY(15px);
 }
 
 .boc-isla .boc-field-1 {
-  font-size: 14px;
-  fill: #6b7280;
-  transform: translateY(15px);
+    font-size: 14px;
+    fill: #6b7280;
+    transform: translateY(15px);
 }
 
 .boc-link {
-  stroke: #d1d5db;
-  stroke-width: 1.5px;
-  stroke-dasharray: 4;
-  animation: dash-flow 2s linear infinite;
+    stroke: #d1d5db;
+    stroke-width: 1.5px;
+    stroke-dasharray: 4;
+    animation: dash-flow 2s linear infinite;
 }
 
 @keyframes dash-flow {
-  from {
-    stroke-dashoffset: 8;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+    from {
+        stroke-dashoffset: 8;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
 }
 
 .boc-exp-coll {
-  stroke: #9ca3b0;
-  stroke-width: 2px;
-  fill: #f9fafb;
-  transition: all 0.3s ease;
+    stroke: #9ca3b0;
+    stroke-width: 2px;
+    fill: #f9fafb;
+    transition: all 0.3s ease;
 }
 
 .boc-exp-coll:hover {
-  stroke: #4f46e5;
-  transform: scale(1.1);
+    stroke: #4f46e5;
+    transform: scale(1.1);
 }
 
 /* app.css */
@@ -138,7 +136,7 @@
 input,
 textarea,
 select {
-  @apply bg-white text-black placeholder-gray-400 border border-gray-300 rounded;
+    @apply rounded border border-gray-300 bg-white text-black placeholder-gray-400;
 }
 /* app.css */
 /*
@@ -152,26 +150,28 @@ select {
 }
 /* 5. Utility classes */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+    .text-balance {
+        text-wrap: balance;
+    }
 
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 @layer components {
     /* Base styles for form inputs, selects, and textareas */
-    .form-input, .form-select, .form-textarea {
-        @apply block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm shadow-sm;
+    .form-input,
+    .form-select,
+    .form-textarea {
+        @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm;
         @apply placeholder:text-gray-400;
-        @apply focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500;
+        @apply focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500;
         @apply transition duration-150 ease-in-out;
     }
 
@@ -181,24 +181,24 @@ select {
 
     /* Primary Button Style */
     .btn-primary {
-        @apply inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-sm text-white;
-        @apply hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
-        @apply disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        @apply inline-flex items-center justify-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2 text-sm font-semibold text-white;
+        @apply hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+        @apply transition-colors disabled:cursor-not-allowed disabled:opacity-50;
     }
 
     /* Secondary Button Style */
     .btn-secondary {
-        @apply inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700;
-        @apply hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
-        @apply disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+        @apply inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700;
+        @apply hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+        @apply transition-colors disabled:cursor-not-allowed disabled:opacity-50;
     }
 }
 /* Target input text inside v-select */
 .vs-style input {
-  color: black !important;
+    color: black !important;
 }
 
 /* Optional: also set the placeholder text color */
 .vs-style .vs__placeholder {
-  color: black !important;
+    color: black !important;
 }

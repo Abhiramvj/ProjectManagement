@@ -6,10 +6,10 @@ import OrgChart from '@balkangraph/orgchart.js';
 
 // --- FIX 1: Simplified props. We only need 'nodes'. ---
 const props = defineProps({
-  nodes: {
-    type: Array,
-    required: true,
-  }
+    nodes: {
+        type: Array,
+        required: true,
+    },
 });
 
 const selectedEmployee = ref(null);
@@ -20,7 +20,8 @@ let chartInstance = null;
 // Node templates remain the same...
 OrgChart.templates.templateGlass = Object.assign({}, OrgChart.templates.base);
 OrgChart.templates.templateGlass.size = [250, 120];
-OrgChart.templates.templateGlass.node = '<rect x="0" y="0" width="250" height="120" rx="12" ry="12"></rect>';
+OrgChart.templates.templateGlass.node =
+    '<rect x="0" y="0" width="250" height="120" rx="12" ry="12"></rect>';
 OrgChart.templates.templateGlass.img_0 =
     '<circle cx="45" cy="60" r="32" fill="none" stroke="{binding.color}" stroke-width="2.5"></circle>' +
     '<clipPath id="clip-glass"><circle cx="45" cy="60" r="30"></circle></clipPath>' +
@@ -38,73 +39,80 @@ OrgChart.templates.templateGlass.field_1 =
     '</div>' +
     '</foreignObject>';
 
-
 const initializeChart = () => {
-  if (chartContainer.value && props.nodes.length) {
-    if (chartInstance) chartInstance.destroy();
+    if (chartContainer.value && props.nodes.length) {
+        if (chartInstance) chartInstance.destroy();
 
-    chartInstance = new OrgChart(chartContainer.value, {
-      // All your chart settings
-      nodes: props.nodes,
-      template: "templateGlass",
-      nodeMouseClick: OrgChart.action.none,
-      mouseScrool: OrgChart.action.zoom,
-      layout: OrgChart.mixed,
-      nodeSeparation: 60,
-      levelSeparation: 80,
-      subtreeSeparation: 70,
-      connector: { type: "curved", color: "rgba(255, 255, 255, 0.4)" },
-      navigator: { enabled: true, width: 200, height: 120, position: "bottom-right", header: "Navigator" },
-      nodeMenu: {
-        performance: {
-            text: "Performance",
-            icon: OrgChart.icon.details(18, 18, '#fff'),
-            onClick: (nodeId) => {
-                const nodeData = chartInstance.get(nodeId);
-                selectedEmployee.value = nodeData;
-                performanceData.value = nodeData.performance_summary || null;
+        chartInstance = new OrgChart(chartContainer.value, {
+            // All your chart settings
+            nodes: props.nodes,
+            template: 'templateGlass',
+            nodeMouseClick: OrgChart.action.none,
+            mouseScrool: OrgChart.action.zoom,
+            layout: OrgChart.mixed,
+            nodeSeparation: 60,
+            levelSeparation: 80,
+            subtreeSeparation: 70,
+            connector: { type: 'curved', color: 'rgba(255, 255, 255, 0.4)' },
+            navigator: {
+                enabled: true,
+                width: 200,
+                height: 120,
+                position: 'bottom-right',
+                header: 'Navigator',
+            },
+            nodeMenu: {
+                performance: {
+                    text: 'Performance',
+                    icon: OrgChart.icon.details(18, 18, '#fff'),
+                    onClick: (nodeId) => {
+                        const nodeData = chartInstance.get(nodeId);
+                        selectedEmployee.value = nodeData;
+                        performanceData.value =
+                            nodeData.performance_summary || null;
+                    },
+                },
+            },
+            tags: {
+                manager: { layout: OrgChart.tree },
+                all: { 'node-class': 'glass-node' },
+            },
+            nodeBinding: {
+                field_0: 'name',
+                field_1: 'title',
+                img_0: 'image',
+                color: 'color',
+                id: 'id',
+                email: 'email',
+                hire_date: 'hire_date',
+                total_experience: 'total_experience',
+                canViewPerformance: 'canViewPerformance',
+                performance_summary: 'performance_summary',
+            },
+
+            // The onInit function to change the placeholder text
+            onInit: function (sender) {
+                const searchInput =
+                    sender.element.querySelector('.boc-search input');
+                if (searchInput) {
+                    searchInput.placeholder = 'Search';
+                }
+            },
+        }); // --- FIX 2: Corrected the closing brackets here. The extra '}),' has been removed.
+
+        chartInstance.on('field', function (sender, args) {
+            if (args.name == 'menu') {
+                if (!args.data.canViewPerformance) {
+                    delete args.value.performance;
+                }
             }
-        }
-      },
-      tags: {
-        "manager": { layout: OrgChart.tree },
-        "all": { "node-class": "glass-node" }
-      },
-      nodeBinding: {
-        field_0: "name",
-        field_1: "title",
-        img_0: "image",
-        color: "color",
-        id: "id",
-        email: "email",
-        hire_date: "hire_date",
-        total_experience: "total_experience",
-        canViewPerformance: "canViewPerformance",
-        performance_summary: "performance_summary"
-      },
-
-      // The onInit function to change the placeholder text
-      onInit: function(sender) {
-        const searchInput = sender.element.querySelector('.boc-search input');
-        if (searchInput) {
-          searchInput.placeholder = 'Search';
-        }
-      }
-    }); // --- FIX 2: Corrected the closing brackets here. The extra '}),' has been removed.
-
-    chartInstance.on('field', function(sender, args){
-        if (args.name == 'menu'){
-            if (!args.data.canViewPerformance){
-               delete args.value.performance;
-            }
-        }
-    });
-  }
+        });
+    }
 };
 
 const closeModal = () => {
-  selectedEmployee.value = null;
-  performanceData.value = null;
+    selectedEmployee.value = null;
+    performanceData.value = null;
 };
 
 onMounted(initializeChart);
@@ -117,63 +125,125 @@ const getTaskProgress = (summary) => {
 </script>
 
 <template>
-  <div class="relative">
-    <div ref="chartContainer" class="chart-container-glass"></div>
+    <div class="relative">
+        <div ref="chartContainer" class="chart-container-glass"></div>
 
-    <div v-if="selectedEmployee" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" @click="closeModal">
-      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative" @click.stop>
-         <button @click="closeModal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
+        <div
+            v-if="selectedEmployee"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            @click="closeModal"
+        >
+            <div
+                class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+                @click.stop
+            >
+                <button
+                    @click="closeModal"
+                    class="absolute right-3 top-2 text-3xl font-light text-gray-500 hover:text-gray-800"
+                >
+                    &times;
+                </button>
 
-          <div class="flex items-center border-b pb-4 mb-4">
-              <img :src="selectedEmployee.image" alt="Photo" class="w-20 h-20 rounded-full mr-4 border-2 border-gray-200">
-              <div>
-                  <h2 class="text-2xl font-bold text-gray-800">{{ selectedEmployee.name }}</h2>
-                  <p class="text-md text-gray-600">{{ selectedEmployee.title }}</p>
-              </div>
-          </div>
-<div class="space-y-2 text-sm">
-    <p v-if="selectedEmployee.canViewPerformance">
-        <strong class="font-semibold text-gray-700 w-32 inline-block">Employee ID:</strong>
-        <span class="text-gray-800">{{ selectedEmployee.id || 'N/A' }}</span>
-    </p>
-    <p v-if="selectedEmployee.canViewPerformance">
-        <strong class="font-semibold text-gray-700 w-32 inline-block">Hire Date:</strong>
-        <span class="text-gray-800">{{ selectedEmployee.hire_date ? new Date(selectedEmployee.hire_date).toLocaleDateString() : 'N/A' }}</span>
-    </p>
+                <div class="mb-4 flex items-center border-b pb-4">
+                    <img
+                        :src="selectedEmployee.image"
+                        alt="Photo"
+                        class="mr-4 h-20 w-20 rounded-full border-2 border-gray-200"
+                    />
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            {{ selectedEmployee.name }}
+                        </h2>
+                        <p class="text-md text-gray-600">
+                            {{ selectedEmployee.title }}
+                        </p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <p v-if="selectedEmployee.canViewPerformance">
+                        <strong
+                            class="inline-block w-32 font-semibold text-gray-700"
+                            >Employee ID:</strong
+                        >
+                        <span class="text-gray-800">{{
+                            selectedEmployee.id || 'N/A'
+                        }}</span>
+                    </p>
+                    <p v-if="selectedEmployee.canViewPerformance">
+                        <strong
+                            class="inline-block w-32 font-semibold text-gray-700"
+                            >Hire Date:</strong
+                        >
+                        <span class="text-gray-800">{{
+                            selectedEmployee.hire_date
+                                ? new Date(
+                                      selectedEmployee.hire_date,
+                                  ).toLocaleDateString()
+                                : 'N/A'
+                        }}</span>
+                    </p>
 
-    <p>
-        <strong class="font-semibold text-gray-700 w-32 inline-block">Email:</strong>
-        <span class="text-gray-800">{{ selectedEmployee.email || 'N/A' }}</span>
-    </p>
-    <p>
-        <strong class="font-semibold text-gray-700 w-32 inline-block">Experience:</strong>
-        <span class="text-gray-800">{{ selectedEmployee.total_experience ? `${selectedEmployee.total_experience} years` : 'N/A' }}</span>
-    </p>
-</div>
+                    <p>
+                        <strong
+                            class="inline-block w-32 font-semibold text-gray-700"
+                            >Email:</strong
+                        >
+                        <span class="text-gray-800">{{
+                            selectedEmployee.email || 'N/A'
+                        }}</span>
+                    </p>
+                    <p>
+                        <strong
+                            class="inline-block w-32 font-semibold text-gray-700"
+                            >Experience:</strong
+                        >
+                        <span class="text-gray-800">{{
+                            selectedEmployee.total_experience
+                                ? `${selectedEmployee.total_experience} years`
+                                : 'N/A'
+                        }}</span>
+                    </p>
+                </div>
 
-
-          <div v-if="performanceData" class="mt-6 pt-4 border-t">
-              <h3 class="text-lg font-bold text-gray-800 mb-3">Performance Snapshot</h3>
-              <div class="space-y-3 text-sm">
-                  <div>
-                      <div class="flex justify-between mb-1">
-                          <span class="font-semibold text-gray-700">Task Completion</span>
-                          <span class="text-gray-600">{{ performanceData.tasks_completed }} / {{ performanceData.tasks_total }}</span>
-                      </div>
-                      <div class="w-full bg-gray-200 rounded-full h-2.5">
-                          <div class="bg-indigo-600 h-2.5 rounded-full" :style="{ width: getTaskProgress(performanceData) + '%' }"></div>
-                      </div>
-                  </div>
-              </div>
-              <div class="mt-6 text-center">
-                  <a :href="`/performance/${selectedEmployee.id}`" class="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                      View Full Performance Report
-                  </a>
-              </div>
-          </div>
-      </div>
+                <div v-if="performanceData" class="mt-6 border-t pt-4">
+                    <h3 class="mb-3 text-lg font-bold text-gray-800">
+                        Performance Snapshot
+                    </h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <div class="mb-1 flex justify-between">
+                                <span class="font-semibold text-gray-700"
+                                    >Task Completion</span
+                                >
+                                <span class="text-gray-600"
+                                    >{{ performanceData.tasks_completed }} /
+                                    {{ performanceData.tasks_total }}</span
+                                >
+                            </div>
+                            <div class="h-2.5 w-full rounded-full bg-gray-200">
+                                <div
+                                    class="h-2.5 rounded-full bg-indigo-600"
+                                    :style="{
+                                        width:
+                                            getTaskProgress(performanceData) +
+                                            '%',
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <a
+                            :href="`/performance/${selectedEmployee.id}`"
+                            class="inline-block rounded-lg bg-indigo-600 px-6 py-2 text-white transition-colors hover:bg-indigo-700"
+                        >
+                            View Full Performance Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 <style>

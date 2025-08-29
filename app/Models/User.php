@@ -392,9 +392,9 @@ class User extends Authenticatable
             $approvers->push($this->parent);
         }
 
-        // Add users with leave management permissions
-        $leaveManagers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'hr', 'project-manager']);
+        // Add users with leave management permissions (admin, hr, team-lead)
+        $leaveManagers = User::whereHas('roles.permissions', function ($query) {
+            $query->where('name', 'manage leave applications');
         })->get();
 
         $approvers = $approvers->merge($leaveManagers)->unique('id');
@@ -560,5 +560,20 @@ class User extends Authenticatable
             ->where('leave_type', 'personal')
             ->where('status', 'approved')
             ->whereYear('start_date', now()->year);
+    }
+
+    public function hasPermission($permission): bool
+    {
+        if (is_array($permission)) {
+            foreach ($permission as $perm) {
+                if ($this->hasPermissionTo($perm)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $this->hasPermissionTo($permission);
     }
 }

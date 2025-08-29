@@ -38,11 +38,12 @@ class LeaveRequestApproved extends Notification
     {
         return [
             'title' => 'Leave Request Approved',
-            'message' => 'Your leave request from '.$this->leaveApplication->start_date.' to '.$this->leaveApplication->end_date.' has been approved.',
-            'type' => 'leave_approved', // For the frontend to pick an icon
+            'message' => 'Your leave request from '.$this->leaveApplication->start_date
+                        .' to '.$this->leaveApplication->end_date.' has been approved.',
+            'type' => 'leave_approved',
             'leave_id' => $this->leaveApplication->id,
             'approved_by' => Auth::user()->name,
-            'url' => route('leave.index'), // Link to the leave page
+            'url' => route('leave.fullRequests'), // employee page
         ];
     }
 }

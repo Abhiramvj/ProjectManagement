@@ -36,12 +36,16 @@ const closeModal = () => {
         <header>
             <h2 class="text-lg font-semibold text-slate-900">Delete Account</h2>
             <p class="mt-1 text-sm text-slate-600">
-                Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting
-                your account, please download any data or information that you wish to retain.
+                Once your account is deleted, all of its resources and data will
+                be permanently deleted. Before deleting your account, please
+                download any data or information that you wish to retain.
             </p>
         </header>
 
-        <button @click="confirmUserDeletion" class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-500">
+        <button
+            @click="confirmUserDeletion"
+            class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-500"
+        >
             Delete Account
         </button>
 
@@ -51,12 +55,17 @@ const closeModal = () => {
                     Are you sure you want to delete your account?
                 </h2>
                 <p class="mt-1 text-sm text-slate-600">
-                    Once your account is deleted, all of its resources and data will be permanently deleted. Please
-                    enter your password to confirm you would like to permanently delete your account.
+                    Once your account is deleted, all of its resources and data
+                    will be permanently deleted. Please enter your password to
+                    confirm you would like to permanently delete your account.
                 </p>
 
                 <div class="mt-6">
-                    <label for="password" class="block text-sm font-medium text-slate-700 sr-only">Password</label>
+                    <label
+                        for="password"
+                        class="sr-only block text-sm font-medium text-slate-700"
+                        >Password</label
+                    >
                     <input
                         id="password"
                         ref="passwordInput"
@@ -70,10 +79,18 @@ const closeModal = () => {
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <button @click="closeModal" class="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                    <button
+                        @click="closeModal"
+                        class="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                    >
                         Cancel
                     </button>
-                    <button @click="deleteUser" :class="{ 'opacity-25': form.processing }" :disabled="form.processing" class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-500 disabled:opacity-50">
+                    <button
+                        @click="deleteUser"
+                        :class="{ 'opacity-25': form.processing }"
+                        :disabled="form.processing"
+                        class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-500 disabled:opacity-50"
+                    >
                         Delete Account
                     </button>
                 </div>
