@@ -296,6 +296,7 @@ if ($employee && !empty($employee->email)) { // add email existence check
         try {
             // Send the actual email.
             Mail::to($recipientEmail)->send($mailable);
+            Mail::to($recipientEmail)->send($mailable);
 
             // LOG SUCCESS: The $logData array now includes the 'body_html'
             MailLog::create(array_merge($logData, [
