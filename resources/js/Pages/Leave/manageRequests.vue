@@ -44,13 +44,7 @@ const uploadErrors = ref({});
 const uploadProcessing = ref(false);
 const currentUploadLeaveId = ref(null);
 
-function openUploadModal(leaveId) {
-    currentUploadLeaveId.value = leaveId;
-    uploadFile.value = null;
-    uploadErrors.value = {};
-    uploadProcessing.value = false;
-    isUploadModalVisible.value = true;
-}
+
 
 function closeUploadModal() {
     isUploadModalVisible.value = false;

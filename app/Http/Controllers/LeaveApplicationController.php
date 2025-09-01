@@ -285,10 +285,8 @@ class LeaveApplicationController extends Controller
         $leave_application->refresh(); // ensure fresh data
 
         // Return as Inertia props, not JSON
-        return Inertia::render('Leave/FullRequests', [
-            'leaveRequests' => LeaveApplication::where('user_id', auth()->id())->paginate(15),
-            'success' => 'Supporting document uploaded successfully.',
-        ]);
+                return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
+
     }
 
     private function notifyLeaveStatus(LeaveApplication $leaveApplication, string $status): void

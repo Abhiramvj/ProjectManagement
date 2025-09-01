@@ -1,6 +1,4 @@
 <script setup>
-// All your existing <script setup> logic remains exactly the same.
-// No changes are needed here.
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -27,8 +25,29 @@ const props = defineProps({
     leaveStats: Object,
 });
 
+const selectedRequest = ref(null)
+const isRequestDetailModalVisible = ref(false)
 const page = usePage();
 const currentUserId = page.props.auth.user.id;
+
+
+function formatDateRange(start, end) {
+    const options = { day: '2-digit', month: 'short', year: 'numeric' }
+    const startDate = new Date(start).toLocaleDateString(undefined, options)
+    if (!end || start === end) return startDate
+    const endDate = new Date(end).toLocaleDateString(undefined, options)
+    return `${startDate} - ${endDate}`
+}
+
+function openRequestDetail(request) {
+    selectedRequest.value = request
+    isRequestDetailModalVisible.value = true
+}
+
+function closeRequestDetailModal() {
+    isRequestDetailModalVisible.value = false
+    selectedRequest.value = null
+}
 
 const leaveColors = {
     pending: '#fbbf24',
@@ -67,7 +86,7 @@ const isLoadingEmployees = ref(false);
 // This function is called by vue-select as the user types
 const searchEmployees = (search) => {
     if (search.length > 1) {
-        isLoadingEmployees.value = true; // Turn spinner ON
+        isLoadingEmployees.value = true; 
         debounce(async () => {
             try {
                 const response = await axios.get(
@@ -77,7 +96,7 @@ const searchEmployees = (search) => {
             } catch (error) {
                 console.error('Error searching employees:', error);
             } finally {
-                isLoadingEmployees.value = false; // Turn spinner OFF
+                isLoadingEmployees.value = false; 
             }
         }, 350);
     }
@@ -94,7 +113,6 @@ const debounce = (callback, delay) => {
 watch(
     () => form.user_id,
     (newUserId) => {
-        // When a user is selected, immediately stop any pending search/loading
         clearTimeout(debounceTimer);
         isLoadingEmployees.value = false;
 
@@ -126,11 +144,7 @@ function onSupportingDocumentChange(event) {
     form.supporting_document = supportingDocument.value;
 }
 
-const scrollToLeaveForm = () => {
-    if (leaveFormSection.value) {
-        leaveFormSection.value.scrollIntoView({ behavior: 'smooth' });
-    }
-};
+
 
 const openPolicyModal = () => {
     isPolicyModalVisible.value = true;
@@ -206,7 +220,6 @@ const handleDateClick = (info) => {
     const clicked = new Date(info.date);
     clicked.setHours(0, 0, 0, 0);
 
-    // This is the only line that changes
     if (!isAdminOrHR && clicked < today) {
         alert('You can only select today or a future date.');
         return;
@@ -269,7 +282,6 @@ const submitApplication = () => {
     const timeDiff = startDate.getTime() - today.getTime();
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-    // Only enforce advance notice for non-admin/hr users
     if (!isAdminOrHR) {
         if (form.leave_type === 'annual' && daysDiff < 7) {
             if (
@@ -294,7 +306,6 @@ const submitApplication = () => {
         formData.append(key, val ?? '');
     }
 
-    // Append user_id if admin/HR selects an employee
     if (isAdminOrHR && form.user_id) {
         formData.append('user_id', form.user_id);
     }
@@ -313,7 +324,7 @@ const submitApplication = () => {
             form.end_half_session = '';
             selectedDates.value = [null, null];
             supportingDocument.value = null;
-            if (isAdminOrHR) form.user_id = null; // Reset selected employee
+            if (isAdminOrHR) form.user_id = null;
         },
         onError: (errors) => {
             if (errors.message) alert(errors.message);
@@ -321,32 +332,8 @@ const submitApplication = () => {
     });
 };
 
-const statusConfig = {
-    approved: { class: 'bg-green-100 text-green-800', icon: '✅' },
-    rejected: { class: 'bg-red-100 text-red-800', icon: '❌' },
-    pending: { class: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-};
 
-const updateStatus = (request, newStatus) => {
-    router.patch(
-        route('leave.update', { leave_application: request.id }),
-        {
-            status: newStatus,
-        },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload({
-                    only: [
-                        'leaveRequests',
-                        'remainingLeaveBalance',
-                        'compOffBalance',
-                    ],
-                });
-            },
-        },
-    );
-};
+
 
 const cancelLeave = (request) => {
     if (confirm('Are you sure you want to cancel this leave request?')) {
@@ -488,21 +475,8 @@ const leaveTypeTags = {
     default: 'bg-gray-100 text-gray-600',
 };
 
-const getTagClass = (type) => {
-    if (!type || typeof type !== 'string') {
-        return leaveTypeTags.default;
-    }
-    return leaveTypeTags[type.toLowerCase()] || leaveTypeTags.default;
-};
 
-function formatLeaveDays(days) {
-    const num = Number(days);
-    if (isNaN(num)) return '0';
-    if (num % 1 === 0.5) return `${Math.floor(num)}.5`;
-    return num % 1 === 0 ? num.toString() : num.toFixed(1);
-}
 
-// Upload Document modal state
 const isUploadModalVisible = ref(false);
 const uploadFile = ref(null);
 const uploadErrors = ref({});
@@ -559,16 +533,8 @@ const submitUpload = () => {
     );
 };
 
-// Your Requests Modal state and methods
-const isRequestsModalVisible = ref(false);
-function openRequestsModal() {
-    isRequestsModalVisible.value = true;
-}
-function closeRequestsModal() {
-    isRequestsModalVisible.value = false;
-}
 
-// Compute the most recent 5 requests for modal display
+
 const recentRequests = computed(() => {
     return (props.leaveRequests.data || []).slice(0, 5);
 });
@@ -611,14 +577,6 @@ function submitEditReason() {
     );
 }
 
-const approvedUpcomingRequests = computed(() =>
-    (props.leaveRequests.data || [])
-        .filter(
-            (lr) =>
-                lr.status === 'approved' && new Date(lr.end_date) >= new Date(),
-        )
-        .slice(0, 3),
-);
 
 const selectedLeaveBalance = computed(() => {
     // This prop is now always correct for the user being viewed.
@@ -636,19 +594,17 @@ const displayedLeaveStats = computed(() => {
 });
 
 function calculatePercentage(taken, total) {
-    if (!total || total === 0) return 0; // Avoid division by zero
+    if (!total || total === 0) return 0; 
     const percentage = (taken / total) * 100;
-    return Math.min(percentage, 100); // Cap at 100%
+    return Math.min(percentage, 100); 
 }
 
-// Add this object to easily loop through leave types in the template
 const leaveTypeDetails = [
     { key: 'annual', label: 'Annual Leave', color: 'bg-blue-500' },
     { key: 'sick', label: 'Sick Leave', color: 'bg-emerald-500' },
     { key: 'personal', label: 'Personal Leave', color: 'bg-amber-500' },
 ];
 
-// Add these helper functions for the modals
 const statusInfo = (status) => {
     return (
         {
@@ -659,15 +615,7 @@ const statusInfo = (status) => {
     );
 };
 
-const statusCardBorderClass = (status) => {
-    return (
-        {
-            pending: 'border-l-yellow-400',
-            approved: 'border-l-green-500',
-            rejected: 'border-l-red-500',
-        }[status] || 'border-l-gray-300'
-    );
-};
+
 </script>
 
 <template>
@@ -775,14 +723,8 @@ const statusCardBorderClass = (status) => {
                         </div>
 
                         <!-- Secondary Action Buttons -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <button
-                                type="button"
-                                @click="openRequestsModal"
-                                class="btn-secondary w-full"
-                            >
-                                My Requests
-                            </button>
+                        <div class="container-fluid">
+                            
                             <button
                                 type="button"
                                 @click="openPolicyModal"
@@ -793,88 +735,39 @@ const statusCardBorderClass = (status) => {
                         </div>
 
                         <!-- Card 2: Upcoming Approved Leave -->
-                        <div
-                            class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-                        >
-                            <h2
-                                class="mb-4 text-lg font-semibold text-slate-800"
-                            >
-                                Upcoming Approved Leave
-                            </h2>
-                            <div
-                                v-if="approvedUpcomingRequests.length"
-                                class="custom-scrollbar h-20 space-y-3 overflow-y-auto pr-2"
-                            >
-                                <div
-                                    v-for="request in approvedUpcomingRequests"
-                                    :key="request.id"
-                                    class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3"
-                                >
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="h-8 w-2 flex-shrink-0 rounded-full"
-                                            :class="
-                                                getTagClass(
-                                                    request.leave_type,
-                                                ).replace('text-', 'bg-')
-                                            "
-                                        ></div>
-                                        <div>
-                                            <p
-                                                class="font-semibold text-slate-800"
-                                            >
-                                                {{
-                                                    new Date(
-                                                        request.start_date,
-                                                    ).toLocaleDateString(
-                                                        undefined,
-                                                        {
-                                                            day: '2-digit',
-                                                            month: 'short',
-                                                        },
-                                                    )
-                                                }}
-                                                <span
-                                                    v-if="
-                                                        request.start_date !==
-                                                        request.end_date
-                                                    "
-                                                >
-                                                    -
-                                                    {{
-                                                        new Date(
-                                                            request.end_date,
-                                                        ).toLocaleDateString(
-                                                            undefined,
-                                                            {
-                                                                day: '2-digit',
-                                                                month: 'short',
-                                                            },
-                                                        )
-                                                    }}</span
-                                                >
-                                            </p>
-                                            <p
-                                                class="text-sm capitalize text-slate-500"
-                                            >
-                                                {{ request.leave_type }} Leave
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p
-                                        class="text-sm font-medium text-green-600"
-                                    >
-                                        Approved
-                                    </p>
-                                </div>
-                            </div>
-                            <div v-else class="py-6 text-center">
-                                <p class="text-sm text-slate-500">
-                                    You have no upcoming approved leave
-                                    requests.
-                                </p>
-                            </div>
-                        </div>
+                        <!-- Left Column: My Requests Compact Card -->
+<div class="space-y-8 lg:col-span-1">
+    <!-- My Requests Card -->
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 class="mb-4 text-sm font-semibold text-slate-500">My Leave Requests(click on the request for furhtur details)</h3>
+        <div v-if="!recentRequests.length" class="flex flex-col items-center justify-center text-center py-6">
+            <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="mt-2 text-sm text-slate-500">No leave requests yet.</p>
+        </div>
+        <div v-else class="space-y-3 max-h-[11rem] overflow-y-auto custom-scrollbar">
+            <div
+                v-for="request in recentRequests.slice(0,5)"
+                :key="request.id"
+                @click="openRequestDetail(request)"
+                class="cursor-pointer rounded-lg border border-slate-200 p-3 hover:bg-slate-50 flex justify-between items-center"
+            >
+                <div>
+                    <p class="text-sm font-medium text-slate-800">
+                        {{ formatDateRange(request.start_date, request.end_date) }}
+                    </p>
+                    <p class="text-xs text-slate-500 capitalize">
+                        {{ request.leave_type }}
+                    </p>
+                </div>
+                <span :class="statusInfo(request.status).textColor + ' text-xs font-semibold px-2 py-1 rounded-full'" >
+                    {{ statusInfo(request.status).text }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
                     </div>
 
                     <!-- Right Column: Form & Info -->
@@ -1276,195 +1169,43 @@ const statusCardBorderClass = (status) => {
         <!-- MODALS (All redesigned and included) -->
         <!-- My Recent Requests Modal -->
         <div
-            v-if="isRequestsModalVisible"
-            @click.self="closeRequestsModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans"
-        >
-            <div
-                class="flex w-full max-w-4xl flex-col rounded-xl bg-slate-50 shadow-2xl"
-                style="height: 90vh; max-height: 700px"
-            >
-                <header
-                    class="flex flex-shrink-0 items-center justify-between border-b border-slate-200 p-5"
-                >
-                    <div class="flex items-center gap-3">
-                        <div class="rounded-full bg-blue-100 p-2">
-                            <svg
-                                class="h-6 w-6 text-blue-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                ></path>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-bold text-slate-800">
-                            My Recent Leave Requests
-                        </h2>
-                    </div>
-                    <button
-                        @click="closeRequestsModal"
-                        class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                    >
-                        <svg
-                            class="h-6 w-6"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            ></path>
-                        </svg>
-                    </button>
-                </header>
-                <section class="flex-grow overflow-y-auto p-5">
-                    <div
-                        v-if="!recentRequests.length"
-                        class="flex h-full flex-col items-center justify-center text-center"
-                    >
-                        <svg
-                            class="mx-auto h-12 w-12 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            ></path>
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium">All Clear!</h3>
-                        <p class="mt-1 text-sm text-slate-500">
-                            You have no recent leave requests.
-                        </p>
-                    </div>
-                    <div v-else class="space-y-4">
-                        <div
-                            v-for="request in recentRequests"
-                            :key="request.id"
-                            :class="statusCardBorderClass(request.status)"
-                            class="rounded-lg border border-l-4 border-slate-200 bg-white shadow-sm"
-                        >
-                            <div
-                                class="grid grid-cols-1 items-center gap-4 p-4 md:grid-cols-12"
-                            >
-                                <div class="md:col-span-3">
-                                    <p class="font-bold text-slate-800">
-                                        {{
-                                            new Date(
-                                                request.start_date,
-                                            ).toLocaleDateString(undefined, {
-                                                day: '2-digit',
-                                                month: 'short',
-                                                year: 'numeric',
-                                            })
-                                        }}
-                                    </p>
-                                    <p class="text-sm text-slate-500">
-                                        {{
-                                            formatLeaveDays(request.leave_days)
-                                        }}
-                                        day<span v-if="request.leave_days != 1"
-                                            >s</span
-                                        >
-                                    </p>
-                                </div>
-                                <div class="md:col-span-4">
-                                    <span
-                                        :class="getTagClass(request.leave_type)"
-                                        class="rounded-full px-2 py-1 text-xs font-medium capitalize"
-                                        >{{ request.leave_type }}</span
-                                    >
-                                    <p
-                                        class="mt-2 truncate text-sm text-slate-700"
-                                        :title="request.reason"
-                                    >
-                                        {{ request.reason }}
-                                    </p>
-                                </div>
-                                <div class="text-center text-sm md:col-span-2">
-                                    <a
-                                        v-if="request.supporting_document_path"
-                                        :href="`/storage/${request.supporting_document_path}`"
-                                        target="_blank"
-                                        class="font-semibold text-indigo-600 hover:underline"
-                                        >View Document</a
-                                    ><span v-else class="italic text-slate-400"
-                                        >—</span
-                                    ><button
-                                        v-if="request.leave_type === 'sick'"
-                                        @click="
-                                            () => {
-                                                openUploadModal(request.id);
-                                                closeRequestsModal();
-                                            }
-                                        "
-                                        class="mt-1 block w-full text-xs text-blue-600 hover:underline"
-                                    >
-                                        {{
-                                            request.supporting_document_path
-                                                ? 'Replace'
-                                                : 'Upload'
-                                        }}
-                                    </button>
-                                </div>
-                                <div
-                                    class="flex items-center justify-start gap-3 md:col-span-3 md:justify-end"
-                                >
-                                    <template
-                                        v-if="request.status === 'pending'"
-                                        ><button
-                                            @click="openEditModal(request)"
-                                            class="btn-secondary-sm text-blue-600"
-                                        >
-                                            Edit</button
-                                        ><button
-                                            @click="cancelLeave(request)"
-                                            class="btn-danger-sm text-red-600"
-                                        >
-                                            Cancel
-                                        </button></template
-                                    ><span
-                                        v-else
-                                        class="text-sm font-semibold"
-                                        :class="
-                                            statusInfo(request.status).textColor
-                                        "
-                                        >{{
-                                            statusInfo(request.status).text
-                                        }}</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <footer
-                    class="flex flex-shrink-0 justify-center border-t border-slate-200 bg-white/50 p-5"
-                >
-                    <PrimaryButton
-                        @click="
-                            () => {
-                                closeRequestsModal();
-                                router.visit(route('leave.fullRequests'));
-                            }
-                        "
-                        >View All My Requests</PrimaryButton
-                    >
-                </footer>
-            </div>
+    v-if="isRequestDetailModalVisible"
+    @click.self="closeRequestDetailModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans"
+>
+    <div class="flex w-full max-w-md flex-col rounded-xl bg-white shadow-2xl">
+        <header class="flex justify-between items-center border-b border-slate-200 p-4">
+            <h2 class="text-lg font-bold text-slate-800">Leave Request Details</h2>
+            <button @click="closeRequestDetailModal" class="text-slate-400 hover:text-slate-600">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </header>
+        <div class="p-4 space-y-3">
+            <p><strong>Date:</strong> {{ formatDateRange(selectedRequest.start_date, selectedRequest.end_date) }}</p>
+            <p><strong>Type:</strong> {{ selectedRequest.leave_type }}</p>
+            <p><strong>Status:</strong> <span :class="statusInfo(selectedRequest.status).textColor">{{ statusInfo(selectedRequest.status).text }}</span></p>
+            <p><strong>Reason:</strong> {{ selectedRequest.reason }}</p>
+            <p v-if="selectedRequest.supporting_document_path">
+                <strong>Document:</strong>
+                <a :href="`/storage/${selectedRequest.supporting_document_path}`" target="_blank" class="text-indigo-600 hover:underline">View</a>
+            </p>
         </div>
+        <footer class="flex justify-end gap-3 border-t border-slate-200 p-4">
+            <button
+                v-if="selectedRequest.leave_type === 'sick'"
+                @click="openUploadModal(selectedRequest.id); closeRequestDetailModal()"
+                class="btn-secondary"
+            >
+                {{ selectedRequest.supporting_document_path ? 'Replace' : 'Upload' }}
+            </button>
+            <button v-if="selectedRequest.status === 'pending'" @click="openEditModal(selectedRequest)" class="btn-secondary">Edit</button>
+            <button v-if="selectedRequest.status === 'pending'" @click="cancelLeave(selectedRequest)" class="btn-danger-sm">Cancel</button>
+            <button @click="closeRequestDetailModal" class="btn-secondary">Close</button>
+        </footer>
+    </div>
+</div>
 
         <!-- Edit Reason Modal -->
         <div
@@ -1762,4 +1503,4 @@ const statusCardBorderClass = (status) => {
     scrollbar-color: #cbd5e1 transparent;
 }
 </style>
-```
+

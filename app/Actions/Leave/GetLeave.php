@@ -102,15 +102,30 @@ class GetLeave
         // "Your Requests" modal should ALWAYS show the LOGGED-IN user's requests
         $requests = LeaveApplication::with(['user:id,name'])
             ->where('user_id', $authUser->id) // Use $authUser here
+            ->select([
+                'id',
+                'user_id',
+                'start_date',
+                'end_date',
+                'reason',
+                'leave_type',
+                'status',
+                'created_at',
+                'rejection_reason',
+                'leave_days',
+                'supporting_document_path'  // <-- ADDED THIS
+            ])
             ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END")
             ->latest()
             ->paginate(15);
+
+        // Transform the collection to include proper document URLs
         $requests->getCollection()->transform(function($leave) {
-    $leave->supporting_document = $leave->supporting_document_path
-        ? asset('storage/' . $leave->supporting_document_path)
-        : null;
-    return $leave;
-});
+            $leave->supporting_document = $leave->supporting_document_path
+                ? asset('storage/' . $leave->supporting_document_path)
+                : null;
+            return $leave;
+        });
 
 
         // Return all data to the Vue component.
