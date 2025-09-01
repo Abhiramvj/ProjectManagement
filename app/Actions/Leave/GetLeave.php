@@ -105,6 +105,13 @@ class GetLeave
             ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END")
             ->latest()
             ->paginate(15);
+        $requests->getCollection()->transform(function($leave) {
+    $leave->supporting_document = $leave->supporting_document_path
+        ? asset('storage/' . $leave->supporting_document_path)
+        : null;
+    return $leave;
+});
+
 
         // Return all data to the Vue component.
         return [

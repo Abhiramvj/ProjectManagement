@@ -57,12 +57,12 @@ class LeaveApplicationController extends Controller
             // Get all admin and hr users
             $recipients = User::role(['admin', 'hr'])->get();
 
-            if ($recipients->isNotEmpty()) {
-                // Option 1: Send one email with all recipients in the "To" field
-                $emails = $recipients->pluck('email')->toArray();
-                $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
+            // if ($recipients->isNotEmpty()) {
+            //     // Option 1: Send one email with all recipients in the "To" field
+            //     $emails = $recipients->pluck('email')->toArray();
+            //     $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
 
-            }
+            // }
 
             return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
 
@@ -145,11 +145,11 @@ class LeaveApplicationController extends Controller
 
             $this->notifyLeaveStatus($leave_application, 'approved');
 
-            $employee = $leave_application->user;
-            if ($employee && ! empty($employee->email)) { // add email existence check
-                $mailable = new LeaveApplicationApproved($leave_application);
-                $this->sendEmail($leave_application, $mailable, $employee->email);
-            }
+            // $employee = $leave_application->user;
+            // if ($employee && ! empty($employee->email)) { // add email existence check
+            //     $mailable = new LeaveApplicationApproved($leave_application);
+            //     $this->sendEmail($leave_application, $mailable, $employee->email);
+            // }
 
         } elseif ($status === 'rejected') {
             $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
@@ -186,10 +186,10 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-            if ($user) {
-                $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
-                $this->sendEmail($leave_application, $mailable, $user->email);
-            }
+            // if ($user) {
+            //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+            //     $this->sendEmail($leave_application, $mailable, $user->email);
+            // }
         }
 
         return Redirect::back()->with('success', 'Application status updated.');
@@ -254,6 +254,41 @@ class LeaveApplicationController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
+    }
+     public function uploadDocumentInertia(Request $request, LeaveApplication $leave_application)
+    {
+        // Ensure only owner can upload
+        if ($leave_application->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Only for sick leave
+        if ($leave_application->leave_type !== 'sick') {
+            return back()->with('error', 'Only sick leave allows document upload.');
+        }
+
+        $request->validate([
+            'supporting_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+        ]);
+
+        $path = $request->file('supporting_document')->store('leave_documents/'.auth()->id(), 'public');
+
+        // Delete old file if exists
+        if ($leave_application->supporting_document_path) {
+            Storage::disk('public')->delete($leave_application->supporting_document_path);
+        }
+
+        $leave_application->update([
+            'supporting_document_path' => $path,
+        ]);
+
+        $leave_application->refresh(); // ensure fresh data
+
+        // Return as Inertia props, not JSON
+        return Inertia::render('Leave/FullRequests', [
+            'leaveRequests' => LeaveApplication::where('user_id', auth()->id())->paginate(15),
+            'success' => 'Supporting document uploaded successfully.',
+        ]);
     }
 
     private function notifyLeaveStatus(LeaveApplication $leaveApplication, string $status): void
