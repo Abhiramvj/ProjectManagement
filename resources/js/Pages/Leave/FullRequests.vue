@@ -118,13 +118,24 @@ function closeEditModal() { isEditModalVisible.value=false; }
 
 function submitEditReason() {
     if(!editingRequest.value) return;
-    editProcessing.value=true;
-    router.patch(route('leave.updateReason',{leave_application:editingRequest.value.id}),{reason:editingReason.value},{
-        preserveScroll:true,
-        onSuccess:()=>closeEditModal(),
-        onFinish:()=>editProcessing.value=false
-    });
+    editProcessing.value = true;
+
+    router.patch(
+        route('leave.updateReason', { leave_application: editingRequest.value.id }),
+        { reason: editingReason.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (selectedRequest.value && selectedRequest.value.id === editingRequest.value.id) {
+                    selectedRequest.value.reason = editingReason.value;
+                }
+                closeEditModal();
+            },
+            onFinish: () => editProcessing.value = false
+        }
+    );
 }
+
 
 const cancelRequest = (request) => {
     if (!confirm("Are you sure you want to cancel this leave request?")) return;
