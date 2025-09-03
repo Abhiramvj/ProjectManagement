@@ -192,9 +192,19 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
              class="bg-white rounded-xl shadow-md p-5 flex items-center justify-between border-l-4 cursor-pointer"
              :class="statusCardBorderClass(req.status)">
             <div>
-                <p class="font-semibold">{{ formatDate(req.start_date) }}
-                    <span v-if="req.end_date !== req.start_date"> - {{ formatDate(req.end_date) }}</span>
-                </p>
+                <p class="font-semibold">
+  {{ formatDate(req.start_date) }}
+  <template v-if="req.start_half_session">
+    ({{ req.start_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+  </template>
+  <span v-if="req.end_date !== req.start_date">
+    - {{ formatDate(req.end_date) }}
+    <template v-if="req.end_half_session">
+      ({{ req.end_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+    </template>
+  </span>
+</p>
+
                 <p class="text-gray-500 text-sm capitalize">{{ req.leave_type }}</p>
             </div>
             <div class="flex items-center gap-3">
@@ -224,9 +234,20 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-1">
-                    <p><span class="font-semibold">Dates:</span> {{ formatDate(selectedRequest.start_date) }} 
-                        <span v-if="selectedRequest.end_date !== selectedRequest.start_date">- {{ formatDate(selectedRequest.end_date) }}</span>
-                    </p>
+                    <p>
+  <span class="font-semibold">Dates:</span>
+  {{ formatDate(selectedRequest.start_date) }}
+  <template v-if="selectedRequest.start_half_session">
+    ({{ selectedRequest.start_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+  </template>
+  <span v-if="selectedRequest.end_date !== selectedRequest.start_date">
+    - {{ formatDate(selectedRequest.end_date) }}
+    <template v-if="selectedRequest.end_half_session">
+      ({{ selectedRequest.end_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+    </template>
+  </span>
+</p>
+
                     <p><span class="font-semibold">Leave Type:</span> {{ selectedRequest.leave_type }}</p>
                     <p><span class="font-semibold">Requested At:</span> {{ new Date(selectedRequest.created_at).toLocaleString() }}</p>
                     <p><span class="font-semibold">Status:</span> {{ statusInfo(selectedRequest.status).text }}</p>

@@ -31,13 +31,27 @@ const page = usePage();
 const currentUserId = page.props.auth.user.id;
 
 
-function formatDateRange(start, end) {
-    const options = { day: '2-digit', month: 'short', year: 'numeric' }
-    const startDate = new Date(start).toLocaleDateString(undefined, options)
-    if (!end || start === end) return startDate
-    const endDate = new Date(end).toLocaleDateString(undefined, options)
-    return `${startDate} - ${endDate}`
+function formatDateRange(start, end, startHalf = null, endHalf = null) {
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+
+    const startDate = new Date(start).toLocaleDateString(undefined, options);
+    const endDate = end ? new Date(end).toLocaleDateString(undefined, options) : null;
+
+    // Helper to append session
+    const formatWithSession = (date, session) => {
+        if (!session) return date;
+        return `${date} (${session === 'morning' ? 'Morning' : 'Afternoon'})`;
+    };
+
+    // Single date
+    if (!end || start === end) {
+        return formatWithSession(startDate, startHalf);
+    }
+
+    // Range
+    return `${formatWithSession(startDate, startHalf)} - ${formatWithSession(endDate, endHalf)}`;
 }
+
 
 function openRequestDetail(request) {
     selectedRequest.value = request
@@ -756,32 +770,32 @@ function statusInfo(status) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <p class="mt-3 text-sm text-slate-500">You don’t have any leave requests yet.</p>
+            <p class="mt-3 text-sm text-slate-500">You don't have any leave requests yet.</p>
         </div>
 
         <!-- Requests List -->
         <div v-else class="space-y-3 max-h-[12rem] overflow-y-auto custom-scrollbar pr-1">
-            <div
-                v-for="request in recentRequests.slice(0,5)"
-                :key="request.id"
-                @click="openRequestDetail(request)"
-                class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition flex justify-between items-center"
-            >
-                <div>
-                    <p class="text-sm font-medium text-slate-800">
-                        {{ formatDateRange(request.start_date, request.end_date) }}
-                    </p>
-                    <p class="text-xs text-slate-500 capitalize">
-                        {{ request.leave_type }}
-                    </p>
-                </div>
-                <span
-                    :class="statusInfo(request.status).badge"
-                >
-                    {{ statusInfo(request.status).text }}
-                </span>
-            </div>
+    <div
+        v-for="request in recentRequests.slice(0,5)"
+        :key="request.id"
+        @click="openRequestDetail(request)"
+        class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition flex justify-between items-center"
+    >
+        <div>
+            <p class="text-sm font-medium text-slate-800">
+                {{ formatDateRange(request.start_date, request.end_date, request.start_half_session, request.end_half_session) }}
+            </p>
+
+            <p class="text-xs text-slate-500 capitalize">
+                {{ request.leave_type }}
+            </p>
         </div>
+        <span :class="statusInfo(request.status).badge">
+            {{ statusInfo(request.status).text }}
+        </span>
+    </div>
+</div>
+
     </div>
 </div>
                     </div>
@@ -1203,7 +1217,10 @@ function statusInfo(status) {
 
         <!-- Body -->
         <div class="px-6 py-5 space-y-3 text-sm text-slate-700">
-            <p><strong class="text-slate-600">Date:</strong> {{ formatDateRange(selectedRequest.start_date, selectedRequest.end_date) }}</p>
+<p>
+  <strong class="text-slate-600">Date:</strong>
+  {{ formatDateRange(selectedRequest.start_date, selectedRequest.end_date, selectedRequest.start_half_session, selectedRequest.end_half_session) }}
+</p>
             <p><strong class="text-slate-600">Type:</strong> <span class="capitalize">{{ selectedRequest.leave_type }}</span></p>
             <p>
                 <strong class="text-slate-600">Status:</strong>
