@@ -122,8 +122,8 @@ Route::middleware('auth')->group(function () {
         ->name('leave.uploadDocument')
         ->middleware('can:apply for leave');
     Route::post('leave/{leave_application}/upload-document-inertia', [LeaveApplicationController::class, 'uploadDocumentInertia'])
-    ->name('leave.uploadDocumentInertia')
-    ->middleware('can:apply for leave');
+        ->name('leave.uploadDocumentInertia')
+        ->middleware('can:apply for leave');
 
     Route::delete('/leave/{leave_application}/cancel', [LeaveApplicationController::class, 'cancel'])->name('leave.cancel')->middleware(['can:apply for leave']);
 

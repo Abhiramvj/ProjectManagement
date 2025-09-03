@@ -230,7 +230,7 @@ class LeaveApplicationController extends Controller
 
         $leave_application->delete();
 
-        return Redirect::route('leave.index')->with('success', 'Leave request canceled.');
+        return redirect()->back()->with('success', 'Leave request canceled.');
     }
 
     public function uploadDocument(Request $request, LeaveApplication $leave_application)
@@ -255,14 +255,13 @@ class LeaveApplicationController extends Controller
 
         return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
     }
-     public function uploadDocumentInertia(Request $request, LeaveApplication $leave_application)
+
+    public function uploadDocumentInertia(Request $request, LeaveApplication $leave_application)
     {
-        // Ensure only owner can upload
         if ($leave_application->user_id !== auth()->id()) {
             abort(403);
         }
 
-        // Only for sick leave
         if ($leave_application->leave_type !== 'sick') {
             return back()->with('error', 'Only sick leave allows document upload.');
         }
@@ -273,7 +272,6 @@ class LeaveApplicationController extends Controller
 
         $path = $request->file('supporting_document')->store('leave_documents/'.auth()->id(), 'public');
 
-        // Delete old file if exists
         if ($leave_application->supporting_document_path) {
             Storage::disk('public')->delete($leave_application->supporting_document_path);
         }
@@ -282,10 +280,9 @@ class LeaveApplicationController extends Controller
             'supporting_document_path' => $path,
         ]);
 
-        $leave_application->refresh(); // ensure fresh data
+        $leave_application->refresh();
 
-        // Return as Inertia props, not JSON
-                return redirect()->back()->with('success', 'Supporting document uploaded successfully.');
+        return redirect()->route('leave.fullRequests')->with('success', 'Document uploaded successfully.');
 
     }
 
