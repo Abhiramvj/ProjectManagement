@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
+use App\Http\Controllers\CompanyOverviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
@@ -160,6 +161,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('announcements', AnnouncementController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:manage announcements');
+    Route::get('/company-overview', [CompanyOverviewController::class, 'index'])->name('company.overview');
+
 
 });
 
