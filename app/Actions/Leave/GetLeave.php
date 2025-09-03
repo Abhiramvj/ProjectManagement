@@ -85,6 +85,8 @@ class GetLeave
                 'title' => ucfirst($request->leave_type).' Leave',
                 'class' => $request->status,
                 'color_category' => $this->getLeaveColorCategory($request),
+                'start_half_session' => $request->start_half_session, 
+                'end_half_session' => $request->end_half_session, 
             ]);
 
         // Get holiday events (this is global and correct)
@@ -113,20 +115,22 @@ class GetLeave
                 'created_at',
                 'rejection_reason',
                 'leave_days',
-                'supporting_document_path'  // <-- ADDED THIS
+                'supporting_document_path',
+                'start_half_session',
+                'end_half_session',
             ])
             ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 ELSE 4 END")
             ->latest()
             ->paginate(15);
 
         // Transform the collection to include proper document URLs
-        $requests->getCollection()->transform(function($leave) {
+        $requests->getCollection()->transform(function ($leave) {
             $leave->supporting_document = $leave->supporting_document_path
-                ? asset('storage/' . $leave->supporting_document_path)
+                ? asset('storage/'.$leave->supporting_document_path)
                 : null;
+
             return $leave;
         });
-
 
         // Return all data to the Vue component.
         return [

@@ -1093,9 +1093,21 @@ const chartOptions = {
                                         </div>
                                     </div>
                                     <span
-                                        class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-600"
-                                        >Fullday</span
-                                    >
+    class="rounded-full px-2 py-1 text-xs font-medium"
+    :class="{
+        'bg-red-100 text-red-600': absentee.day_type === 'full',
+        'bg-orange-100 text-orange-700': absentee.day_type === 'half',
+    }"
+>
+    {{
+        absentee.day_type === 'full' 
+            ? 'Full Day' 
+            : absentee.half_session === 'morning' 
+                ? 'Morning' 
+                : 'Afternoon'
+    }}
+</span>
+
                                 </div>
                             </div>
                             <div

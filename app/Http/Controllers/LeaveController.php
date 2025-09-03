@@ -66,25 +66,27 @@ class LeaveController extends Controller
         ]);
     }
 
-     public function fullRequests(Request $request)
+    public function fullRequests(Request $request)
     {
         $user = auth()->user();
-        
+
         // Base query for user's leave requests - ADDED supporting_document_path
         $query = LeaveApplication::with('user:id,name')
             ->where('user_id', $user->id)
             ->select([
-                'id', 
-                'user_id', 
-                'start_date', 
-                'end_date', 
-                'reason', 
-                'leave_type', 
-                'status', 
-                'created_at', 
-                'rejection_reason', 
+                'id',
+                'user_id',
+                'start_date',
+                'start_half_session',
+                'end_date',
+                'end_half_session',
+                'reason',
+                'leave_type',
+                'status',
+                'created_at',
+                'rejection_reason',
                 'leave_days',
-                'supporting_document_path'  // <-- ADDED THIS LINE
+                'supporting_document_path',  // <-- ADDED THIS LINE
             ])
             ->orderBy('start_date', 'desc');
 
@@ -99,10 +101,11 @@ class LeaveController extends Controller
         $leaveRequests = $query->paginate(15)->withQueryString();
 
         // Transform the collection to include document URLs
-        $leaveRequests->getCollection()->transform(function($leave) {
+        $leaveRequests->getCollection()->transform(function ($leave) {
             $leave->supporting_document = $leave->supporting_document_path
-                ? asset('storage/' . $leave->supporting_document_path)
+                ? asset('storage/'.$leave->supporting_document_path)
                 : null;
+
             return $leave;
         });
 

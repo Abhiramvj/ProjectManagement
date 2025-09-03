@@ -1,9 +1,10 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
-import { Head, router } from '@inertiajs/vue3';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import { Head } from '@inertiajs/vue3';
 import { ref, reactive, watch } from 'vue';
+import { usePage, router } from '@inertiajs/vue3'; // <-- correct place for usePage
 
 const props = defineProps({
     leaveRequests: Object,
@@ -53,11 +54,11 @@ const statusCardBorderClass = status => ({
     rejected: 'border-red-500',
 }[status] || 'border-gray-300');
 
+const page = usePage();
 const uploadingRequest = ref(null);
 const selectedFiles = ref({});
 const uploadProcessing = ref(false);
 const uploadError = ref('');
-const uploadSuccess = ref('');
 const fileInputRefs = reactive({});
 
 function handleFileChange(reqId, event) {
@@ -72,25 +73,38 @@ function handleFileChange(reqId, event) {
 
 function submitUpload(req) {
     const file = selectedFiles.value[req.id];
-    if (!file) { uploadError.value='Please select a file'; return; }
-    uploadingRequest.value=req.id; uploadProcessing.value=true; uploadError.value=''; uploadSuccess.value='';
-    const formData=new FormData(); formData.append('supporting_document',file);
-    router.post(route('leave.uploadDocumentInertia',{leave_application:req.id}),formData,{
-        preserveScroll:true, forceFormData:true,
-        onSuccess:()=>{ delete selectedFiles.value[req.id]; if(fileInputRefs[req.id]) fileInputRefs[req.id].value=''; uploadSuccess.value='Document uploaded successfully'; uploadingRequest.value=null; router.get(route('leave.fullRequests')); },
-        onError:(errors)=>{ uploadError.value=errors.supporting_document || 'Upload failed'; },
-        onFinish:()=>{ uploadProcessing.value=false; }
+    if (!file) { uploadError.value = 'Please select a file'; return; }
+
+    uploadingRequest.value = req.id;
+    uploadProcessing.value = true;
+    uploadError.value = '';
+
+    const formData = new FormData();
+    formData.append('supporting_document', file);
+
+    router.post(route('leave.uploadDocumentInertia', { leave_application: req.id }), formData, {
+        preserveScroll: true,
+        forceFormData: true,
+        onSuccess: (page) => {
+            // Update the selectedRequest with the fresh data from server
+            const updatedRequest = page.props.leaveRequests.data.find(l => l.id === req.id);
+            if (updatedRequest) {
+                Object.assign(selectedRequest.value, updatedRequest);
+            }
+
+            // Reset file input
+            delete selectedFiles.value[req.id];
+            if (fileInputRefs[req.id]) fileInputRefs[req.id].value = '';
+            uploadingRequest.value = null;
+
+            // Show flash
+            page.props.flash = { success: 'Document uploaded successfully ✅' };
+        },
+        onError: (errors) => { uploadError.value = errors.supporting_document || 'Upload failed'; },
+        onFinish: () => { uploadProcessing.value = false; }
     });
 }
 
-function removeDocument(req) {
-    if(!confirm('Are you sure to remove this document?')) return;
-    router.delete(route('leave.removeDocument',{leave_application:req.id}),{
-        preserveScroll:true,
-        onSuccess:()=>{ uploadSuccess.value='Document removed successfully'; setTimeout(()=>{uploadSuccess.value='';},3000); },
-        onError:()=>{ uploadError.value='Failed to remove document'; }
-    });
-}
 
 function clearFileSelection(reqId) { delete selectedFiles.value[reqId]; if(fileInputRefs[reqId]) fileInputRefs[reqId].value=''; uploadError.value=''; }
 
@@ -104,15 +118,39 @@ function closeEditModal() { isEditModalVisible.value=false; }
 
 function submitEditReason() {
     if(!editingRequest.value) return;
-    editProcessing.value=true;
-    router.patch(route('leave.updateReason',{leave_application:editingRequest.value.id}),{reason:editingReason.value},{
-        preserveScroll:true,
-        onSuccess:()=>closeEditModal(),
-        onFinish:()=>editProcessing.value=false
-    });
+    editProcessing.value = true;
+
+    router.patch(
+        route('leave.updateReason', { leave_application: editingRequest.value.id }),
+        { reason: editingReason.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (selectedRequest.value && selectedRequest.value.id === editingRequest.value.id) {
+                    selectedRequest.value.reason = editingReason.value;
+                }
+                closeEditModal();
+            },
+            onFinish: () => editProcessing.value = false
+        }
+    );
 }
 
-function cancelRequest(req) { if(confirm('Are you sure to cancel this leave request?')) router.delete(route('leave.cancel',{leave_application:req.id}),{preserveScroll:true}); }
+
+const cancelRequest = (request) => {
+    if (!confirm("Are you sure you want to cancel this leave request?")) return;
+
+    router.delete(route('leave.cancel', request.id), {
+        onSuccess: () => {
+            isDetailModalVisible.value = false; 
+            selectedRequest.value = null;       
+        },
+        onError: (errors) => {
+            console.error(errors);
+        }
+    });
+};
+
 
 const isDetailModalVisible = ref(false);
 const selectedRequest = ref(null);
@@ -121,6 +159,9 @@ function closeDetailModal() { isDetailModalVisible.value=false; }
 
 const formatDate=dateString=>new Date(dateString).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
 function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
+
+
+
 </script>
 
 <template>
@@ -151,9 +192,19 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
              class="bg-white rounded-xl shadow-md p-5 flex items-center justify-between border-l-4 cursor-pointer"
              :class="statusCardBorderClass(req.status)">
             <div>
-                <p class="font-semibold">{{ formatDate(req.start_date) }}
-                    <span v-if="req.end_date !== req.start_date"> - {{ formatDate(req.end_date) }}</span>
-                </p>
+                <p class="font-semibold">
+  {{ formatDate(req.start_date) }}
+  <template v-if="req.start_half_session">
+    ({{ req.start_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+  </template>
+  <span v-if="req.end_date !== req.start_date">
+    - {{ formatDate(req.end_date) }}
+    <template v-if="req.end_half_session">
+      ({{ req.end_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+    </template>
+  </span>
+</p>
+
                 <p class="text-gray-500 text-sm capitalize">{{ req.leave_type }}</p>
             </div>
             <div class="flex items-center gap-3">
@@ -183,9 +234,20 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-1">
-                    <p><span class="font-semibold">Dates:</span> {{ formatDate(selectedRequest.start_date) }} 
-                        <span v-if="selectedRequest.end_date !== selectedRequest.start_date">- {{ formatDate(selectedRequest.end_date) }}</span>
-                    </p>
+                    <p>
+  <span class="font-semibold">Dates:</span>
+  {{ formatDate(selectedRequest.start_date) }}
+  <template v-if="selectedRequest.start_half_session">
+    ({{ selectedRequest.start_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+  </template>
+  <span v-if="selectedRequest.end_date !== selectedRequest.start_date">
+    - {{ formatDate(selectedRequest.end_date) }}
+    <template v-if="selectedRequest.end_half_session">
+      ({{ selectedRequest.end_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
+    </template>
+  </span>
+</p>
+
                     <p><span class="font-semibold">Leave Type:</span> {{ selectedRequest.leave_type }}</p>
                     <p><span class="font-semibold">Requested At:</span> {{ new Date(selectedRequest.created_at).toLocaleString() }}</p>
                     <p><span class="font-semibold">Status:</span> {{ statusInfo(selectedRequest.status).text }}</p>
@@ -200,8 +262,7 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
             <div v-if="selectedRequest.leave_type==='sick'" class="mt-4">
                 <p class="font-semibold mb-2">Supporting Document</p>
                 <div v-if="selectedRequest.supporting_document" class="flex items-center gap-3 p-3 bg-green-50 border border-green-300 rounded-md">
-                    <a :href="selectedRequest.supporting_document" target="_blank" class="font-medium text-green-700 hover:underline">{{ getFileName(selectedRequest.supporting_document) }}</a>
-                    <button v-if="selectedRequest.status==='pending'" @click="removeDocument(selectedRequest)" class="text-red-600 bg-red-50 px-3 py-1 rounded text-sm hover:bg-red-100">Remove</button>
+                    <a :href="selectedRequest.supporting_document" target="_blank" class="font-medium text-green-700 hover:underline"> View Document</a>
                 </div>
                 <div v-if="selectedRequest.status==='pending'" class="flex flex-col sm:flex-row sm:items-center gap-3 mt-2">
                     <input :ref="el => { if(el) fileInputRefs[selectedRequest.id]=el }" type="file" @change="e=>handleFileChange(selectedRequest.id,e)" accept=".pdf,.jpg,.jpeg,.png" class="border rounded px-2 py-1 w-full sm:w-auto"/>
@@ -211,7 +272,6 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
                     </button>
                 </div>
                 <p v-if="uploadError" class="text-red-600 text-sm mt-1">{{ uploadError }}</p>
-                <p v-if="uploadSuccess" class="text-green-600 text-sm mt-1">{{ uploadSuccess }}</p>
             </div>
 
             <!-- Actions -->

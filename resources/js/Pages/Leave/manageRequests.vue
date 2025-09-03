@@ -347,25 +347,29 @@ function submitRejection() {
 
                         <!-- Sessions -->
                         <div class="flex items-start gap-3">
-                            <span class="text-orange-500">🕒</span>
-                            <div>
-                                <span class="font-medium text-gray-900"
-                                    >Sessions:</span
-                                >
-                                <p class="capitalize text-gray-700">
-                                    {{
-                                        selectedLeave.day_type === 'half'
-                                            ? selectedLeave.start_half_session +
-                                              (selectedLeave.start_date !==
-                                              selectedLeave.end_date
-                                                  ? ' → ' +
-                                                    selectedLeave.end_half_session
-                                                  : '')
-                                            : 'Full Day'
-                                    }}
-                                </p>
-                            </div>
-                        </div>
+    <span class="text-orange-500">🕒</span>
+    <div>
+        <span class="font-medium text-gray-900">Sessions:</span>
+        <p class="capitalize text-gray-700">
+            <template v-if="selectedLeave.day_type === 'full'">
+                Full Day
+            </template>
+            <template v-else>
+                <!-- If single-day half leave -->
+                <span v-if="selectedLeave.start_date === selectedLeave.end_date">
+                    {{ selectedLeave.start_half_session }}
+                </span>
+
+                <!-- If multi-day leave with different sessions -->
+                <span v-else>
+                    {{ selectedLeave.start_half_session }} →
+                    {{ selectedLeave.end_half_session }}
+                </span>
+            </template>
+        </p>
+    </div>
+</div>
+
 
                         <!-- Reason -->
                         <div class="flex items-start gap-3">

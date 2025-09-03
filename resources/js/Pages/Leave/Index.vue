@@ -31,13 +31,27 @@ const page = usePage();
 const currentUserId = page.props.auth.user.id;
 
 
-function formatDateRange(start, end) {
-    const options = { day: '2-digit', month: 'short', year: 'numeric' }
-    const startDate = new Date(start).toLocaleDateString(undefined, options)
-    if (!end || start === end) return startDate
-    const endDate = new Date(end).toLocaleDateString(undefined, options)
-    return `${startDate} - ${endDate}`
+function formatDateRange(start, end, startHalf = null, endHalf = null) {
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+
+    const startDate = new Date(start).toLocaleDateString(undefined, options);
+    const endDate = end ? new Date(end).toLocaleDateString(undefined, options) : null;
+
+    // Helper to append session
+    const formatWithSession = (date, session) => {
+        if (!session) return date;
+        return `${date} (${session === 'morning' ? 'Morning' : 'Afternoon'})`;
+    };
+
+    // Single date
+    if (!end || start === end) {
+        return formatWithSession(startDate, startHalf);
+    }
+
+    // Range
+    return `${formatWithSession(startDate, startHalf)} - ${formatWithSession(endDate, endHalf)}`;
 }
+
 
 function openRequestDetail(request) {
     selectedRequest.value = request
@@ -336,14 +350,17 @@ const submitApplication = () => {
 
 
 const cancelLeave = (request) => {
-    if (confirm('Are you sure you want to cancel this leave request?')) {
-        router.delete(
-            route('leave.cancel', { leave_application: request.id }),
-            {
-                preserveScroll: true,
-            },
-        );
-    }
+    if (!confirm("Are you sure you want to cancel this leave request?")) return;
+
+    router.delete(route('leave.cancel', request.id), {
+        onSuccess: () => {
+            isRequestDetailModalVisible.value = false;  // ✅ Close modal
+            selectedRequest.value = null;               // ✅ Reset selection
+        },
+        onError: (errors) => {
+            console.error(errors);
+        }
+    });
 };
 
 const calendarOptions = ref({
@@ -605,15 +622,19 @@ const leaveTypeDetails = [
     { key: 'personal', label: 'Personal Leave', color: 'bg-amber-500' },
 ];
 
-const statusInfo = (status) => {
-    return (
-        {
-            pending: { text: 'Pending', textColor: 'text-yellow-700' },
-            approved: { text: 'Approved', textColor: 'text-green-700' },
-            rejected: { text: 'Rejected', textColor: 'text-red-700' },
-        }[status] || { text: 'Unknown', textColor: 'text-gray-700' }
-    );
-};
+function statusInfo(status) {
+    switch (status) {
+        case 'pending':
+            return { text: 'Pending', badge: 'bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full' };
+        case 'approved':
+            return { text: 'Approved', badge: 'bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full' };
+        case 'rejected':
+            return { text: 'Rejected', badge: 'bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full' };
+        default:
+            return { text: 'Unknown', badge: 'bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-1 rounded-full' };
+    }
+}
+
 
 
 </script>
@@ -734,38 +755,47 @@ const statusInfo = (status) => {
                             </button>
                         </div>
 
-                        <!-- Card 2: Upcoming Approved Leave -->
                         <!-- Left Column: My Requests Compact Card -->
 <div class="space-y-8 lg:col-span-1">
     <!-- My Requests Card -->
-    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 class="mb-4 text-sm font-semibold text-slate-500">My Leave Requests(click on the request for furhtur details)</h3>
-        <div v-if="!recentRequests.length" class="flex flex-col items-center justify-center text-center py-6">
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-md p-6">
+        <h3 class="mb-4 text-sm font-semibold text-slate-600 uppercase tracking-wide">
+            My Leave Requests
+            <span class="block text-xs font-normal text-slate-400">(Click on a request for details)</span>
+        </h3>
+
+        <!-- Empty State -->
+        <div v-if="!recentRequests.length" class="flex flex-col items-center justify-center text-center py-10">
             <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <p class="mt-2 text-sm text-slate-500">No leave requests yet.</p>
+            <p class="mt-3 text-sm text-slate-500">You don't have any leave requests yet.</p>
         </div>
-        <div v-else class="space-y-3 max-h-[11rem] overflow-y-auto custom-scrollbar">
-            <div
-                v-for="request in recentRequests.slice(0,5)"
-                :key="request.id"
-                @click="openRequestDetail(request)"
-                class="cursor-pointer rounded-lg border border-slate-200 p-3 hover:bg-slate-50 flex justify-between items-center"
-            >
-                <div>
-                    <p class="text-sm font-medium text-slate-800">
-                        {{ formatDateRange(request.start_date, request.end_date) }}
-                    </p>
-                    <p class="text-xs text-slate-500 capitalize">
-                        {{ request.leave_type }}
-                    </p>
-                </div>
-                <span :class="statusInfo(request.status).textColor + ' text-xs font-semibold px-2 py-1 rounded-full'" >
-                    {{ statusInfo(request.status).text }}
-                </span>
-            </div>
+
+        <!-- Requests List -->
+        <div v-else class="space-y-3 max-h-[12rem] overflow-y-auto custom-scrollbar pr-1">
+    <div
+        v-for="request in recentRequests.slice(0,5)"
+        :key="request.id"
+        @click="openRequestDetail(request)"
+        class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition flex justify-between items-center"
+    >
+        <div>
+            <p class="text-sm font-medium text-slate-800">
+                {{ formatDateRange(request.start_date, request.end_date, request.start_half_session, request.end_half_session) }}
+            </p>
+
+            <p class="text-xs text-slate-500 capitalize">
+                {{ request.leave_type }}
+            </p>
         </div>
+        <span :class="statusInfo(request.status).badge">
+            {{ statusInfo(request.status).text }}
+        </span>
+    </div>
+</div>
+
     </div>
 </div>
                     </div>
@@ -1168,41 +1198,73 @@ const statusInfo = (status) => {
 
         <!-- MODALS (All redesigned and included) -->
         <!-- My Recent Requests Modal -->
-        <div
+       <div
     v-if="isRequestDetailModalVisible"
     @click.self="closeRequestDetailModal"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans"
 >
-    <div class="flex w-full max-w-md flex-col rounded-xl bg-white shadow-2xl">
-        <header class="flex justify-between items-center border-b border-slate-200 p-4">
+    <div class="flex w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl overflow-hidden animate-fadeIn">
+        <!-- Header -->
+        <header class="flex justify-between items-center border-b border-slate-200 px-6 py-4 bg-slate-50">
             <h2 class="text-lg font-bold text-slate-800">Leave Request Details</h2>
-            <button @click="closeRequestDetailModal" class="text-slate-400 hover:text-slate-600">
+            <button @click="closeRequestDetailModal" class="text-slate-400 hover:text-slate-600 transition">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </header>
-        <div class="p-4 space-y-3">
-            <p><strong>Date:</strong> {{ formatDateRange(selectedRequest.start_date, selectedRequest.end_date) }}</p>
-            <p><strong>Type:</strong> {{ selectedRequest.leave_type }}</p>
-            <p><strong>Status:</strong> <span :class="statusInfo(selectedRequest.status).textColor">{{ statusInfo(selectedRequest.status).text }}</span></p>
-            <p><strong>Reason:</strong> {{ selectedRequest.reason }}</p>
+
+        <!-- Body -->
+        <div class="px-6 py-5 space-y-3 text-sm text-slate-700">
+<p>
+  <strong class="text-slate-600">Date:</strong>
+  {{ formatDateRange(selectedRequest.start_date, selectedRequest.end_date, selectedRequest.start_half_session, selectedRequest.end_half_session) }}
+</p>
+            <p><strong class="text-slate-600">Type:</strong> <span class="capitalize">{{ selectedRequest.leave_type }}</span></p>
+            <p>
+                <strong class="text-slate-600">Status:</strong>
+                <span :class="statusInfo(selectedRequest.status).badge">
+                    {{ statusInfo(selectedRequest.status).text }}
+                </span>
+            </p>
+            <p><strong class="text-slate-600">Reason:</strong> {{ selectedRequest.reason }}</p>
             <p v-if="selectedRequest.supporting_document_path">
-                <strong>Document:</strong>
-                <a :href="`/storage/${selectedRequest.supporting_document_path}`" target="_blank" class="text-indigo-600 hover:underline">View</a>
+                <strong class="text-slate-600">Document:</strong>
+                <a :href="`/storage/${selectedRequest.supporting_document_path}`" target="_blank"
+                   class="text-indigo-600 hover:underline font-medium">View File</a>
             </p>
         </div>
-        <footer class="flex justify-end gap-3 border-t border-slate-200 p-4">
+
+        <!-- Footer -->
+        <footer class="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
             <button
                 v-if="selectedRequest.leave_type === 'sick'"
                 @click="openUploadModal(selectedRequest.id); closeRequestDetailModal()"
-                class="btn-secondary"
+                class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-300 rounded-md hover:bg-slate-100 transition"
             >
-                {{ selectedRequest.supporting_document_path ? 'Replace' : 'Upload' }}
+                {{ selectedRequest.supporting_document_path ? 'Replace document' : 'Upload document' }}
             </button>
-            <button v-if="selectedRequest.status === 'pending'" @click="openEditModal(selectedRequest)" class="btn-secondary">Edit</button>
-            <button v-if="selectedRequest.status === 'pending'" @click="cancelLeave(selectedRequest)" class="btn-danger-sm">Cancel</button>
-            <button @click="closeRequestDetailModal" class="btn-secondary">Close</button>
+            <button
+                v-if="selectedRequest.status === 'pending'"
+                @click="openEditModal(selectedRequest)"
+                class="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-300 rounded-md hover:bg-slate-100 transition"
+            >
+                Edit
+            </button>
+            <button
+                v-if="selectedRequest.status === 'pending'"
+                @click="cancelLeave(selectedRequest)"
+                class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 rounded-md hover:bg-red-50 transition"
+            >
+                Cancel
+            </button>
+            <button
+                @click="closeRequestDetailModal"
+                class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-300 rounded-md hover:bg-slate-100 transition"
+            >
+                Close
+            </button>
         </footer>
     </div>
 </div>
