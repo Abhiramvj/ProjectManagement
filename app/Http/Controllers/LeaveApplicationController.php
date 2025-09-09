@@ -37,90 +37,90 @@ class LeaveApplicationController extends Controller
         return Inertia::render('Leave/Index', $getLeaveRequests->handle());
     }
 
-   public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
-{
-    try {
-        $leave_application = $storeLeave->handle($request->validated());
+    public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
+    {
+        try {
+            $leave_application = $storeLeave->handle($request->validated());
 
-        LeaveLog::create([
-            'user_id' => $leave_application->user_id,
-            'actor_id' => auth()->id(),
-            'leave_application_id' => $leave_application->id,
-            'action' => 'created',
-            'description' => 'Submitted a new leave request for '.$leave_application->leave_days.' day(s).',
-            'details' => [
-                'leave_type' => $leave_application->leave_type,
-                'start_date' => $leave_application->start_date->toDateString(),
-                'end_date' => $leave_application->end_date->toDateString(),
-            ],
-        ]);
+            LeaveLog::create([
+                'user_id' => $leave_application->user_id,
+                'actor_id' => auth()->id(),
+                'leave_application_id' => $leave_application->id,
+                'action' => 'created',
+                'description' => 'Submitted a new leave request for '.$leave_application->leave_days.' day(s).',
+                'details' => [
+                    'leave_type' => $leave_application->leave_type,
+                    'start_date' => $leave_application->start_date->toDateString(),
+                    'end_date' => $leave_application->end_date->toDateString(),
+                ],
+            ]);
 
-        // Get all admin and hr users
-        $recipients = User::role(['admin', 'hr'])->get();
+            // Get all admin and hr users
+            $recipients = User::role(['admin', 'hr'])->get();
 
-        // if ($recipients->isNotEmpty()) {
-        //     $emails = $recipients->pluck('email')->toArray();
-        //     $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
+            // if ($recipients->isNotEmpty()) {
+            //     $emails = $recipients->pluck('email')->toArray();
+            //     $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
 
-        //     $template = MailTemplate::where('event_type', 'leave_submitted')->first();
+            //     $template = MailTemplate::where('event_type', 'leave_submitted')->first();
 
-        //     if ($template && !empty($emails)) {
-        //         $body = str_replace(
-        //             [
-        //                 '{{employee_name}}',
-        //                 '{{leave_type}}',
-        //                 '{{leave_days}}',
-        //                 '{{start_date}}',
-        //                 '{{end_date}}',
-        //                 '{{reason}}',
-        //                 '[[app_name]]',
-        //             ],
-        //             [
-        //                 $leave_application->user->name,
-        //                 ucfirst($leave_application->leave_type),
-        //                 $leave_application->leave_days,
-        //                 $leave_application->start_date->format('M d, Y'),
-        //                 $leave_application->end_date->format('M d, Y'),
-        //                 $leave_application->reason,
-        //                 config('app.name'),
-        //             ],
-        //             $template->body
-        //         );
+            //     if ($template && !empty($emails)) {
+            //         $body = str_replace(
+            //             [
+            //                 '{{employee_name}}',
+            //                 '{{leave_type}}',
+            //                 '{{leave_days}}',
+            //                 '{{start_date}}',
+            //                 '{{end_date}}',
+            //                 '{{reason}}',
+            //                 '[[app_name]]',
+            //             ],
+            //             [
+            //                 $leave_application->user->name,
+            //                 ucfirst($leave_application->leave_type),
+            //                 $leave_application->leave_days,
+            //                 $leave_application->start_date->format('M d, Y'),
+            //                 $leave_application->end_date->format('M d, Y'),
+            //                 $leave_application->reason,
+            //                 config('app.name'),
+            //             ],
+            //             $template->body
+            //         );
 
-        //         Mail::to($emails)->queue(new CustomMail($template->subject, $body));
+            //         Mail::to($emails)->queue(new CustomMail($template->subject, $body));
 
-        //         foreach ($emails as $email) {
-        //             MailLog::create([
-        //                 'leave_application_id' => $leave_application->id,
-        //                 'recipient_email' => $email,
-        //                 'subject' => $template->subject,
-        //                 'status' => 'sent',
-        //                 'event_type' => $template->event_type,
-        //                 'sent_at' => now(),
-        //                 'body_html' => $body,
-        //                 'reason' => $leave_application->reason,
-        //                 'leave_period' => $leave_application->start_date->toDateString()
-        //                                        .' - '.
-        //                                        $leave_application->end_date->toDateString(),
-        //             ]);
-        //         }
-        //     }
-        // }
+            //         foreach ($emails as $email) {
+            //             MailLog::create([
+            //                 'leave_application_id' => $leave_application->id,
+            //                 'recipient_email' => $email,
+            //                 'subject' => $template->subject,
+            //                 'status' => 'sent',
+            //                 'event_type' => $template->event_type,
+            //                 'sent_at' => now(),
+            //                 'body_html' => $body,
+            //                 'reason' => $leave_application->reason,
+            //                 'leave_period' => $leave_application->start_date->toDateString()
+            //                                        .' - '.
+            //                                        $leave_application->end_date->toDateString(),
+            //             ]);
+            //         }
+            //     }
+            // }
 
-        return Redirect::route('leave.index')
-            ->with('success', 'Leave application submitted successfully.');
+            return Redirect::route('leave.index')
+                ->with('success', 'Leave application submitted successfully.');
 
-    } catch (ValidationException $e) {
-        return Redirect::back()
-            ->withErrors($e->errors())
-            ->with('error', 'There were validation errors.');
-    } catch (\Exception $e) {
-        Log::error('Failed to store leave application: '.$e->getMessage());
+        } catch (ValidationException $e) {
+            return Redirect::back()
+                ->withErrors($e->errors())
+                ->with('error', 'There were validation errors.');
+        } catch (\Exception $e) {
+            Log::error('Failed to store leave application: '.$e->getMessage());
 
-        return Redirect::back()
-            ->with('error', 'An unexpected server error occurred. Please try again later.');
+            return Redirect::back()
+                ->with('error', 'An unexpected server error occurred. Please try again later.');
+        }
     }
-}
 
     public function approveCompOff(Request $request, User $user)
     {
@@ -155,129 +155,129 @@ class LeaveApplicationController extends Controller
     }
 
     public function update(UpdateLeaveRequest $request, LeaveApplication $leave_application, UpdateLeave $updateLeaveStatus)
-{
-    $validatedData = $request->validated();
-    $status = $validatedData['status'];
-    $actor = auth()->user();
-    $user = $leave_application->user;
+    {
+        $validatedData = $request->validated();
+        $status = $validatedData['status'];
+        $actor = auth()->user();
+        $user = $leave_application->user;
 
-    if ($status === 'approved') {
-        $balanceType = in_array($leave_application->leave_type, ['compensatory']) ? 'comp_off_balance' : 'leave_balance';
-        $oldBalance = $user->$balanceType;
-
-        // Deduct balance inside handler
-        $updateLeaveStatus->handle($leave_application, 'approved');
-
-        // Log approval action
-        LeaveLog::create([
-            'user_id' => $leave_application->user_id,
-            'actor_id' => $actor->id,
-            'leave_application_id' => $leave_application->id,
-            'action' => 'approved',
-            'description' => 'Request approved by '.$actor->name.'. '.$leave_application->leave_days.' day(s) deducted.',
-            'details' => [
-                'balance_type' => str_replace('_balance', '', $balanceType),
-                'change_amount' => -$leave_application->leave_days,
-                'old_balance' => $oldBalance,
-                'new_balance' => $user->fresh()->$balanceType,
-            ],
-        ]);
-
-        $this->notifyLeaveStatus($leave_application, 'approved');
-
-        // if ($user && !empty($user->email)) {
-        //     $mailable = new LeaveApplicationApproved($leave_application);
-        //     $this->sendEmail($leave_application, $mailable, $user->email);
-        // }
-
-    } elseif ($status === 'rejected') {
-        $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
-        $balanceType = null;
-        $oldBalance = 0;
-
-        // Restore leave balance
-        if (in_array($leave_application->leave_type, ['annual', 'personal'])) {
-            $user->increment('leave_balance', $leave_application->leave_days);
-            $balanceType = 'leave_balance';
-        } elseif ($leave_application->leave_type === 'compensatory') {
-            $user->increment('comp_off_balance', $leave_application->leave_days);
-            $balanceType = 'comp_off_balance';
-        }
-
-        if ($user && $balanceType) {
+        if ($status === 'approved') {
+            $balanceType = in_array($leave_application->leave_type, ['compensatory']) ? 'comp_off_balance' : 'leave_balance';
             $oldBalance = $user->$balanceType;
-        }
-        $user->save();
 
-        // Restore status inside handler
-        $updateLeaveStatus->handle($leave_application, 'rejected', $rejectReason);
+            // Deduct balance inside handler
+            $updateLeaveStatus->handle($leave_application, 'approved');
 
-        // Log rejection action
-        LeaveLog::create([
-            'user_id' => $leave_application->user_id,
-            'actor_id' => $actor->id,
-            'leave_application_id' => $leave_application->id,
-            'action' => 'rejected',
-            'description' => 'Request rejected by '.$actor->name.'. Balance restored.',
-            'details' => [
-                'rejection_reason' => $rejectReason,
-                'balance_type' => str_replace('_balance', '', $balanceType),
-                'change_amount' => +$leave_application->leave_days,
-                'old_balance' => $oldBalance,
-                'new_balance' => $user->fresh()->$balanceType,
-            ],
-        ]);
-
-        // if ($user && !empty($user->email)) {
-        //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
-        //     $this->sendEmail($leave_application, $mailable, $user->email);
-        // }
-
-        // Rejection email template from MongoDB
-        $template = MailTemplate::where('event_type', 'leave_rejected')->first();
-        if ($template && !empty($user->email)) {
-            $body = str_replace(
-                [
-                    '{{employee_name}}',
-                    '{{leave_type}}',
-                    '{{leave_days}}',
-                    '{{start_date}}',
-                    '{{end_date}}',
-                    '{{rejection_reason}}',
-                    '{{route}}',
-                    '{{app_name}}',
-                ],
-                [
-                    $user->name,
-                    ucfirst($leave_application->leave_type),
-                    $leave_application->leave_days ?: $leave_application->start_date->diffInDays($leave_application->end_date) + 1,
-                    $leave_application->start_date->format('M d, Y'),
-                    $leave_application->end_date->format('M d, Y'),
-                    $rejectReason,
-                    route('leave.index'),
-                    config('app.name'),
-                ],
-                $template->body
-            );
-
-            // Mail::to($user->email)->queue(new CustomMail($template->subject, $body));
-
-            MailLog::create([
+            // Log approval action
+            LeaveLog::create([
+                'user_id' => $leave_application->user_id,
+                'actor_id' => $actor->id,
                 'leave_application_id' => $leave_application->id,
-                'recipient_email' => $user->email,
-                'subject' => $template->subject,
-                'status' => 'sent',
-                'event_type' => $template->event_type,
-                'sent_at' => now(),
-                'body_html' => $body,
-                'rejection_reason' => $rejectReason,
-                'leave_period' => $leave_application->start_date->toDateString() . ' - ' . $leave_application->end_date->toDateString(),
+                'action' => 'approved',
+                'description' => 'Request approved by '.$actor->name.'. '.$leave_application->leave_days.' day(s) deducted.',
+                'details' => [
+                    'balance_type' => str_replace('_balance', '', $balanceType),
+                    'change_amount' => -$leave_application->leave_days,
+                    'old_balance' => $oldBalance,
+                    'new_balance' => $user->fresh()->$balanceType,
+                ],
             ]);
-        }
-    }
 
-    return Redirect::back()->with('success', 'Application status updated.');
-}
+            $this->notifyLeaveStatus($leave_application, 'approved');
+
+            // if ($user && !empty($user->email)) {
+            //     $mailable = new LeaveApplicationApproved($leave_application);
+            //     $this->sendEmail($leave_application, $mailable, $user->email);
+            // }
+
+        } elseif ($status === 'rejected') {
+            $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
+            $balanceType = null;
+            $oldBalance = 0;
+
+            // Restore leave balance
+            if (in_array($leave_application->leave_type, ['annual', 'personal'])) {
+                $user->increment('leave_balance', $leave_application->leave_days);
+                $balanceType = 'leave_balance';
+            } elseif ($leave_application->leave_type === 'compensatory') {
+                $user->increment('comp_off_balance', $leave_application->leave_days);
+                $balanceType = 'comp_off_balance';
+            }
+
+            if ($user && $balanceType) {
+                $oldBalance = $user->$balanceType;
+            }
+            $user->save();
+
+            // Restore status inside handler
+            $updateLeaveStatus->handle($leave_application, 'rejected', $rejectReason);
+
+            // Log rejection action
+            LeaveLog::create([
+                'user_id' => $leave_application->user_id,
+                'actor_id' => $actor->id,
+                'leave_application_id' => $leave_application->id,
+                'action' => 'rejected',
+                'description' => 'Request rejected by '.$actor->name.'. Balance restored.',
+                'details' => [
+                    'rejection_reason' => $rejectReason,
+                    'balance_type' => str_replace('_balance', '', $balanceType),
+                    'change_amount' => +$leave_application->leave_days,
+                    'old_balance' => $oldBalance,
+                    'new_balance' => $user->fresh()->$balanceType,
+                ],
+            ]);
+
+            // if ($user && !empty($user->email)) {
+            //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+            //     $this->sendEmail($leave_application, $mailable, $user->email);
+            // }
+
+            // Rejection email template from MongoDB
+            $template = MailTemplate::where('event_type', 'leave_rejected')->first();
+            if ($template && ! empty($user->email)) {
+                $body = str_replace(
+                    [
+                        '{{employee_name}}',
+                        '{{leave_type}}',
+                        '{{leave_days}}',
+                        '{{start_date}}',
+                        '{{end_date}}',
+                        '{{rejection_reason}}',
+                        '{{route}}',
+                        '{{app_name}}',
+                    ],
+                    [
+                        $user->name,
+                        ucfirst($leave_application->leave_type),
+                        $leave_application->leave_days ?: $leave_application->start_date->diffInDays($leave_application->end_date) + 1,
+                        $leave_application->start_date->format('M d, Y'),
+                        $leave_application->end_date->format('M d, Y'),
+                        $rejectReason,
+                        route('leave.index'),
+                        config('app.name'),
+                    ],
+                    $template->body
+                );
+
+                // Mail::to($user->email)->queue(new CustomMail($template->subject, $body));
+
+                MailLog::create([
+                    'leave_application_id' => $leave_application->id,
+                    'recipient_email' => $user->email,
+                    'subject' => $template->subject,
+                    'status' => 'sent',
+                    'event_type' => $template->event_type,
+                    'sent_at' => now(),
+                    'body_html' => $body,
+                    'rejection_reason' => $rejectReason,
+                    'leave_period' => $leave_application->start_date->toDateString().' - '.$leave_application->end_date->toDateString(),
+                ]);
+            }
+        }
+
+        return Redirect::back()->with('success', 'Application status updated.');
+    }
 
     public function updateReason(Request $request, LeaveApplication $leave_application)
     {
