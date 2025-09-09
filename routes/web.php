@@ -163,7 +163,6 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:manage announcements');
     Route::get('/company-overview', [CompanyOverviewController::class, 'index'])->name('company.overview');
 
-
 });
 
 // Developer login route

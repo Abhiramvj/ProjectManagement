@@ -46,33 +46,32 @@ class DashboardController extends Controller
         $totalEmployees = User::count();
         $today = now()->toDateString(); // define before closures
 
-$absentTodayUsers = User::whereHas('leaveApplications', function ($query) use ($today) {
-    $query->where('status', 'approved')
-          ->where('start_date', '<=', $today)
-          ->where('end_date', '>=', $today);
-})->get();
-
+        $absentTodayUsers = User::whereHas('leaveApplications', function ($query) use ($today) {
+            $query->where('status', 'approved')
+                ->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today);
+        })->get();
 
         $attendanceData = [
             'total' => $totalEmployees,
             'present' => $totalEmployees - $absentTodayUsers->count(),
             'absent' => $absentTodayUsers->count(),
             'absent_list' => $absentTodayUsers->map(function ($user) use ($today) {
-    $leave = $user->leaveApplications()
-        ->where('status', 'approved')
-        ->where('start_date', '<=', $today)
-        ->where('end_date', '>=', $today)
-        ->first();
+                $leave = $user->leaveApplications()
+                    ->where('status', 'approved')
+                    ->where('start_date', '<=', $today)
+                    ->where('end_date', '>=', $today)
+                    ->first();
 
-    return [
-        'id' => $user->id,
-        'name' => $user->name,
-        'designation' => $user->designation,
-        'avatar_url' => $user->avatar_url,
-        'day_type' => $leave?->day_type ?? 'full',          // full or half
-        'half_session' => $leave?->half_session ?? null,    // morning/afternoon if half
-    ];
-}),
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'designation' => $user->designation,
+                    'avatar_url' => $user->avatar_url,
+                    'day_type' => $leave?->day_type ?? 'full',          // full or half
+                    'half_session' => $leave?->half_session ?? null,    // morning/afternoon if half
+                ];
+            }),
 
         ];
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
@@ -10,6 +11,7 @@ class CustomMail extends Mailable
     use Queueable, SerializesModels;
 
     public $subjectLine;
+
     public $bodyContent;
 
     public function __construct($subjectLine, $bodyContent)
@@ -21,6 +23,6 @@ class CustomMail extends Mailable
     public function build()
     {
         return $this->subject($this->subjectLine)
-                    ->html($this->bodyContent);
+            ->html($this->bodyContent);
     }
 }

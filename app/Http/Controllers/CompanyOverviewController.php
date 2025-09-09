@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\User;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class CompanyOverviewController extends Controller
 {

@@ -85,8 +85,8 @@ class GetLeave
                 'title' => ucfirst($request->leave_type).' Leave',
                 'class' => $request->status,
                 'color_category' => $this->getLeaveColorCategory($request),
-                'start_half_session' => $request->start_half_session, 
-                'end_half_session' => $request->end_half_session, 
+                'start_half_session' => $request->start_half_session,
+                'end_half_session' => $request->end_half_session,
             ]);
 
         // Get holiday events (this is global and correct)
