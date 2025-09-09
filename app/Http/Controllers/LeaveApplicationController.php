@@ -58,12 +58,12 @@ class LeaveApplicationController extends Controller
             // Get all admin and hr users
             $recipients = User::role(['admin', 'hr'])->get();
 
-            // if ($recipients->isNotEmpty()) {
-            //     // Option 1: Send one email with all recipients in the "To" field
-            //     $emails = $recipients->pluck('email')->toArray();
-            //     $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
+            if ($recipients->isNotEmpty()) {
+                // Option 1: Send one email with all recipients in the "To" field
+                $emails = $recipients->pluck('email')->toArray();
+                $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
 
-            // }
+            }
 
             return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
             $recipients = User::role(['admin', 'hr'])->pluck('email')->toArray();
@@ -194,11 +194,11 @@ class LeaveApplicationController extends Controller
 
             $this->notifyLeaveStatus($leave_application, 'approved');
 
-            // $employee = $leave_application->user;
-            // if ($employee && ! empty($employee->email)) { // add email existence check
-            //     $mailable = new LeaveApplicationApproved($leave_application);
-            //     $this->sendEmail($leave_application, $mailable, $employee->email);
-            // }
+            $employee = $leave_application->user;
+            if ($employee && ! empty($employee->email)) { // add email existence check
+                $mailable = new LeaveApplicationApproved($leave_application);
+                $this->sendEmail($leave_application, $mailable, $employee->email);
+            }
 
         } elseif ($status === 'rejected') {
             $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
@@ -283,10 +283,10 @@ class LeaveApplicationController extends Controller
                 ],
             ]);
 
-            // if ($user) {
-            //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
-            //     $this->sendEmail($leave_application, $mailable, $user->email);
-            // }
+            if ($user) {
+                $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+                $this->sendEmail($leave_application, $mailable, $user->email);
+            }
         }
         // Fetch rejection email template from MongoDB
         $template = MailTemplate::where('event_type', 'leave_rejected')->first();
