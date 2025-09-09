@@ -23,6 +23,8 @@ const props = defineProps({
         default: () => [],
     },
     leaveStats: Object,
+    leaveTypeDescriptions: Object,
+    leaveTypeIcons: Object,
 });
 
 const selectedRequest = ref(null)
@@ -389,108 +391,8 @@ watch(
     { deep: true },
 );
 
-const leaveTypeDescriptions = {
-    annual: {
-        title: 'Annual Leave',
-        summary: 'Planned time off with advance notice',
-        details: [
-            'For vacations, personal time, or other planned absences',
-            'Should be requested at least 7 days in advance',
-            'Requires manager approval',
-            'Balance accrued based on tenure (typically 15-25 days/year)',
-        ],
-    },
-    personal: {
-        title: 'Personal Leave',
-        summary: 'Leave for personal matters that require time off',
-        details: [
-            'Used for personal errands, family commitments, or important events',
-            'Typically requires 3 days advance notice',
-            'Needs manager approval',
-            'May be limited in total number of days per year',
-        ],
-    },
-    sick: {
-        title: 'Sick Leave',
-        summary: 'Leave granted for health-related issues',
-        details: [
-            'For medical appointments, illness, or recovery',
-            'Usually requires a medical certificate for extended absences',
-            'Accrued based on company policy and local law',
-            'May be paid or unpaid as per policy',
-        ],
-    },
-    emergency: {
-        title: 'Emergency Leave',
-        summary: 'Leave for urgent, unforeseen personal emergencies',
-        details: [
-            'For unexpected situations like medical emergencies, accidents, or urgent family matters',
-            'Typically granted on short notice with flexible approval process',
-            'Usually paid leave, separate from annual or personal leave balances',
-            'Helps employees manage critical situations without penalty',
-        ],
-    },
-    maternity: {
-        title: 'Maternity Leave',
-        summary: 'Leave for childbirth and related recovery',
-        details: [
-            'Granted to employees during pregnancy and after birth',
-            'Duration varies by jurisdiction (typically 12-26 weeks)',
-            'May require medical documentation',
-            'Protected under employment law',
-        ],
-    },
-    paternity: {
-        title: 'Paternity Leave',
-        summary: 'Leave for fathers around the time of childbirth',
-        details: [
-            'Allows bonding with the newborn and support for the family',
-            'Usually shorter duration than maternity leave (e.g., 1-2 weeks)',
-            'Requires notice as per company policy',
-            'Protected under employment law',
-        ],
-    },
-    wfh: {
-        title: 'Work From Home',
-        summary: 'Remote work arrangements without reducing leave balance',
-        details: [
-            'Allows employees to work remotely for full or partial days',
-            'Usually does not deduct from leave balance',
-            'Requires manager’s approval',
-            'Supports flexible work-life balance',
-        ],
-    },
-    compensatory: {
-        title: 'Compensatory Leave',
-        summary: 'Leave earned by working extra hours or on holidays',
-        details: [
-            'Credited when working during official holidays',
-            'Used as paid time off in lieu of extra hours worked',
-            'Requires manager approval to grant and to use',
-            'Usually tracked separately to enforce usage policies',
-        ],
-    },
-};
 
-const leaveTypeIcons = {
-    annual: '🌴',
-    personal: '📝',
-    sick: '🤒',
-    emergency: '🚨',
-    maternity: '🤰',
-    paternity: '👨‍🍼',
-    wfh: '💻',
-    compensatory: '⏰',
-    default: '📌',
-};
 
-const leaveTypeTags = {
-    sick: 'bg-pink-100 text-pink-600',
-    casual: 'bg-blue-100 text-blue-600',
-    compensatory: 'bg-green-100 text-green-600',
-    wfh: 'bg-cyan-100 text-cyan-600',
-    default: 'bg-gray-100 text-gray-600',
-};
 
 
 

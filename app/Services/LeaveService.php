@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log; // Added for logging
+
+// Added for logging
 
 class LeaveService
 {
@@ -76,7 +78,7 @@ class LeaveService
     {
         $query = LeaveApplication::forUser($user->id)
             ->where('status', '!=', 'rejected')
-            ->overlapsWith($startDate, $endDate); // <-- This now works correctly
+            ->overlapsWith($startDate, $endDate);
 
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
@@ -145,31 +147,74 @@ class LeaveService
     /**
      * Calculate leave days for a date range considering weekends and half days
      */
-    public function calculateLeaveDays(Carbon $startDate, Carbon $endDate, string $dayType = 'full', array $data = []): float
+    public function calculateLeaveDays(array $data, User $user): float
     {
-        Log::info('LeaveService calculateLeaveDays called', [
-            'startDate' => $startDate->toDateString(), 'endDate' => $endDate->toDateString(), 'dayType' => $dayType,
-            'start_half_session' => $data['start_half_session'] ?? 'not set',
-            'end_half_session' => $data['end_half_session'] ?? 'not set',
-        ]);
+        $start = Carbon::parse($data['start_date']);
+        $end = Carbon::parse($data['end_date']);
+        $startSession = $data['start_half_session'] ?? null;
+        $endSession = $data['end_half_session'] ?? null;
 
-        if ($dayType === 'half') {
-            if ($startDate->isSameDay($endDate)) {
-                return 0.5;
+        $startSession = $startSession === '' ? null : $startSession;
+        $endSession = $endSession === '' ? null : $endSession;
+
+        $leaveDays = 0;
+        $isSingleDay = $start->isSameDay($end);
+
+        if ($isSingleDay) {
+            $isWeekend = in_array($start->dayOfWeekIso, [6, 7]);
+            $isHoliday = Holiday::whereDate('date', $start->toDateString())->exists();
+
+            if ($isWeekend || $isHoliday) {
+                $leaveDays = 0;
             } else {
-                $totalDays = $startDate->diffInDaysFiltered(fn ($date) => ! $date->isWeekend(), $endDate) + 1;
-                $deduction = 0;
-                if (($data['start_half_session'] ?? null) === 'afternoon') {
-                    $deduction += 0.5;
-                }
-                if (($data['end_half_session'] ?? null) === 'morning') {
-                    $deduction += 0.5;
+                $isFullDay = ($startSession === 'morning' && $endSession === 'afternoon');
+
+                $halfDayCases = [
+                    ['morning', null],
+                    [null, 'afternoon'],
+                    ['morning', 'morning'],
+                    ['afternoon', 'afternoon'],
+                    ['afternoon', null],
+                ];
+
+                $isHalfDay = false;
+                foreach ($halfDayCases as $case) {
+                    if ($startSession === $case[0] && $endSession === $case[1]) {
+                        $isHalfDay = true;
+                        break;
+                    }
                 }
 
-                return max(0.5, $totalDays - $deduction);
+                if ($isFullDay) {
+                    $leaveDays = 1.0;
+                } elseif ($isHalfDay) {
+                    $leaveDays = 0.5;
+                } else {
+                    $leaveDays = 1.0;
+                }
             }
+        } else {
+            $firstDayValue = (! in_array($start->dayOfWeekIso, [6, 7]) && ! Holiday::whereDate('date', $start->toDateString())->exists())
+                             ? (($startSession === 'afternoon') ? 0.5 : 1.0)
+                             : 0.0;
+
+            $lastDayValue = (! in_array($end->dayOfWeekIso, [6, 7]) && ! Holiday::whereDate('date', $end->toDateString())->exists())
+                            ? (($endSession === 'morning') ? 0.5 : 1.0)
+                            : 0.0;
+
+            $workingDaysInBetween = 0;
+            $currentDay = $start->copy()->addDay();
+            while ($currentDay->lt($end)) {
+                if (! in_array($currentDay->dayOfWeekIso, [6, 7]) && ! Holiday::whereDate('date', $currentDay->toDateString())->exists()) {
+                    $workingDaysInBetween++;
+                }
+                $currentDay->addDay();
+            }
+
+            $leaveDays = $firstDayValue + $lastDayValue + $workingDaysInBetween;
+            $leaveDays = max(0, $leaveDays);
         }
 
-        return $startDate->diffInDaysFiltered(fn ($date) => ! $date->isWeekend(), $endDate) + 1;
+        return $leaveDays;
     }
 }

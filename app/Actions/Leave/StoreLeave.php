@@ -2,7 +2,6 @@
 
 namespace App\Actions\Leave;
 
-use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\User;
 use App\Notifications\LeaveRequestSubmitted;
@@ -37,73 +36,10 @@ class StoreLeave
             ]);
         }
 
-        // Calculate leave days (existing logic unchanged)
-        $leaveDays = 0;
-        $isSingleDay = $start->isSameDay($end);
+        // leavedays calculation
+        $leaveService = app(\App\Services\LeaveService::class);
 
-        if ($isSingleDay) {
-            $isWeekend = in_array($start->dayOfWeekIso, [6, 7]);
-            $isHoliday = Holiday::whereDate('date', $start->toDateString())->exists();
-
-            if ($isWeekend || $isHoliday) {
-                $leaveDays = 0;
-            } else {
-                $isFullDay = ($startSession === 'morning' && $endSession === 'afternoon');
-
-                $halfDayCases = [
-                    ['morning', null],
-                    [null, 'afternoon'],
-                    ['morning', 'morning'],
-                    ['afternoon', 'afternoon'],
-                    ['afternoon', null],
-                ];
-
-                $isHalfDay = false;
-                foreach ($halfDayCases as $case) {
-                    if ($startSession === $case[0] && $endSession === $case[1]) {
-                        $isHalfDay = true;
-                        break;
-                    }
-                }
-
-                if ($isFullDay) {
-                    $leaveDays = 1.0;
-                } elseif ($isHalfDay) {
-                    $leaveDays = 0.5;
-                } else {
-                    $leaveDays = 1.0;
-                }
-            }
-        } else {
-            $firstDayValue = 0.0;
-            if (! in_array($start->dayOfWeekIso, [6, 7])
-                && ! Holiday::whereDate('date', $start->toDateString())->exists()) {
-                $firstDayValue = ($startSession === 'afternoon') ? 0.5 : 1.0;
-            }
-
-            $lastDayValue = 0.0;
-            if (! in_array($end->dayOfWeekIso, [6, 7])
-                && ! Holiday::whereDate('date', $end->toDateString())->exists()) {
-                $lastDayValue = ($endSession === 'morning') ? 0.5 : 1.0;
-            }
-
-            $workingDaysInBetween = 0;
-            $currentDay = $start->copy()->addDay();
-
-            while ($currentDay->lt($end)) {
-                $isWeekend = in_array($currentDay->dayOfWeekIso, [6, 7]);
-                $isHoliday = Holiday::whereDate('date', $currentDay->toDateString())->exists();
-
-                if (! $isWeekend && ! $isHoliday) {
-                    $workingDaysInBetween++;
-                }
-
-                $currentDay->addDay();
-            }
-
-            $leaveDays = $firstDayValue + $lastDayValue + $workingDaysInBetween;
-            $leaveDays = max(0, $leaveDays);
-        }
+        $leaveDays = $leaveService->calculateLeaveDays($data, $targetUser);
 
         // Validate leave balance for target user except exempt leave types
         // Replace in StoreLeave class, handle() method before throwing ValidationException

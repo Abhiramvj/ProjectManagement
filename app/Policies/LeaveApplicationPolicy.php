@@ -45,8 +45,7 @@ class LeaveApplicationPolicy
      */
     public function update(User $user, LeaveApplication $leaveApplication): bool
     {
-        // We return false here because only the `before` method should grant update permission.
-        return false;
+         return $user->id === $leaveApplication->user_id;
     }
 
     /**

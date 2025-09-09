@@ -37,7 +37,7 @@ class GetLeave
      */
     public function handle(): array
     {
-        $authUser = Auth::user(); // The person who is logged in (the admin)
+        $authUser = Auth::user();
 
         // Determine which user's data we need to display
         $displayUserId = request('user_id');
@@ -55,8 +55,6 @@ class GetLeave
         } else {
             Log::info('displayUser is model', ['id' => $displayUser->id]);
         }
-
-        // --- All calculations below are now correctly based on $displayUser ---
 
         // Calculate leave stats for the correct user ($displayUser)
         $leaveStats = [
@@ -103,7 +101,7 @@ class GetLeave
 
         // "Your Requests" modal should ALWAYS show the LOGGED-IN user's requests
         $requests = LeaveApplication::with(['user:id,name'])
-            ->where('user_id', $authUser->id) // Use $authUser here
+            ->where('user_id', $authUser->id)
             ->select([
                 'id',
                 'user_id',
@@ -132,16 +130,31 @@ class GetLeave
             return $leave;
         });
 
-        // Return all data to the Vue component.
+        $leaveTypes = config('leave_types');
+
+        // Map into two objects for Vue
+        $leaveTypeDescriptions = collect($leaveTypes)->mapWithKeys(function ($type, $key) {
+            return [$key => [
+                'title' => $type['title'],
+                'summary' => $type['summary'],
+                'details' => $type['details'],
+            ]];
+        })->toArray();
+
+        $leaveTypeIcons = collect($leaveTypes)->mapWithKeys(function ($type, $key) {
+            return [$key => $type['icon'] ?? '📌'];
+        })->toArray();
+
         return [
             'leaveRequests' => $requests,
             'highlightedDates' => $highlighted,
-            // These props now correctly contain the data for the $displayUser
             'remainingLeaveBalance' => $displayUser->leave_balance,
             'compOffBalance' => $displayUser->comp_off_balance,
             'employees' => $employees,
             'leaveStats' => $leaveStats,
-            'canManage' => false, // This seems unused, but we'll leave it
+            'canManage' => false,
+            'leaveTypeDescriptions' => $leaveTypeDescriptions,
+            'leaveTypeIcons' => $leaveTypeIcons,
         ];
     }
 }
