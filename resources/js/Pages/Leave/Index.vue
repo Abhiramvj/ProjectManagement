@@ -484,13 +484,7 @@ const leaveTypeIcons = {
     default: '📌',
 };
 
-const leaveTypeTags = {
-    sick: 'bg-pink-100 text-pink-600',
-    casual: 'bg-blue-100 text-blue-600',
-    compensatory: 'bg-green-100 text-green-600',
-    wfh: 'bg-cyan-100 text-cyan-600',
-    default: 'bg-gray-100 text-gray-600',
-};
+
 
 
 

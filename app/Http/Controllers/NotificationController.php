@@ -100,9 +100,12 @@ class NotificationController extends Controller
     }
 
     public function markAllAsRead()
-    {
-        auth()->user()->unreadNotifications->markAsRead();
-
-        return back();
+{
+    foreach (auth()->user()->unreadNotifications as $notification) {
+        $notification->markAsRead();
     }
+
+    return back()->with('success', 'All notifications marked as read.');
+}
+
 }

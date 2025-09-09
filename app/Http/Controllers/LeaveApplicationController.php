@@ -58,54 +58,54 @@ class LeaveApplicationController extends Controller
         // Get all admin and hr users
         $recipients = User::role(['admin', 'hr'])->get();
 
-        if ($recipients->isNotEmpty()) {
-            $emails = $recipients->pluck('email')->toArray();
-            $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
+        // if ($recipients->isNotEmpty()) {
+        //     $emails = $recipients->pluck('email')->toArray();
+        //     $this->sendEmail($leave_application, new LeaveApplicationSubmitted($leave_application), $emails);
 
-            $template = MailTemplate::where('event_type', 'leave_submitted')->first();
+        //     $template = MailTemplate::where('event_type', 'leave_submitted')->first();
 
-            if ($template && !empty($emails)) {
-                $body = str_replace(
-                    [
-                        '{{employee_name}}',
-                        '{{leave_type}}',
-                        '{{leave_days}}',
-                        '{{start_date}}',
-                        '{{end_date}}',
-                        '{{reason}}',
-                        '[[app_name]]',
-                    ],
-                    [
-                        $leave_application->user->name,
-                        ucfirst($leave_application->leave_type),
-                        $leave_application->leave_days,
-                        $leave_application->start_date->format('M d, Y'),
-                        $leave_application->end_date->format('M d, Y'),
-                        $leave_application->reason,
-                        config('app.name'),
-                    ],
-                    $template->body
-                );
+        //     if ($template && !empty($emails)) {
+        //         $body = str_replace(
+        //             [
+        //                 '{{employee_name}}',
+        //                 '{{leave_type}}',
+        //                 '{{leave_days}}',
+        //                 '{{start_date}}',
+        //                 '{{end_date}}',
+        //                 '{{reason}}',
+        //                 '[[app_name]]',
+        //             ],
+        //             [
+        //                 $leave_application->user->name,
+        //                 ucfirst($leave_application->leave_type),
+        //                 $leave_application->leave_days,
+        //                 $leave_application->start_date->format('M d, Y'),
+        //                 $leave_application->end_date->format('M d, Y'),
+        //                 $leave_application->reason,
+        //                 config('app.name'),
+        //             ],
+        //             $template->body
+        //         );
 
-                Mail::to($emails)->queue(new CustomMail($template->subject, $body));
+        //         Mail::to($emails)->queue(new CustomMail($template->subject, $body));
 
-                foreach ($emails as $email) {
-                    MailLog::create([
-                        'leave_application_id' => $leave_application->id,
-                        'recipient_email' => $email,
-                        'subject' => $template->subject,
-                        'status' => 'sent',
-                        'event_type' => $template->event_type,
-                        'sent_at' => now(),
-                        'body_html' => $body,
-                        'reason' => $leave_application->reason,
-                        'leave_period' => $leave_application->start_date->toDateString()
-                                               .' - '.
-                                               $leave_application->end_date->toDateString(),
-                    ]);
-                }
-            }
-        }
+        //         foreach ($emails as $email) {
+        //             MailLog::create([
+        //                 'leave_application_id' => $leave_application->id,
+        //                 'recipient_email' => $email,
+        //                 'subject' => $template->subject,
+        //                 'status' => 'sent',
+        //                 'event_type' => $template->event_type,
+        //                 'sent_at' => now(),
+        //                 'body_html' => $body,
+        //                 'reason' => $leave_application->reason,
+        //                 'leave_period' => $leave_application->start_date->toDateString()
+        //                                        .' - '.
+        //                                        $leave_application->end_date->toDateString(),
+        //             ]);
+        //         }
+        //     }
+        // }
 
         return Redirect::route('leave.index')
             ->with('success', 'Leave application submitted successfully.');
@@ -185,10 +185,10 @@ class LeaveApplicationController extends Controller
 
         $this->notifyLeaveStatus($leave_application, 'approved');
 
-        if ($user && !empty($user->email)) {
-            $mailable = new LeaveApplicationApproved($leave_application);
-            $this->sendEmail($leave_application, $mailable, $user->email);
-        }
+        // if ($user && !empty($user->email)) {
+        //     $mailable = new LeaveApplicationApproved($leave_application);
+        //     $this->sendEmail($leave_application, $mailable, $user->email);
+        // }
 
     } elseif ($status === 'rejected') {
         $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
@@ -228,10 +228,10 @@ class LeaveApplicationController extends Controller
             ],
         ]);
 
-        if ($user && !empty($user->email)) {
-            $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
-            $this->sendEmail($leave_application, $mailable, $user->email);
-        }
+        // if ($user && !empty($user->email)) {
+        //     $mailable = new LeaveApplicationRejected($leave_application, $rejectReason);
+        //     $this->sendEmail($leave_application, $mailable, $user->email);
+        // }
 
         // Rejection email template from MongoDB
         $template = MailTemplate::where('event_type', 'leave_rejected')->first();
@@ -260,7 +260,7 @@ class LeaveApplicationController extends Controller
                 $template->body
             );
 
-            Mail::to($user->email)->queue(new CustomMail($template->subject, $body));
+            // Mail::to($user->email)->queue(new CustomMail($template->subject, $body));
 
             MailLog::create([
                 'leave_application_id' => $leave_application->id,
