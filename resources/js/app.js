@@ -7,6 +7,14 @@ import { ZiggyVue } from 'ziggy-js';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
+// Import and use the Syncfusion Spreadsheet Plugin for global registration
+import { SpreadsheetPlugin } from '@syncfusion/ej2-vue-spreadsheet';
+import { registerLicense } from '@syncfusion/ej2-base';
+
+axios.defaults.withCredentials = true;
+
+
+registerLicense('Ngo9BigBOggjHTQxAR8/V1JFaF5cXGRCd0x3Q3xbf1x1ZFZMYV5bRndPIiBoS35Rc0VqWXZfdXVXRGFfU0J3VEFc');
 window.Pusher = Pusher;
 
 window.Echo = new Echo({
@@ -18,9 +26,7 @@ window.Echo = new Echo({
 });
 
 window.Echo.private('user-import').listen('UserImportCompleted', (e) => {
-    // For example, show a toast notification here
     alert(`Import completed for file: ${e.filePath}`);
-    // Or trigger a Vue state update or event bus emit
 });
 
 // Global Inertia event listener: clear flash messages after each Inertia navigation
@@ -51,6 +57,7 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .use(SpreadsheetPlugin) // Register Syncfusion Spreadsheet plugin globally here
             .mount(el);
     },
     progress: {

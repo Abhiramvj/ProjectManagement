@@ -471,11 +471,13 @@ class User extends Authenticatable
         return $this->hasMany(Project::class, 'project_manager_id');
     }
 
-    // === PERFORMANCE METHODS ===
+    public function teamMembers()
+{
+    return $this->hasMany(User::class, 'parent_id'); // Assuming team_lead_id FK in users table
+}
 
-    /**
-     * Get user performance score
-     */
+
+
     public function getPerformanceScore(): int
     {
         $taskScore = $this->getTaskCompletionRate();

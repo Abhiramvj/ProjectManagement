@@ -5,8 +5,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { formatDistanceToNowStrict, format } from 'date-fns';
+
 
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -17,19 +18,20 @@ import axios from 'axios';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Props are unchanged
 const props = defineProps({
-    user: { type: Object, required: true },
-    attendance: { type: Object, required: true },
-    calendarEvents: { type: Array, default: () => [] },
-    greeting: { type: Object, required: true },
-    projects: { type: Array, default: () => [] },
-    myTasks: { type: Array, default: () => [] },
-    taskStats: { type: Object, required: true },
-    timeStats: { type: Object, required: true },
-    leaveStats: { type: Object, required: true },
-    announcements: { type: Array, default: () => [] },
+  user: { type: Object, required: true },
+  attendance: { type: Object, required: true },
+  calendarEvents: { type: Array, default: () => [] },
+  greeting: { type: Object, required: true },
+  projects: { type: Array, default: () => [] },
+  myTasks: { type: Array, default: () => [] },
+  taskStats: { type: Object, required: true },
+  timeStats: { type: Object, required: true },
+  leaveStats: { type: Object, required: true },
+  announcements: { type: Array, default: () => [] },
 });
+
+
 
 // Logic for Performance Score and AI Summary is unchanged
 const performanceScore = computed(() => {
@@ -177,6 +179,8 @@ function closeViewAnnouncementModal() {
     viewingAnnouncement.value = null;
 }
 
+
+
 // Other script setup logic is unchanged
 const updateTaskStatus = (task, newStatus) => {
     router.patch(
@@ -321,6 +325,10 @@ const chartOptions = {
     cutout: '80%',
     plugins: { legend: { display: false }, tooltip: { enabled: true } },
 };
+
+
+
+
 </script>
 
 <template>
@@ -536,6 +544,7 @@ const chartOptions = {
                 </form>
             </div>
         </Modal>
+
 
         <div class="flex-1 bg-gray-50 p-6">
             <div class="mx-auto max-w-7xl space-y-6">
@@ -1138,4 +1147,4 @@ const chartOptions = {
     white-space: normal !important;
 }
 </style>
-76.6s
+

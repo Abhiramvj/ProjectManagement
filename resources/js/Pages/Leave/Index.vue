@@ -13,6 +13,9 @@ import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 const showColors = ref(true);
 
+
+const selectedMailTemplateId = ref('');
+
 const props = defineProps({
     leaveRequests: Object,
     highlightedDates: Array,
@@ -338,7 +341,8 @@ const submitApplication = () => {
             form.end_half_session = '';
             selectedDates.value = [null, null];
             supportingDocument.value = null;
-            if (isAdminOrHR) form.user_id = null;
+            selectedMailTemplateId.value = ''; // reset mail template selection
+            if (isAdminOrHR) form.user_id = null; // Reset selected employee
         },
         onError: (errors) => {
             if (errors.message) alert(errors.message);
@@ -347,7 +351,32 @@ const submitApplication = () => {
 };
 
 
+const statusConfig = {
+    approved: { class: 'bg-green-100 text-green-800', icon: '✅' },
+    rejected: { class: 'bg-red-100 text-red-800', icon: '❌' },
+    pending: { class: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
+};
 
+const updateStatus = (request, newStatus) => {
+    router.patch(
+        route('leave.update', { leave_application: request.id }),
+        {
+            status: newStatus,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload({
+                    only: [
+                        'leaveRequests',
+                        'remainingLeaveBalance',
+                        'compOffBalance',
+                    ],
+                });
+            },
+        },
+    );
+};
 
 const cancelLeave = (request) => {
     if (!confirm("Are you sure you want to cancel this leave request?")) return;

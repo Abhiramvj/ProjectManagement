@@ -35,6 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view leaves',
             'manage announcements',
             'view mail logs',
+            'grading for the reviews',
 
         ];
 
