@@ -71,7 +71,6 @@
         "vue-flatpickr-component": "^12.0.0",
         "vue-select": "^4.0.0-beta.6",
         "vue3-blocks-tree": "^0.6.2",
-        "vue3-excel-editor": "^1.0.60",
         "vue3-json-tree-view": "^3.0.4",
         "vue3-json-viewer": "^2.4.1",
         "vue3-tree": "^0.11.5",
