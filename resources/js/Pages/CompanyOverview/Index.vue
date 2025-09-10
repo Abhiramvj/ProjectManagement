@@ -237,7 +237,7 @@
                                 </p>
                                 <p class="text-gray-600">
                                     <span class="font-medium">Members:</span> 
-                                    {{ team.users?.length ?? 0 }} people
+                                    {{ team.members?.length ?? 0 }} people
                                 </p>
                             </div>
                         </div>

@@ -50,13 +50,13 @@ class CompanyOverviewController extends Controller
         // Enhanced company information
         $companyInfo = [
             'name' => 'IOCOD',
-            'tagline' => 'Innovative Digital Solutions & Events',
+            'tagline' => 'Innovating Together: Building Tomorrow with Integrity, Transparency, and Excellence',
             'description' => 'At IOCOD, we specialize in creating cutting-edge digital experiences and managing world-class events. Our expertise spans across digital media, event management, technology solutions, and creative services.',
             'mission' => 'To transform ideas into impactful digital experiences that drive business growth and create lasting connections.',
             'vision' => 'To be the leading provider of innovative digital solutions and premium event experiences globally.',
 
             'work_hours' => [
-                'Morning Shift: 6:00 AM – 2:30 PM',
+                'Morning Shift: 3:00 AM – 11:00 PM',
                 'Regular Shift: 9:00 AM – 5:00 PM',
                 'Evening Shift: 12:00 PM – 8:00 PM',
                 'Night Shift: 6:30 PM – 3:30 AM',
