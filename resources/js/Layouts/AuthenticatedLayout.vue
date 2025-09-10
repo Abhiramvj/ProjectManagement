@@ -248,7 +248,7 @@ onUnmounted(() => {
                             />
                         </Link>
                         <span class="text-xl font-bold text-gray-800"
-                            >WorkSphere</span
+                            >Organize</span
                         >
                     </div>
                     <nav

@@ -412,7 +412,7 @@
                                 ]"
                                 class="whitespace-nowrap border-b-2 py-2 px-4 text-sm font-medium rounded-t-lg transition-all"
                             >
-                                Organization Chart
+                                Designation Structure
                             </button>
                         </nav>
                     </div>
