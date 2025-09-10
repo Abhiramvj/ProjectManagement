@@ -209,6 +209,7 @@ class LeaveApplicationController extends Controller
                     'new_balance' => $user->fresh()->$balanceType,
                 ],
             ]);
+            $this->notifyLeaveStatus($leave_application, 'rejected');
 
             $templateMapping = TemplateMapping::where('event_type', 'leave_rejected')->first();
             $template = $templateMapping
