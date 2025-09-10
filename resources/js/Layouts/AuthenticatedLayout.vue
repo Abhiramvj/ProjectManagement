@@ -1,5 +1,4 @@
 <script setup>
-// --- SCRIPT SETUP IS UNCHANGED ---
 import {
     ref,
     computed,
@@ -47,7 +46,6 @@ const fetchNotifications = async () => {
 
 const handleNotificationClick = async (notification) => {
     try {
-        // Mark it as read in backend
         await axios.post(route('notifications.read', notification.id));
 
         // Remove it from local state immediately
@@ -59,7 +57,6 @@ const handleNotificationClick = async (notification) => {
             0,
         );
 
-        // Redirect to notification link (if any)
         if (notification.data.url) {
             window.location.href = notification.data.url;
         }
@@ -248,7 +245,7 @@ onUnmounted(() => {
                             />
                         </Link>
                         <span class="text-xl font-bold text-gray-800"
-                            >Organize</span
+                            >Organice</span
                         >
                     </div>
                     <nav
@@ -551,13 +548,7 @@ onUnmounted(() => {
 </template>
 
 <style>
-/*
- * ===================================================================
- * START OF CORRECTION: New styles to match the Projects page design
- * ===================================================================
- */
 
-/* General (unselected) link style */
 .nav-link {
     display: flex;
     align-items: center;
@@ -570,13 +561,11 @@ onUnmounted(() => {
     transition: all 0.2s ease-in-out;
 }
 
-/* Hover state for UNSELECTED links */
 .nav-link:not([aria-current='page']):hover {
-    background-color: #f3f4f6; /* bg-gray-100 */
-    color: #111827; /* text-gray-900 */
+    background-color: #f3f4f6; 
+    color: #111827; 
 }
 
-/* Active state (selected link) */
 .nav-link[aria-current='page'] {
     background-color: #3b82f6; /* bg-blue-500, a nice medium blue */
     color: #ffffff; /* White text and icon */
@@ -586,7 +575,6 @@ onUnmounted(() => {
         0 2px 4px -2px rgb(0 0 0 / 0.1); /* Subtle shadow */
 }
 
-/* Ensure SVG icons inherit the link's text color correctly */
 .nav-link svg {
     color: currentColor;
 }
@@ -661,8 +649,4 @@ onUnmounted(() => {
     transition: color 0.2s;
 }
 
-/* ===================================================================
- * END OF CORRECTION
- * ===================================================================
- */
 </style>

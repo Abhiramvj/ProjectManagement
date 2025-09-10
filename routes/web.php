@@ -142,7 +142,6 @@ Route::middleware('auth')->group(function () {
     // Team management routes
     Route::resource('teams', TeamController::class)->only(['index', 'store', 'update', 'destroy'])->middleware(['can:manage employees']);
 
-    // Company hierarchy route
 
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -159,6 +158,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('announcements', AnnouncementController::class)
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:manage announcements');
+
+    // Company overview route
     Route::get('/company-overview', [CompanyOverviewController::class, 'index'])->name('company.overview');
 });
 

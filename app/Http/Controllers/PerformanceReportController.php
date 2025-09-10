@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Performance\ShowPerformance;
 use App\Models\User;
-// 1. --- CHANGE THIS ---
-use App\Services\OllamaAIService; // Use the new Ollama service
+use App\Services\OllamaAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -13,9 +12,7 @@ use Inertia\Inertia;
 
 class PerformanceReportController extends Controller
 {
-    /**
-     * Display the performance report for a user.
-     */
+    
     public function show(User $user, ShowPerformance $action): \Inertia\Response
     {
         return Inertia::render('Performance/Show', $action->handle($user));
@@ -24,7 +21,6 @@ class PerformanceReportController extends Controller
     /**
      * Generate an AI performance summary for a given user.
      */
-    // 2. --- CHANGE THE TYPE-HINT HERE ---
     public function generateSummary(Request $request, User $user, OllamaAIService $ollamaAiService)
     {
         $stats = $request->validate([
@@ -55,7 +51,6 @@ class PerformanceReportController extends Controller
         ";
 
         // 3. --- CALL THE OLLAMA SERVICE ---
-        // We'll specify the model to use, e.g., 'llama3'
         $summary = $ollamaAiService->generateText($prompt, 'llama3');
 
         if (! $summary) {
@@ -70,7 +65,6 @@ class PerformanceReportController extends Controller
     /**
      * Generate an AI performance summary for the currently authenticated user.
      */
-    // 4. --- CHANGE THE TYPE-HINT HERE TOO ---
     public function generateMySummary(Request $request, OllamaAIService $ollamaAiService)
     {
         $stats = $request->validate([
@@ -100,7 +94,6 @@ class PerformanceReportController extends Controller
             Based on these metrics, provide a 1-2 paragraph summary of their performance.
         ";
 
-        // 5. --- CALL THE OLLAMA SERVICE HERE TOO ---
         $summary = $ollamaAiService->generateText($prompt, 'llama3');
 
         if (! $summary) {

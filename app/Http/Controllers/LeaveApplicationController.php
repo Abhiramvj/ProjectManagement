@@ -15,9 +15,9 @@ use App\Models\LeaveApplication;
 use App\Models\LeaveLog;
 use App\Models\MailLog;
 use App\Models\MailTemplate;
-use App\Models\User; // <-- IMPORT THE LEAVELOG MODEL
+use App\Models\User; 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\Request; // <-- IMPORT THE LEAVELOG MODEL
+use Illuminate\Http\Request; 
 use Illuminate\Mail\Mailable;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Blade;
@@ -295,7 +295,7 @@ class LeaveApplicationController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // --- Important: We must restore the balance BEFORE deleting ---
+        //--- We must restore the balance BEFORE deleting ---
         $user = $leave_application->user;
         if (in_array($leave_application->leave_type, ['annual', 'personal'])) {
             $user->increment('leave_balance', $leave_application->leave_days);
@@ -303,7 +303,6 @@ class LeaveApplicationController extends Controller
             $user->increment('comp_off_balance', $leave_application->leave_days);
         }
 
-        // --- ADD THIS LOGGING BLOCK ---
         LeaveLog::create([
             'user_id' => $leave_application->user_id,
             'actor_id' => auth()->id(),
@@ -403,7 +402,7 @@ class LeaveApplicationController extends Controller
             foreach ($recipients as $email) {
                 MailLog::create([
                     'leave_application_id' => $leaveApplication->id,
-                    'recipient_email' => $email,  // <-- Log each one individually
+                    'recipient_email' => $email,  
                     'subject' => $mailable->subject ?? 'Leave Application Notification',
                     'event_type' => $eventType,
                     'sent_at' => now(),

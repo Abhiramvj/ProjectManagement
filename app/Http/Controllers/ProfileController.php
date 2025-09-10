@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Actions\Profile\DeleteAccount;
 use App\Actions\Profile\EditProfile;
 use App\Actions\Profile\UpdateProfile;
