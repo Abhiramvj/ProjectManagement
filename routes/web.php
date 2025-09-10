@@ -8,10 +8,14 @@ use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveLogController;
 use App\Http\Controllers\MailLogController; // ✅ 1. IMPORT THE NEW CONTROLLER
+use App\Http\Controllers\MailTemplateController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReviewCategoryController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ReviewDataController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
@@ -35,7 +39,7 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
         'status' => session('status'),
     ]);
-})->middleware('guest')->name('login');
+})->middleware('guest')->name('logins');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -94,10 +98,16 @@ Route::middleware('auth')->group(function () {
         ->middleware(['can:view mail logs']);
 
     Route::get('/mail-logs/{mailLog}', [MailLogController::class, 'show'])->name('mail-logs.show')->middleware(['can:view mail logs']);
-    // In routes/web.php
-    Route::get('/mail-logs/snapshot/{mailLog}', [App\Http\Controllers\MailLogController::class, 'showSnapshot'])
-        ->name('mail-logs.snapshot')
-        ->middleware('can:view mail logs');
+
+
+    Route::middleware(['can:view mail templates'])->group(function () {
+    Route::get('/mail-templates', [MailTemplateController::class, 'index'])->name('mail-templates.index');
+    Route::get('/mail-templates/{mailTemplate}', [MailTemplateController::class, 'show'])->name('mail-templates.show');
+     Route::post('/template-mapping/update', [LeaveApplicationController::class, 'updateTemplateMapping'])
+    ->name('template.mapping.update');
+
+});
+
 
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
@@ -158,6 +168,30 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:manage announcements');
 
 });
+
+use App\Http\Controllers\ReviewCriteriaController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/review-criteria', [ReviewCriteriaController::class, 'index'])->name('criteria.index');
+    Route::post('/review-criteria', [ReviewCriteriaController::class, 'store'])->name('criteria.store');
+    Route::delete('/review-criteria/{criteria}', [ReviewCriteriaController::class, 'destroy'])->name('criteria.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/review-categories', [ReviewCategoryController::class, 'index'])
+        ->name('review-categories.index');
+
+    Route::post('/review-categories', [ReviewCategoryController::class, 'store'])
+        ->name('review-categories.store');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+});
+
+
+
 
 // Developer login route
 Route::get('/dev-login/{role}', function ($role) {

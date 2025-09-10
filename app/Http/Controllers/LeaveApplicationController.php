@@ -9,11 +9,13 @@ use App\Http\Requests\Leave\StoreLeaveRequest;
 use App\Http\Requests\Leave\UpdateLeaveRequest;
 use App\Mail\CustomMail;
 use App\Mail\DynamicTemplateMail;
+use App\Models\TemplateMapping;
 use App\Mail\LeaveApplicationApproved;
 use App\Mail\LeaveApplicationRejected;
 use App\Mail\LeaveApplicationSubmitted;
 use App\Models\LeaveApplication;
 use App\Models\MailTemplate;
+use App\Services\LeaveNotificationService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Mail;
 use App\Models\LeaveLog; // <-- IMPORT THE LEAVELOG MODEL
@@ -42,88 +44,38 @@ class LeaveApplicationController extends Controller
     }
 
 
-public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
-{
-    try {
-        $leave_application = $storeLeave->handle($request->validated());
 
-        LeaveLog::create([
-            'user_id' => $leave_application->user_id,
-            'actor_id' => auth()->id(),
-            'leave_application_id' => $leave_application->id,
-            'action' => 'created',
-            'description' => 'Submitted a new leave request for ' . $leave_application->leave_days . ' day(s).',
-            'details' => [
-                'leave_type' => $leave_application->leave_type,
-                'start_date' => $leave_application->start_date->toDateString(),
-                'end_date' => $leave_application->end_date->toDateString(),
-            ],
-        ]);
+ public function store(StoreLeaveRequest $request, StoreLeave $storeLeave)
+    {
+        try {
+            // Handle the actual leave application creation
+            $leave_application = $storeLeave->handle($request->validated());
 
-        $recipients = User::role(['admin', 'hr'])->pluck('email')->toArray();
-        $template   = MailTemplate::where('event_type', 'leave_submitted')->first(); // ✅ fixed field name
+            // Log leave creation action
+            LeaveLog::create([
+                'user_id' => $leave_application->user_id,
+                'actor_id' => auth()->id(),
+                'leave_application_id' => $leave_application->id,
+                'action' => 'created',
+                'description' => 'Submitted a new leave request for ' . $leave_application->leave_days . ' day(s).',
+                'details' => [
+                    'leave_type' => $leave_application->leave_type,
+                    'start_date' => $leave_application->start_date->toDateString(),
+                    'end_date' => $leave_application->end_date->toDateString(),
+                ],
+            ]);
 
-       if ($template && !empty($recipients)) {
-    // 🔄 Replace placeholders with actual values
-    $body = str_replace(
-        [
-            '{{employee_name}}',
-            '{{leave_type}}',
-            '{{leave_days}}',
-            '{{start_date}}',
-            '{{end_date}}',
-            '{{reason}}',
-             '[[app_name]]',
-        ],
-        [
-            $leave_application->user->name,
-            ucfirst($leave_application->leave_type),
-            $leave_application->leave_days,
-            $leave_application->start_date->format('M d, Y'),
-            $leave_application->end_date->format('M d, Y'),
-            $leave_application->reason,
-             config('app.name'),
-        ],
-        $template->body
-    );
+            // Send leave submitted notification email using dedicated service
+            LeaveNotificationService::sendLeaveSubmittedNotification($leave_application);
 
-    // ✅ Send email
- // ✅ Send email
-Mail::to($recipients)->queue(new CustomMail($template->subject, $body));
-
-
-
-    // ✅ Log each recipient
-    foreach ($recipients as $email) {
-        MailLog::create([
-            'leave_application_id' => $leave_application->id,
-            'recipient_email'      => $email,
-            'subject'              => $template->subject,
-            'status'               => 'sent',
-            'event_type'           => $template->event_type,
-            'sent_at'              => now(),
-            'body_html'            => $body, // ✅ replaced version, not raw
-            'reason'               => $leave_application->reason,
-            'leave_period'         => $leave_application->start_date->toDateString()
-                                      . ' - ' .
-                                      $leave_application->end_date->toDateString(),
-        ]);
-    }
-
+            return Redirect::route('leave.index')->with('success', 'Leave application submitted successfully.');
+        } catch (ValidationException $e) {
+            return Redirect::back()->withErrors($e->errors())->with('error', 'There were validation errors.');
+        } catch (\Exception $e) {
+            Log::error('Failed to store leave application: ' . $e->getMessage());
+            return Redirect::back()->with('error', 'An unexpected server error occurred. Please try again later.');
         }
-        return Redirect::route('leave.index')
-            ->with('success', 'Leave application submitted successfully.');
-
-    } catch (ValidationException $e) {
-        return Redirect::back()
-            ->withErrors($e->errors())
-            ->with('error', 'There were validation errors.');
-    } catch (\Exception $e) {
-        Log::error('Failed to store leave application: ' . $e->getMessage());
-        return Redirect::back()
-            ->with('error', 'An unexpected server error occurred. Please try again later.');
     }
-}
 
 
 
@@ -179,7 +131,7 @@ public function update(UpdateLeaveRequest $request, LeaveApplication $leave_appl
             'actor_id' => $actor->id,
             'leave_application_id' => $leave_application->id,
             'action' => 'approved',
-            'description' => 'Request approved by '.$actor->name.'. '.$leave_application->leave_days.' day(s) deducted.',
+            'description' => 'Request approved by ' . $actor->name . '. ' . $leave_application->leave_days . ' day(s) deducted.',
             'details' => [
                 'balance_type' => str_replace('_balance', '', $balanceType),
                 'change_amount' => -$leave_application->leave_days,
@@ -190,48 +142,9 @@ public function update(UpdateLeaveRequest $request, LeaveApplication $leave_appl
 
         $this->notifyLeaveStatus($leave_application, 'approved');
 
-        // Fetch approval email template from MongoDB
-        $template = MailTemplate::where('event_type', 'leave_approved')->first();
-
-        if ($template && !empty($user->email)) {
-            $body = str_replace(
-                [
-    '{{employee_name}}',
-    '{{leave_type}}',
-    '{{leave_days}}',
-    '{{start_date}}',
-    '{{end_date}}',
-    '{{route}}',
-    '{{app_name}}',
-                ],
-
-                [
-    $user->name,
-    ucfirst($leave_application->leave_type),
-    $leave_application->leave_days ?: $leave_application->start_date->diffInDays($leave_application->end_date) + 1, // fix duration here
-    $leave_application->start_date->format('M d, Y'),
-    $leave_application->end_date->format('M d, Y'),
-    route('leave.index'),
-    config('app.name'),
-                ],
-
-                $template->body
-            );
-
-            Mail::to($user->email)->queue(new CustomMail($template->subject, $body));
-
-            // Log mail sent
-            MailLog::create([
-                'leave_application_id' => $leave_application->id,
-                'recipient_email' => $user->email,
-                'subject' => $template->subject,
-                'status' => 'sent',
-                'event_type' => $template->event_type,
-                'sent_at' => now(),
-                'body_html' => $body,
-                'leave_period' => $leave_application->start_date->toDateString().' - '.$leave_application->end_date->toDateString(),
-            ]);
-        }
+        // Use the service method to send leave approved notification
+        LeaveNotificationService::sendLeaveApprovedNotification($leave_application);
+        
     } elseif ($status === 'rejected') {
         $rejectReason = $validatedData['rejection_reason'] ?? 'No reason provided.';
         $balanceType = null;
@@ -269,8 +182,10 @@ public function update(UpdateLeaveRequest $request, LeaveApplication $leave_appl
             ],
         ]);
 
-        // Fetch rejection email template from MongoDB
-        $template = MailTemplate::where('event_type', 'leave_rejected')->first();
+        $mapping = TemplateMapping::where('event_type', 'leave_rejected')->first();
+    $template = $mapping
+        ? MailTemplate::find($mapping->mail_template_id)
+        : MailTemplate::where('event_type', 'leave_rejected')->first();
 
         if ($template && !empty($user->email)) {
            $body = str_replace(
@@ -460,5 +375,23 @@ private function sendEmail(LeaveApplication $leaveApplication, Mailable $mailabl
         $path = explode('\\', get_class($mailable));
 
         return array_pop($path);
+    }
+
+     public function updateTemplateMapping(Request $request)
+    {
+        // Validate input
+        $request->validate([
+            'event_type' => 'required|string',
+            'mail_template_id' => 'required|string',
+        ]);
+
+        // Update existing or create new mapping for the event
+        TemplateMapping::updateOrCreate(
+            ['event_type' => $request->event_type],
+            ['mail_template_id' => $request->mail_template_id]
+        );
+
+        // Return a JSON response indicating success
+        return response()->json(['success' => true, 'message' => 'Template mapping updated successfully.']);
     }
 }

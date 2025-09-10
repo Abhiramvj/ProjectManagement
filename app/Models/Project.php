@@ -62,12 +62,11 @@ class Project extends Model
      * The users that belong to the project as members.
      * This defines the many-to-many relationship required by the `whereHas('members', ...)` query.
      */
-    public function members(): BelongsToMany
-    {
-        // This tells Laravel that a Project can belong to many Users,
-        // and it uses the 'project_user' table to link them.
-        return $this->belongsToMany(User::class, 'project_user');
-    }
+  public function members()
+{
+    return $this->belongsToMany(User::class, 'project_user', 'project_id', 'user_id');
+}
+
 
     // ==================
     // Accessors
@@ -89,15 +88,18 @@ class Project extends Model
     }
 
     // Accessor for Hours-based progress
-    protected function hoursProgress(): Attribute
-    {
-        return new Attribute(get: function () {
-            if ($this->total_hours_required == 0) {
-                return 0;
-            }
-            $loggedHours = $this->timeLogs()->sum('hours_worked');
+   protected function hoursProgress(): Attribute
+{
+    return new Attribute(get: function () {
+        if ($this->total_hours_required == 0) {
+            return 0;
+        }
 
-            return round(($loggedHours / $this->total_hours_required) * 100);
-        });
-    }
+        // Use eager loaded sum if available, else fallback to query
+        $loggedHours = $this->time_logs_sum_hours_worked ?? $this->timeLogs()->sum('hours_worked');
+
+        return round(($loggedHours / $this->total_hours_required) * 100);
+    });
+}
+
 }

@@ -147,17 +147,7 @@ const formatDate = (date) =>
               month: 'short',
               day: 'numeric',
           });
-const getProgressPercentage = (project) => {
-    if (typeof project.hours_progress === 'number')
-        return project.hours_progress;
-    if (!project.total_hours_required) return 0;
-    return Math.min(
-        Math.round(
-            ((project.hours_logged || 0) / project.total_hours_required) * 100,
-        ),
-        100,
-    );
-};
+
 const clearFilters = () => {
     searchQuery.value = '';
     selectedTeam.value = '';
@@ -502,21 +492,20 @@ const clearFilters = () => {
                             </div>
                         </div>
                         <div class="mb-4">
+
                             <div
                                 class="mb-2 flex justify-between text-sm text-gray-600"
                             >
                                 <span>Progress</span
                                 ><span
-                                    >{{ getProgressPercentage(project) }}%</span
+                                    >{{ project.hours_progress || 0 }}%</span
                                 >
                             </div>
                             <div class="h-2 w-full rounded-full bg-gray-200">
                                 <div
-                                    class="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
-                                    :style="{
-                                        width: `${getProgressPercentage(project)}%`,
-                                    }"
-                                ></div>
+  class="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+  :style="{ width: (project.hours_progress || 0) + '%' }"
+></div>
                             </div>
                         </div>
                         <div class="space-y-3">

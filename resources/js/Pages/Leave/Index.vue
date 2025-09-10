@@ -15,6 +15,9 @@ import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 const showColors = ref(true);
 
+
+const selectedMailTemplateId = ref('');
+
 const props = defineProps({
     leaveRequests: Object,
     highlightedDates: Array,
@@ -313,6 +316,7 @@ const submitApplication = () => {
             form.end_half_session = '';
             selectedDates.value = [null, null];
             supportingDocument.value = null;
+            selectedMailTemplateId.value = ''; // reset mail template selection
             if (isAdminOrHR) form.user_id = null; // Reset selected employee
         },
         onError: (errors) => {
@@ -320,6 +324,7 @@ const submitApplication = () => {
         },
     });
 };
+
 
 const statusConfig = {
     approved: { class: 'bg-green-100 text-green-800', icon: '✅' },
