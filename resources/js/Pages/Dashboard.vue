@@ -857,15 +857,14 @@ const chartOptions = {
 
                 <!-- The rest of your template -->
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div
-                        v-if="projects && projects.length > 0"
-                        class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-                    >
-                        <h3 class="text-lg font-bold text-gray-900">
-                            Active Projects
-                        </h3>
-                        <ul class="mt-4 space-y-3">
-                            <li
+  <div
+    v-if="projects && projects.length > 0"
+    class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col"
+  >
+    <h3 class="text-lg font-bold text-gray-900 mb-4">Active Projects</h3>
+    <div class="flex-grow max-h-96 overflow-y-auto">
+      <ul class="space-y-3">
+        <li
                                 v-for="project in projects"
                                 :key="project.id"
                                 class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4"
@@ -892,24 +891,22 @@ const chartOptions = {
                                     >
                                 </div>
                             </li>
-                        </ul>
-                    </div>
-                    <div
-                        v-if="myTasks && myTasks.length > 0"
-                        class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-                    >
-                        <div class="mb-4 flex items-center justify-between">
-                            <h3
-                                class="flex items-center text-lg font-semibold text-gray-900"
-                            >
-                                My Assigned Tasks
-                            </h3>
-                            <span class="text-sm text-gray-500"
-                                >{{ myTasks.length }} total tasks</span
-                            >
-                        </div>
-                        <div class="max-h-96 space-y-3 overflow-y-auto">
-                            <div
+      </ul>
+    </div>
+  </div>
+
+  <div
+    v-if="myTasks && myTasks.length > 0"
+    class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col"
+  >
+    <div class="mb-4 flex items-center justify-between">
+      <h3 class="flex items-center text-lg font-semibold text-gray-900">
+        My Assigned Tasks
+      </h3>
+      <span class="text-sm text-gray-500">{{ myTasks.length }} total tasks</span>
+    </div>
+    <div class="flex-grow max-h-96 overflow-y-auto space-y-3">
+      <div
                                 v-for="task in myTasks"
                                 :key="task.id"
                                 class="rounded-lg border p-3 transition-all duration-200 hover:shadow-sm"
@@ -974,9 +971,10 @@ const chartOptions = {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
+    </div>
+  </div>
+</div>
+
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div
                         class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
