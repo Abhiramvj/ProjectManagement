@@ -2,14 +2,13 @@
 
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
-use App\Http\Controllers\CompanyDashboardController;
 use App\Http\Controllers\CompanyOverviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveLogController;
-use App\Http\Controllers\MailLogController; // ✅ 1. IMPORT THE NEW CONTROLLER
+use App\Http\Controllers\MailLogController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
@@ -19,7 +18,6 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\UserHierarchyController;
 use App\Models\User;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
@@ -145,7 +143,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('teams', TeamController::class)->only(['index', 'store', 'update', 'destroy'])->middleware(['can:manage employees']);
 
     // Company hierarchy route
-    Route::get('/company-hierarchy', [UserHierarchyController::class, 'index'])->name('company.hierarchy');
 
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -163,7 +160,6 @@ Route::middleware('auth')->group(function () {
         ->only(['store', 'update', 'destroy'])
         ->middleware('can:manage announcements');
     Route::get('/company-overview', [CompanyOverviewController::class, 'index'])->name('company.overview');
-
 });
 
 // Developer login route
@@ -178,4 +174,3 @@ Route::get('/dev-login/{role}', function ($role) {
 
 require __DIR__.'/auth.php';
 
-Route::get('/company-dashboard', [CompanyDashboardController::class, 'index'])->name('company.dashboard');
