@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 // --- ADD THIS IMPORT ---
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Project extends Model
 {
@@ -62,11 +62,10 @@ class Project extends Model
      * The users that belong to the project as members.
      * This defines the many-to-many relationship required by the `whereHas('members', ...)` query.
      */
-  public function members()
-{
-    return $this->belongsToMany(User::class, 'project_user', 'project_id', 'user_id');
-}
-
+    public function members()
+    {
+        return $this->belongsToMany(User::class, 'project_user', 'project_id', 'user_id');
+    }
 
     // ==================
     // Accessors
@@ -88,18 +87,17 @@ class Project extends Model
     }
 
     // Accessor for Hours-based progress
-   protected function hoursProgress(): Attribute
-{
-    return new Attribute(get: function () {
-        if ($this->total_hours_required == 0) {
-            return 0;
-        }
+    protected function hoursProgress(): Attribute
+    {
+        return new Attribute(get: function () {
+            if ($this->total_hours_required == 0) {
+                return 0;
+            }
 
-        // Use eager loaded sum if available, else fallback to query
-        $loggedHours = $this->time_logs_sum_hours_worked ?? $this->timeLogs()->sum('hours_worked');
+            // Use eager loaded sum if available, else fallback to query
+            $loggedHours = $this->time_logs_sum_hours_worked ?? $this->timeLogs()->sum('hours_worked');
 
-        return round(($loggedHours / $this->total_hours_required) * 100);
-    });
-}
-
+            return round(($loggedHours / $this->total_hours_required) * 100);
+        });
+    }
 }

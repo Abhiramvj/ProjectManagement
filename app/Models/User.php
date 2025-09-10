@@ -271,6 +271,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Team::class, 'team_lead_id');
     }
+
+    public function teamLeads()
+    {
+        return $this->teams()->with('teamLead')->get()->pluck('teamLead')->filter()->unique('id');
+    }
+
     // === NOTIFICATIONS ===
 
     public function unreadNotifications()
@@ -472,11 +478,9 @@ class User extends Authenticatable
     }
 
     public function teamMembers()
-{
-    return $this->hasMany(User::class, 'parent_id'); // Assuming team_lead_id FK in users table
-}
-
-
+    {
+        return $this->hasMany(User::class, 'parent_id'); // Assuming team_lead_id FK in users table
+    }
 
     public function getPerformanceScore(): int
     {

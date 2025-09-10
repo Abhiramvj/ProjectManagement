@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\ReviewCategory;
 use App\Models\ReviewCriteria;
+use Illuminate\Database\Seeder;
 
 class ReviewCriteriaSeeder extends Seeder
 {

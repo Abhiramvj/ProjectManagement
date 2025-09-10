@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\TemplateMapping;
-use App\Models\MailTemplate;
-use App\Models\User;
-use App\Models\MailLog;
 use App\Mail\CustomMail;
+use App\Models\MailLog;
+use App\Models\MailTemplate;
+use App\Models\TemplateMapping;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
 class LeaveNotificationService
@@ -15,13 +15,23 @@ class LeaveNotificationService
     {
         $recipients = User::role(['admin', 'hr'])->pluck('email')->toArray();
 
+        $teamLeads = $leaveApplication->user->teamLeads();
+
+        foreach ($teamLeads as $lead) {
+            if ($lead->email) {
+                $recipients[] = $lead->email;
+            }
+        }
+
+        $recipients = array_unique($recipients);
+
         $mapping = TemplateMapping::where('event_type', 'leave_submitted')->first();
 
         $template = $mapping
             ? MailTemplate::find($mapping->mail_template_id)
             : MailTemplate::where('event_type', 'leave_submitted')->first();
 
-        if ($template && !empty($recipients)) {
+        if ($template && ! empty($recipients)) {
             $body = str_replace(
                 [
                     '{{employee_name}}',
@@ -30,7 +40,7 @@ class LeaveNotificationService
                     '{{start_date}}',
                     '{{end_date}}',
                     '{{reason}}',
-                    '[[app_name]]'
+                    '[[app_name]]',
                 ],
                 [
                     $leaveApplication->user->name,
@@ -39,7 +49,7 @@ class LeaveNotificationService
                     $leaveApplication->start_date->format('M d, Y'),
                     $leaveApplication->end_date->format('M d, Y'),
                     $leaveApplication->reason,
-                    config('app.name')
+                    config('app.name'),
                 ],
                 $template->body
             );
@@ -56,13 +66,13 @@ class LeaveNotificationService
                     'sent_at' => now(),
                     'body_html' => $body,
                     'reason' => $leaveApplication->reason,
-                    'leave_period' => $leaveApplication->start_date->toDateString() . ' - ' . $leaveApplication->end_date->toDateString(),
+                    'leave_period' => $leaveApplication->start_date->toDateString().' - '.$leaveApplication->end_date->toDateString(),
                 ]);
             }
         }
     }
 
-     public static function sendLeaveApprovedNotification($leaveApplication)
+    public static function sendLeaveApprovedNotification($leaveApplication)
     {
         $user = $leaveApplication->user;
         $mapping = TemplateMapping::where('event_type', 'leave_approved')->first();
@@ -71,7 +81,7 @@ class LeaveNotificationService
             ? MailTemplate::find($mapping->mail_template_id)
             : MailTemplate::where('event_type', 'leave_approved')->first();
 
-        if ($template && !empty($user->email)) {
+        if ($template && ! empty($user->email)) {
             $body = str_replace(
                 [
                     '{{employee_name}}',
@@ -104,7 +114,7 @@ class LeaveNotificationService
                 'event_type' => $template->event_type,
                 'sent_at' => now(),
                 'body_html' => $body,
-                'leave_period' => $leaveApplication->start_date->toDateString() . ' - ' . $leaveApplication->end_date->toDateString(),
+                'leave_period' => $leaveApplication->start_date->toDateString().' - '.$leaveApplication->end_date->toDateString(),
             ]);
         }
     }

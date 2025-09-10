@@ -12,7 +12,6 @@ use Inertia\Inertia;
 
 class PerformanceReportController extends Controller
 {
-    
     public function show(User $user, ShowPerformance $action): \Inertia\Response
     {
         return Inertia::render('Performance/Show', $action->handle($user));

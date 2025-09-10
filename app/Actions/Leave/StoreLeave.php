@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Actions\Leave;
+
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\User;

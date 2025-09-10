@@ -146,9 +146,9 @@ class CompanyOverviewController extends Controller
             $color = $this->generateColorForText($teamName);
 
             // Permission logic for performance data
-            $canViewPerformance = $loggedInUser->hasRole('admin') ||    
-                                  $loggedInUser->id === $user->parent_id || 
-                                  $loggedInUser->id === $user->id;         
+            $canViewPerformance = $loggedInUser->hasRole('admin') ||
+                                  $loggedInUser->id === $user->parent_id ||
+                                  $loggedInUser->id === $user->id;
 
             $performanceSummary = null;
             if ($canViewPerformance) {
@@ -185,9 +185,9 @@ class CompanyOverviewController extends Controller
 
         foreach ($users as $user) {
             // Permission logic for performance data
-            $canViewPerformance = $loggedInUser->hasRole('admin') ||  
-                                  $loggedInUser->id === $user->parent_id || 
-                                  $loggedInUser->id === $user->id;         
+            $canViewPerformance = $loggedInUser->hasRole('admin') ||
+                                  $loggedInUser->id === $user->parent_id ||
+                                  $loggedInUser->id === $user->id;
 
             $performanceSummary = null;
             if ($canViewPerformance) {

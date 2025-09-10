@@ -8,7 +8,7 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveLogController;
-use App\Http\Controllers\MailLogController; 
+use App\Http\Controllers\MailLogController;
 use App\Http\Controllers\MailTemplateController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
@@ -95,15 +95,13 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/mail-logs/{mailLog}', [MailLogController::class, 'show'])->name('mail-logs.show')->middleware(['can:view mail logs']);
 
-
     Route::middleware(['can:view mail templates'])->group(function () {
-    Route::get('/mail-templates', [MailTemplateController::class, 'index'])->name('mail-templates.index');
-    Route::get('/mail-templates/{mailTemplate}', [MailTemplateController::class, 'show'])->name('mail-templates.show');
-     Route::post('/template-mapping/update', [LeaveApplicationController::class, 'updateTemplateMapping'])
-    ->name('template.mapping.update');
+        Route::get('/mail-templates', [MailTemplateController::class, 'index'])->name('mail-templates.index');
+        Route::get('/mail-templates/{mailTemplate}', [MailTemplateController::class, 'show'])->name('mail-templates.show');
+        Route::post('/template-mapping/update', [LeaveApplicationController::class, 'updateTemplateMapping'])
+            ->name('template.mapping.update');
 
-});
-
+    });
 
     // Project routes
     Route::resource('projects', ProjectController::class)->only(['index', 'store']);
@@ -148,7 +146,6 @@ Route::middleware('auth')->group(function () {
     // Team management routes
     Route::resource('teams', TeamController::class)->only(['index', 'store', 'update', 'destroy'])->middleware(['can:manage employees']);
 
-
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
@@ -168,10 +165,6 @@ Route::middleware('auth')->group(function () {
     // Company overview route
     Route::get('/company-overview', [CompanyOverviewController::class, 'index'])->name('company.overview');
 });
-
-
-
-
 
 // Developer login route
 Route::get('/dev-login/{role}', function ($role) {
