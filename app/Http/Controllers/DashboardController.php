@@ -7,9 +7,6 @@ use App\Models\CalendarNote;
 use App\Models\Holiday;
 use App\Models\LeaveApplication;
 use App\Models\Project;
-use App\Models\Review;
-use App\Models\ReviewCategory;
-use App\Models\ReviewCriteria;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
@@ -184,64 +181,7 @@ class DashboardController extends Controller
     $timeStats = $this->timeStatsService->getStatsForUser($user->id);
     $leaveStats = $this->leaveStatsService->getStatsForUser($user->id);
 
- $user = Auth::user()->load('parent'); // or auth()->user()
-$isTeamLead = $user->hasRole('team-lead');
-$teamLeadId = $user->parent_id;
 
-if ($isTeamLead) {
-    $employeeIds = User::where('parent_id', $user->id)->pluck('id')->toArray();
-
-    // Reviews GIVEN by Team Lead
-    $reviewsGivenByMe = Review::with(['criteria', 'user'])
-        ->where('reviewer_id', $user->id)
-        ->whereIn('user_id', $employeeIds)
-        ->orderByDesc('year')
-        ->orderByDesc('month')
-        ->get();
-
-    // Employee Self Reviews ONLY (user_id == reviewer_id)
-    $employeeReviews = Review::with(['criteria', 'user'])
-        ->whereIn('user_id', $employeeIds)
-        ->whereColumn('user_id', 'reviewer_id')
-        ->orderByDesc('year')
-        ->orderByDesc('month')
-        ->get();
-
-    $myReviews = collect();
-
-    $users = User::where('parent_id', $user->id)
-        ->orderBy('name')
-        ->get(['id', 'name']);
-} else {
-    // Employee self reviews
-    $myReviews = Review::with(['criteria', 'user'])
-        ->where('user_id', $user->id)
-        ->where('reviewer_id', $user->id)
-        ->orderByDesc('year')
-        ->orderByDesc('month')
-        ->get();
-
-    $reviewsGivenByMe = collect();
-
-    if (!empty($teamLeadId)) {
-        $teamLeadReviews = Review::with(['criteria', 'user'])
-            ->where('user_id', $user->id)
-            ->where('reviewer_id', $teamLeadId)
-            ->orderByDesc('year')
-            ->orderByDesc('month')
-            ->get();
-
-        // Combine self and team lead reviews
-        $employeeReviews = $myReviews->merge($teamLeadReviews);
-    } else {
-        $employeeReviews = $myReviews;
-    }
-
-    $users = collect([['id' => $user->id, 'name' => $user->name]]);
-}
-
-$criterias = \App\Models\ReviewCriteria::orderBy('name')->get(['id','category_id', 'name','max_points']);
-$categories = ReviewCategory::orderBy('name')->get(['id', 'name','weight']);
 // --- RENDER VIEW ---
 
 return Inertia::render('Dashboard', [
@@ -271,13 +211,7 @@ return Inertia::render('Dashboard', [
     'timeStats' => $timeStats,
     'leaveStats' => $leaveStats,
     'authUser' => Auth::user()->load('roles'),
-    'myReviews' => $myReviews,
-    'employeeReviews' => $employeeReviews,
-    'reviewsGivenByMe' => $reviewsGivenByMe,
-    'isTeamLead' => $isTeamLead,
-    'users' => $users,
-    'criterias' => $criterias,
-    'categories' => $categories,
+
 ]);
 
 
@@ -300,38 +234,6 @@ return Inertia::render('Dashboard', [
         ];
 
         return $colors[$leaveType] ?? '#6B7280'; // Default gray
-    }
-
-    public function reviews() {
-         $user = Auth::user();
-
-        // Fetch reviews with criteria + category
-        $reviews = Review::with(['criteria.category'])
-            ->where('user_id', $user->id)
-            ->orderBy('year', 'desc')
-            ->orderByRaw("FIELD(month, 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')")
-            ->get();
-
-        // Group reviews by category
-        $grouped = $reviews->groupBy(fn($review) => $review->criteria->category->name);
-
-        // Calculate weighted score
-        $weightedScore = 0;
-        foreach ($grouped as $categoryName => $items) {
-            $categoryWeight = $items->first()->criteria->category->weight; // e.g. 70
-            $sum = $items->sum('score'); // sum of all scores under this category
-            $max = $items->sum(fn($r) => $r->criteria->max_points); // sum of max points under this category
-
-            $categoryPercent = $max > 0 ? ($sum / $max) * 100 : 0;
-
-            $weightedScore += ($categoryPercent * ($categoryWeight / 100));
-        }
-
-        return Inertia::render('Dashboard/Index', [
-            'user' => $user,
-            'reviews' => $grouped,
-            'weightedScore' => round($weightedScore, 2),
-        ]);
     }
 
 

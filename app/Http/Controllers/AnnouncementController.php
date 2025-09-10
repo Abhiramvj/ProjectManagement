@@ -28,9 +28,6 @@ class AnnouncementController extends Controller
             'published_at' => now(), // Publish immediately
         ]);
 
-        // 3. BROADCAST the event to all other connected users.
-        // The .toOthers() helper prevents the user who created the announcement
-        // from receiving the real-time notification themselves.
         broadcast(new AnnouncementCreated($announcement))->toOthers();
 
         return redirect()->back()->with('success', 'Announcement created and published successfully.');

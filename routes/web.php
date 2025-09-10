@@ -7,7 +7,7 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveLogController;
-use App\Http\Controllers\MailLogController; // ✅ 1. IMPORT THE NEW CONTROLLER
+use App\Http\Controllers\MailLogController; 
 use App\Http\Controllers\MailTemplateController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
@@ -169,26 +169,6 @@ Route::middleware('auth')->group(function () {
 
 });
 
-use App\Http\Controllers\ReviewCriteriaController;
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/review-criteria', [ReviewCriteriaController::class, 'index'])->name('criteria.index');
-    Route::post('/review-criteria', [ReviewCriteriaController::class, 'store'])->name('criteria.store');
-    Route::delete('/review-criteria/{criteria}', [ReviewCriteriaController::class, 'destroy'])->name('criteria.destroy');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/review-categories', [ReviewCategoryController::class, 'index'])
-        ->name('review-categories.index');
-
-    Route::post('/review-categories', [ReviewCategoryController::class, 'store'])
-        ->name('review-categories.store');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
-});
 
 
 

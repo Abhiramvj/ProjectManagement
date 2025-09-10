@@ -3,15 +3,11 @@
 
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
-import CreateReview from '@/Components/CreateReview.vue';
-import CategoryIndex from '@/Components/CategoryIndex.vue';
-import CriteriaIndex from '@/Components/CriteriaIndex.vue';
 import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { formatDistanceToNowStrict, format } from 'date-fns';
 
-import { SpreadsheetComponent as EjsSpreadsheet } from "@syncfusion/ej2-vue-spreadsheet";
 
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -22,78 +18,6 @@ import axios from 'axios';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Reactive variables to hold Excel sheet data and sheet name
-const sheetData = ref([]);  // Array of rows (arrays of cell values)
-const sheetName = ref('');  // Will be set dynamically from backend
-
-// Prepare spreadsheet sheets config computed from sheetData and sheetName
-const sheets = computed(() => [
-  {
-    name: sheetName.value || 'Sheet1', // fallback if sheetName not set
-    rows: sheetData.value.map((row, ri) => ({
-      cells: row.map((cell, ci) => ({
-        value: cell,
-        isLocked: ri === 0, // Lock header row to prevent edits
-      })),
-    })),
-  },
-]);
-
-// Load the initial Excel sheet data from API on component mount
-onMounted(async () => {
-  try {
-    const response = await axios.get('/api/excel-sheet-data');
-    if (response.data) {
-      sheetName.value = response.data.sheetName || 'Sheet1';
-      sheetData.value = response.data.rows || [];
-    }
-  } catch (error) {
-    console.error('Failed to load Excel sheet data:', error);
-    // Optionally handle UI feedback here
-  }
-});
-
-// Cell save handler for Syncfusion spreadsheet
-async function onCellSave(args) {
-  const { rowIndex, colIndex, value } = args;
-
-  // Prevent saving if editing header row
-  if (rowIndex === 0) {
-    args.cancel = true;
-    return;
-  }
-
-  // Update local reactive sheetData to reflect UI change immediately
-  if (sheetData.value[rowIndex] && typeof colIndex === 'number') {
-    sheetData.value[rowIndex][colIndex] = value;
-  }
-
-  // Send updated cell data to backend API for saving to Excel file
-  try {
-    await axios.post('/api/save-excel-cell', {
-      sheetName: sheetName.value,
-      row: rowIndex,  // zero-based index matching backend expectation
-      col: colIndex,
-      value,
-    });
-    console.log('Cell updated and saved successfully');
-  } catch (error) {
-    console.error('Error saving cell update:', error);
-    // Optional: show UI notification of failure, revert UI cell value, etc.
-  }
-}
-
-// Dummy mapping function for criteria_name to criteria_id used previously
-function mapCriteriaNameToId(name) {
-  const mapping = {
-    'Total Number of Bugs Reported': 1,
-    'Consistently Meets Deadlines': 2,
-    // Add other criteria mappings...
-  }
-  return mapping[name] || null;
-}
-
-// Props expected to be passed from Laravel Inertia controller
 const props = defineProps({
   user: { type: Object, required: true },
   attendance: { type: Object, required: true },
@@ -105,30 +29,7 @@ const props = defineProps({
   timeStats: { type: Object, required: true },
   leaveStats: { type: Object, required: true },
   announcements: { type: Array, default: () => [] },
-  myReviews: { type: Array, default: () => [] },
-  employeeReviews: { type: Array, default: () => [] },
-  reviewsGivenByMe: { type: Array, default: () => [] },
-  isTeamLead: { type: Boolean, required: true },
- users: {
-    type: Array,
-    required: true,
-  },
-  criterias: {
-    type: Array,
-    required: true,
-  },
-  // 'reviews' is optional if used
-  reviews: {
-    type: Object,   // because it’s paginated data, or Array if you convert
-    required: false,
-  },
-    categories: {
-    type: Array,
-    required: true,
-  },
 });
-
-const categories = props.categories;
 
 
 
@@ -278,9 +179,7 @@ function closeViewAnnouncementModal() {
     viewingAnnouncement.value = null;
 }
 
-function goToReviewPage() {
-  router.get(route('reviews.index'));
-}
+
 
 // Other script setup logic is unchanged
 const updateTaskStatus = (task, newStatus) => {
@@ -429,62 +328,7 @@ const chartOptions = {
 
 
 
-function convertReviewsToRows(reviews) {
-  // Header row
-  const rows = [
-    {
-      cells: [
-        { value: 'Employee' },
-        { value: 'Criteria' },
-        { value: 'Score' },
-        { value: 'Month' },
-        { value: 'Year' },
-      ],
-    },
-  ];
-  // Data rows
-  for (const r of reviews) {
-    rows.push({
-      cells: [
-        { value: r.user?.name || 'N/A' },
-        { value: r.criteria?.name || 'N/A' },
-        { value: r.score },
-        { value: r.month },
-        { value: r.year },
-      ],
-    });
-  }
-  return rows;
-}
 
-const reviewsGivenByMeRows = computed(() => convertReviewsToRows(props.reviewsGivenByMe));
-const employeeReviewsRows = computed(() => convertReviewsToRows(props.employeeReviews));
-const myReviewsRows = computed(() => convertReviewsToRows(props.myReviews));
-
-const showReviewModal = ref(false)
-function openReviewModal() {
-  showReviewModal.value = true
-}
-function closeReviewModal() {
-  showReviewModal.value = false
-}
-
-const showCategoryModal = ref(false)
-function openCategoryModal() {
-  showCategoryModal.value = true
-}
-function closeCategoryModal() {
-  showCategoryModal.value = false
-}
-
-
-const showCriteriaModal = ref(false)
-function openCriteriaModal() {
-  showCriteriaModal.value = true
-}
-function closeCriteriaModal() {
-  showCriteriaModal.value = false
-}
 </script>
 
 <template>
@@ -1134,95 +978,6 @@ function closeCriteriaModal() {
                     </div>
                 </div>
   <div class="p-6">
-    <!-- Dashboard Header -->
- <!-- Button to open modal -->
-<button @click="openReviewModal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-  Add Review
-</button>
-
-<!-- Modal Overlay -->
-<div
-  v-if="showReviewModal"
-  @click.self="closeReviewModal"
-  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="modal-title"
->
-  <div class="bg-white rounded-lg w-full max-w-md p-6 relative max-h-[90vh] overflow-auto">
-    <!-- Close button -->
-    <button @click="closeReviewModal" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-2xl leading-none" aria-label="Close modal">
-      &times;
-    </button>
-
-    <!-- Modal title for screen readers -->
-    <h2 id="modal-title" class="sr-only">Add Review Modal</h2>
-
-    <!-- Render Review Creation Component inside modal -->
-  <CreateReview
-  v-if="showReviewModal"
-  :users="users"
-  :criterias="criterias"
-  @openCategoryModal="openCategoryModal"
-  @openCriteriaModal="openCriteriaModal"
-  @close="closeReviewModal"
-/>
-
-  <CategoryIndex
-    v-if="showCategoryModal"
-    @close="closeCategoryModal"
-  />
-
- <CriteriaIndex
-  v-if="showCriteriaModal"
-  :criterias="criterias"
-  :categories="categories"
-  @close="closeCriteriaModal"
-/>
-
-
-
-
-  </div>
-</div>
-
-<!-- REVIEWS NAV -->
-<nav class="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-  <h3 class="font-bold text-lg mb-4 text-black">Monthly Review Comparison</h3>
-
-  <div v-if="isTeamLead" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- Reviews Given By Me (editable) -->
-    <div>
-      <h4 class="font-semibold mb-2 text-black">Reviews Given By Me</h4>
-      <ejs-spreadsheet
-        :showRibbon="false"
-        :showFormulaBar="false"
-        :sheets="[{ name: 'Reviews Given By Me', rows: reviewsGivenByMeRows }]"
-        @cellSave="onCellSave"
-      />
-    </div>
-
-    <!-- Employee Reviews (read-only) -->
-    <div>
-      <h4 class="font-semibold mb-2 text-black">Employee Reviews</h4>
-      <ejs-spreadsheet
-        :showRibbon="false"
-        :showFormulaBar="false"
-        :sheets="[{ name: 'Employee Reviews', rows: employeeReviewsRows }]"
-      />
-    </div>
-  </div>
-
-  <div v-else>
-    <!-- Employee view: My Reviews (read-only) -->
-    <h4 class="font-semibold mb-2 text-black">My Reviews</h4>
-    <ejs-spreadsheet
-      :showRibbon="false"
-      :showFormulaBar="false"
-      :sheets="[{ name: 'My Reviews', rows: myReviewsRows }]"
-    />
-  </div>
-</nav>
 
 
 
