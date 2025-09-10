@@ -6,7 +6,12 @@
                     <h1 class="text-3xl font-bold text-gray-900">{{ companyInfo.name }}</h1>
                     <p class="text-lg text-blue-600 font-medium">{{ companyInfo.tagline }}</p>
                 </div>
-                
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">Total Employees</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ totalEmployees }}</p>
+                    </div>
+                </div>
             </div>
         </template>
 
@@ -196,7 +201,7 @@
                             </p>
                             <p class="text-gray-600">
                                 <span class="font-medium">Members:</span> 
-                                {{ team.members?.length ?? 0 }} people
+                                {{ team.users?.length ?? 0 }} people
                             </p>
                         </div>
                     </div>
@@ -298,7 +303,7 @@
                 </div>
             </section>
 
-            <!-- Contact Information
+            <!-- Contact Information -->
             <section class="bg-white p-8 rounded-2xl shadow-lg">
                 <h2 class="text-3xl font-bold text-gray-800 mb-8">Contact Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -346,7 +351,7 @@
                         </div>
                     </div>
                 </div>
-            </section> -->
+            </section>
 
             <!-- Modals -->
             <!-- Company Info Modal -->
@@ -752,5 +757,38 @@ textarea {
 
 .hover\:shadow-md:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Hierarchy Chart Styles */
+.boc-input > label {
+    font-size: 0 !important;
+    color: transparent;
+}
+
+.boc-input > label::after {
+    content: 'Search';
+    font-size: 16px;
+    color: #a0aec0;
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.chart-container-glass {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #ffffff 0%, #62a5dc 100%);
+    border-radius: 0.5rem;
+}
+
+.glass-node > rect {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    fill: rgba(255, 255, 255, 0.2);
+    stroke-width: 1px;
+    stroke: rgba(255, 255, 255, 0.3);
 }
 </style>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
+use App\Http\Controllers\CompanyDashboardController;
 use App\Http\Controllers\CompanyOverviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveApplicationController;
@@ -176,3 +177,5 @@ Route::get('/dev-login/{role}', function ($role) {
 })->name('dev.login');
 
 require __DIR__.'/auth.php';
+
+Route::get('/company-dashboard', [CompanyDashboardController::class, 'index'])->name('company.dashboard');
