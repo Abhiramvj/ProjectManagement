@@ -37,7 +37,7 @@ class LeaveRequestRejected extends Notification
     {
         return [
             'title' => 'Leave Request Rejected',
-            'message' => 'Your leave request from '.$this->leaveApplication->start_date.
+            'message' => ' leave request from '.$this->leaveApplication->start_date.
                          ' to '.$this->leaveApplication->end_date.' has been rejected.',
             'type' => 'leave_rejected',
             'leave_id' => $this->leaveApplication->id,

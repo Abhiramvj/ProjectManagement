@@ -70,26 +70,32 @@ class NotificationController extends Controller
      * This is a reusable method to apply the correct security scope to our queries.
      */
     private function scopeQueryByUserRole(Builder $query): void
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        if ($user->hasAnyRole(['admin', 'hr'])) {
-            // Admin/HR can see notifications for all relevant users.
-            $query->whereHas('user.roles', function ($q) {
-                $q->whereIn('name', ['employee', 'team-lead', 'project-manager']);
-            });
-        } elseif ($user->hasRole('team-lead')) {
-            // Team lead can only see notifications for their team members.
-            $ledTeams = $user->ledTeams()->with('members:id')->get();
-            $memberIds = $ledTeams->flatMap(fn ($team) => $team->members->pluck('id'))->unique();
+    if ($user->hasAnyRole(['admin', 'hr'])) {
+        // Admin/HR can see all notifications.
+        $query->whereHas('user.roles', function ($q) {
+            $q->whereIn('name', ['employee', 'team-lead', 'project-manager']);
+        });
+    } elseif ($user->hasRole('team-lead')) {
+        $ledTeams = $user->ledTeams()->with('members:id')->get();
+        $memberIds = $ledTeams->flatMap(fn ($team) => $team->members->pluck('id'))->unique();
 
-            $query->whereIn('notifiable_id', $memberIds);
-        } else {
-            // A regular employee can ONLY see their own notifications.
-            $query->where('notifiable_id', $user->id)
-                ->where('notifiable_type', User::class);
-        }
+        $query->where(function ($q) use ($user, $memberIds) {
+            $q->whereIn('notifiable_id', $memberIds) // Notifications of team members (approval requests)
+              ->orWhere(function ($q2) use ($user) {
+                  // Own approved/rejected notifications
+                  $q2->where('notifiable_id', $user->id)
+                     ->whereIn('data->type', ['leave_approved', 'leave_rejected']);
+              });
+        });
+    } else {
+        // Regular employee: only own notifications
+        $query->where('notifiable_id', $user->id)
+              ->where('notifiable_type', User::class);
     }
+}
 
     public function markAsRead($id)
     {

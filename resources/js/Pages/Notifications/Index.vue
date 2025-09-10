@@ -15,9 +15,13 @@ const markAsRead = (notificationId) => {
         {},
         {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload(); // Reload the page to update the read status
+            },
         },
     );
 };
+
 
 const markAllAsRead = () => {
     router.post(
@@ -25,9 +29,13 @@ const markAllAsRead = () => {
         {},
         {
             preserveScroll: true,
+            onSuccess: () => {
+                router.reload(); // Refresh notifications
+            },
         },
     );
 };
+
 
 // --- Helper functions ---
 const icons = {
@@ -69,10 +77,12 @@ const user = computed(() => page.props.auth.user);
 const canManageLeaves = computed(() =>
     user.value?.permissions?.includes('manage leave applications'),
 );
-const getDetailsRoute = () =>
-    canManageLeaves.value
+const getDetailsRoute = (notification) => {
+    return notification.data.type === 'leave_request'
         ? route('leave.manageRequests')
         : route('leave.fullRequests');
+};
+
 </script>
 
 <template>
@@ -198,12 +208,13 @@ const getDetailsRoute = () =>
                                             Mark as read
                                         </button>
                                         <Link
-                                            :href="getDetailsRoute()"
-                                            class="flex items-center text-sm font-semibold text-slate-600 hover:text-slate-800"
-                                        >
-                                            View Details
-                                            <span class="ml-1">→</span>
-                                        </Link>
+    :href="getDetailsRoute(notification)"
+    class="flex items-center text-sm font-semibold text-slate-600 hover:text-slate-800"
+>
+    View Details
+    <span class="ml-1">→</span>
+</Link>
+
                                     </div>
                                 </div>
                             </div>
