@@ -173,4 +173,3 @@ Route::get('/dev-login/{role}', function ($role) {
 })->name('dev.login');
 
 require __DIR__.'/auth.php';
-

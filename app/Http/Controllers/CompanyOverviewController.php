@@ -122,7 +122,7 @@ class CompanyOverviewController extends Controller
             'roleSummary' => $roleSummary,
             'totalEmployees' => $totalEmployees,
             'userRole' => $userRole,
-            
+
             // Hierarchy Data
             'reportingNodes' => $reportingNodes,
             'designationBasedNodes' => $designationBasedNodes,
@@ -159,18 +159,18 @@ class CompanyOverviewController extends Controller
             }
 
             return [
-                'id' => $user->id, 
-                'pid' => $user->parent_id, 
+                'id' => $user->id,
+                'pid' => $user->parent_id,
                 'name' => $user->name,
                 'title' => $user->designation,
                 'image' => $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?background=random&name='.urlencode($user->name)),
-                'color' => $color, 
-                'tags' => $tags, 
-                'employee_id' => $user->employee_id, 
+                'color' => $color,
+                'tags' => $tags,
+                'employee_id' => $user->employee_id,
                 'email' => $user->email,
-                'hire_date' => $user->hire_date, 
+                'hire_date' => $user->hire_date,
                 'total_experience' => $user->total_experience,
-                'canViewPerformance' => $canViewPerformance, 
+                'canViewPerformance' => $canViewPerformance,
                 'performance_summary' => $performanceSummary,
             ];
         })->all();
@@ -196,21 +196,21 @@ class CompanyOverviewController extends Controller
                     'tasks_completed' => $user->tasks_completed_count,
                 ];
             }
-            
+
             $teamName = $user->teams->first()->name ?? $user->designation ?? 'Unassigned';
             $color = $this->generateColorForText($teamName);
             $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name='.urlencode($user->name));
 
             if (is_null($user->parent_id) || ! in_array($user->parent_id, $allowedUserIds)) {
                 $nodes[] = [
-                    'id' => $user->id, 
-                    'pid' => null, 
-                    'name' => $user->name, 
-                    'title' => $user->designation, 
+                    'id' => $user->id,
+                    'pid' => null,
+                    'name' => $user->name,
+                    'title' => $user->designation,
                     'image' => $imageUrl,
                     'color' => $color,
                     'tags' => ['employee-node', $user->id === $loggedInUser->id ? 'is-logged-in-user' : ''],
-                    'canViewPerformance' => $canViewPerformance, 
+                    'canViewPerformance' => $canViewPerformance,
                     'performance_summary' => $performanceSummary,
                 ];
 
@@ -223,10 +223,10 @@ class CompanyOverviewController extends Controller
             if (! isset($createdDesignationGroups[$directParentId][$designation])) {
                 $groupNodeId = 'group_'.$directParentId.'_'.str_replace(' ', '_', $designation);
                 $nodes[] = [
-                    'id' => $groupNodeId, 
-                    'pid' => $directParentId, 
+                    'id' => $groupNodeId,
+                    'pid' => $directParentId,
                     'name' => $designation,
-                    'title' => 'Designation Group', 
+                    'title' => 'Designation Group',
                     'tags' => ['role-category'],
                     'color' => $this->generateColorForText($designation),
                 ];
@@ -236,14 +236,14 @@ class CompanyOverviewController extends Controller
             $groupNodeId = 'group_'.$directParentId.'_'.str_replace(' ', '_', $designation);
 
             $nodes[] = [
-                'id' => $user->id, 
-                'pid' => $groupNodeId, 
-                'name' => $user->name, 
-                'title' => $user->designation, 
+                'id' => $user->id,
+                'pid' => $groupNodeId,
+                'name' => $user->name,
+                'title' => $user->designation,
                 'image' => $imageUrl,
                 'color' => $color,
                 'tags' => ['employee-node', $user->id === $loggedInUser->id ? 'is-logged-in-user' : ''],
-                'canViewPerformance' => $canViewPerformance, 
+                'canViewPerformance' => $canViewPerformance,
                 'performance_summary' => $performanceSummary,
             ];
         }
