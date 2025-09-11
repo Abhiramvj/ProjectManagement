@@ -190,12 +190,26 @@ const navigationItems = computed(() => {
             icon: 'Mail Logs',
         },
         {
-    name: 'Company Overview',
-    route: 'company.overview',
-    active: route().current('company.overview'),
-    show: true,
-    icon: 'Company Overview' 
-}
+            name: 'Company Overview',
+            route: 'company.overview',
+            active: route().current('company.overview'),
+            show: true,
+            icon: 'Company Overview', 
+        },
+        {
+            name: 'Team Reviews',
+            route: 'reviews.team',
+            active: route().current('reviews.team'),
+            show: user.value.permissions.includes('manage team reviews'), // Adjust permission check
+            icon: 'Manage Teams', // or use a relevant icon
+        },
+        {
+            name: 'My Reviews',
+            route: 'myReviews',
+            icon: 'MyReviews', // should be SVG string or icon component
+            active: route().current('myReviews'),
+            show: user.value.permissions.includes('view my reviews'),
+        }
     ];
     return items.filter((item) => item.show);
 });
@@ -214,6 +228,9 @@ const icons = {
     'Manage Users': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
     'Manage Teams': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
     'Company Overview': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16M6 21h12M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4" /></svg>`,
+    'Company Hierarchy': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
+    'TeamReviews': `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+    'MyReviews': `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4a4 4 0 110 8 4 4 0 010-8z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20v-1a6 6 0 1112 0v1"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.5 17.5l.87 1.76a.5.5 0 00.91 0l.87-1.76 1.93-.28a.5.5 0 00.28-.85l-1.4-1.37.33-1.92a.5.5 0 00-.72-.53l-1.73.91-1.73-.91a.5.5 0 00-.72.53l.33 1.92-1.4 1.37a.5.5 0 00.28.85l1.93.28z"/></svg>`
 };
 
 onMounted(() => {
