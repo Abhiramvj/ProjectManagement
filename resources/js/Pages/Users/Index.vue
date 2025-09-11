@@ -717,11 +717,19 @@ function handleImageUpload(e) {
                             </li>
                         </ul>
                         <div class="mt-4">
-                            <a
-                                :href="route('users.import.template')"
-                                class="font-semibold text-blue-800 hover:underline"
-                                >Download Template (.xlsx)</a
-                            >
+  <a 
+  href="/template/employee_data.xlsx" 
+  download
+  class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-2 text-white font-semibold shadow-md shadow-blue-300 transition hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12v8m0 0l-4-4m4 4l4-4M12 4v8" />
+  </svg>
+  Download Template (.xlsx)
+</a>
+
+
+
                         </div>
                     </div>
                     <div>

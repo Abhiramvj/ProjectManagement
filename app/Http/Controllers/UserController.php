@@ -6,13 +6,12 @@ use App\Actions\User\DeleteUser;
 use App\Actions\User\GetUsers;
 use App\Actions\User\StoreUsers;
 use App\Actions\User\UpdateUser;
-// <-- CORRECTED: Points to the Action class
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Jobs\ProcessUserImport;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log; // <-- 1. IMPORT THE LOG FACADE
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
@@ -28,12 +27,8 @@ class UserController extends Controller
             return Inertia::render('Users/Index', $getUsers->handle($request));
 
         } catch (\Throwable $e) {
-            // If any error occurs, log it and re-throw to see the error page
             Log::error('Failed to load user index page: '.$e->getMessage());
-            Log::error($e); // This logs the full exception details
-
-            // During development, re-throwing is useful to see the error screen.
-            // In production, you might want to return an error view.
+            Log::error($e);
             throw $e;
         }
     }
