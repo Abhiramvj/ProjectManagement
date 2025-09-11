@@ -112,12 +112,12 @@ class LeaveCalendarController extends Controller
 
     private function applyFilters($query, array $filters, User $user, Collection $ledTeamIds): void
     {
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->where('name', 'like', "%{$filters['search']}%");
         }
 
-        if (!empty($filters['team_id'])) {
-            if ($user->hasRole('team-lead') && !$ledTeamIds->contains($filters['team_id'])) {
+        if (! empty($filters['team_id'])) {
+            if ($user->hasRole('team-lead') && ! $ledTeamIds->contains($filters['team_id'])) {
                 abort(403);
             }
 

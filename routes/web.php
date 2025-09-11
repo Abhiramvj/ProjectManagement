@@ -4,6 +4,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
 use App\Http\Controllers\CompanyOverviewController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FeedbackIdeaController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
@@ -211,3 +212,32 @@ Route::get('/dev-login/{role}', function ($role) {
 })->name('dev.login');
 
 require __DIR__.'/auth.php';
+
+Route::middleware(['auth'])->group(function () {
+    // Employee routes
+    Route::get('/feedback', [FeedbackIdeaController::class, 'indexEmployee'])
+        ->name('feedback.index')
+        ->defaults('type', 'feedback');
+
+    Route::post('/feedback', [FeedbackIdeaController::class, 'store'])
+        ->name('feedback.store')
+        ->defaults('type', 'feedback');
+
+    Route::get('/ideas', [FeedbackIdeaController::class, 'indexEmployee'])
+        ->name('idea.index')
+        ->defaults('type', 'idea');
+
+    Route::post('/ideas', [FeedbackIdeaController::class, 'store'])
+        ->name('idea.store')
+        ->defaults('type', 'idea');
+
+    // Admin/HR routes
+    Route::get('/admin/feedback-submissions', [FeedbackIdeaController::class, 'indexAdmin'])
+        ->name('admin.feedback.index')
+        ->defaults('type', 'feedback');
+
+    Route::get('/admin/idea-submissions', [FeedbackIdeaController::class, 'indexAdmin'])
+        ->name('admin.idea.index')
+        ->defaults('type', 'idea');
+
+});
