@@ -144,7 +144,7 @@ const navigationItems = computed(() => {
             name: 'Leave Calendar',
             route: 'leaves.calendar',
             active: route().current('leaves.calendar'),
-            show: user.value.permissions.includes('manage leave applications'),
+            show: user.value.permissions.includes('view calendar'),
             icon: 'Leave Calendar',
         },
         {
