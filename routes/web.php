@@ -13,9 +13,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\ReviewCategoryController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\ReviewDataController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
@@ -23,7 +21,6 @@ use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserHierarchyController;
 use App\Models\User;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -169,7 +166,42 @@ Route::middleware('auth')->group(function () {
 
 });
 
+Route::middleware('auth')->group(function () {
+    Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('myReviews');
 
+    Route::get('/my-reviews/{month}/{year}/create', [ReviewController::class, 'createSelfReview'])
+        ->name('selfReview.create');
+
+    Route::post('/my-reviews/{month}/{year}', [ReviewController::class, 'storeSelfReview'])
+        ->name('selfReview.store');
+});
+
+
+
+Route::middleware(['auth'])->group(function () {
+
+    // Show logged-in user's self reviews page
+
+
+    // Show team lead's team reviews page
+    Route::get('/reviews/team', [ReviewController::class, 'teamReviews'])
+        ->name('reviews.team');
+
+    // Store a new review (self review)
+    Route::post('/reviews', [ReviewController::class, 'store'])
+        ->name('reviews.store');
+
+          Route::get('/employee/{employeeId}/{month}/{year}/review/create', [ReviewController::class, 'createEmployeeReview'])
+        ->name('employee.review.create');
+
+    Route::post('/employee/{employeeId}/{month}/{year}/review', [ReviewController::class, 'storeEmployeeReview'])
+        ->name('employee.review.store');
+
+           Route::get('/employee/{employeeId}/reviews', [ReviewController::class, 'showReviewHistory'])
+    ->name('employee.reviewHistory');
+
+
+});
 
 
 

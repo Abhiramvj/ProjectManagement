@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Review>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ReviewScore>
  */
-class ReviewFactory extends Factory
+class ReviewScoreFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -17,9 +17,7 @@ class ReviewFactory extends Factory
     public function definition(): array
     {
         return [
-        'review_month' => fake()->numberBetween(1, 12),
-        'review_year' => fake()->year(),
-        'feedback' => fake()->sentence(),
-    ];
+            'score' => fake()->numberBetween(1, 10),
+        ];
     }
 }
