@@ -27,21 +27,17 @@
     23 => 'Cloudstudio\\Ollama\\OllamaServiceProvider',
     24 => 'Gemini\\Laravel\\ServiceProvider',
     25 => 'Inertia\\ServiceProvider',
-    26 => 'Laravel\\Breeze\\BreezeServiceProvider',
-    27 => 'Laravel\\Pail\\PailServiceProvider',
-    28 => 'Laravel\\Sail\\SailServiceProvider',
-    29 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    30 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    31 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
-    32 => 'MongoDB\\Laravel\\MongoDBServiceProvider',
-    33 => 'MongoDB\\Laravel\\MongoDBBusServiceProvider',
-    34 => 'Carbon\\Laravel\\ServiceProvider',
-    35 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    36 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    37 => 'Spatie\\Permission\\PermissionServiceProvider',
-    38 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
-    39 => 'App\\Providers\\AppServiceProvider',
-    40 => 'App\\Providers\\AuthServiceProvider',
+    26 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+    27 => 'Laravel\\Tinker\\TinkerServiceProvider',
+    28 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
+    29 => 'MongoDB\\Laravel\\MongoDBServiceProvider',
+    30 => 'MongoDB\\Laravel\\MongoDBBusServiceProvider',
+    31 => 'Carbon\\Laravel\\ServiceProvider',
+    32 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    33 => 'Spatie\\Permission\\PermissionServiceProvider',
+    34 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
+    35 => 'App\\Providers\\AppServiceProvider',
+    36 => 'App\\Providers\\AuthServiceProvider',
   ),
   'eager' => 
   array (
@@ -57,17 +53,15 @@
     9 => 'Illuminate\\View\\ViewServiceProvider',
     10 => 'Cloudstudio\\Ollama\\OllamaServiceProvider',
     11 => 'Inertia\\ServiceProvider',
-    12 => 'Laravel\\Pail\\PailServiceProvider',
-    13 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    14 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
-    15 => 'MongoDB\\Laravel\\MongoDBServiceProvider',
-    16 => 'Carbon\\Laravel\\ServiceProvider',
-    17 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    18 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    19 => 'Spatie\\Permission\\PermissionServiceProvider',
-    20 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
-    21 => 'App\\Providers\\AppServiceProvider',
-    22 => 'App\\Providers\\AuthServiceProvider',
+    12 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+    13 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
+    14 => 'MongoDB\\Laravel\\MongoDBServiceProvider',
+    15 => 'Carbon\\Laravel\\ServiceProvider',
+    16 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    17 => 'Spatie\\Permission\\PermissionServiceProvider',
+    18 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
+    19 => 'App\\Providers\\AppServiceProvider',
+    20 => 'App\\Providers\\AuthServiceProvider',
   ),
   'deferred' => 
   array (
@@ -223,9 +217,6 @@
     'Gemini\\Client' => 'Gemini\\Laravel\\ServiceProvider',
     'Gemini\\Contracts\\ClientContract' => 'Gemini\\Laravel\\ServiceProvider',
     'gemini' => 'Gemini\\Laravel\\ServiceProvider',
-    'Laravel\\Breeze\\Console\\InstallCommand' => 'Laravel\\Breeze\\BreezeServiceProvider',
-    'Laravel\\Sail\\Console\\InstallCommand' => 'Laravel\\Sail\\SailServiceProvider',
-    'Laravel\\Sail\\Console\\PublishCommand' => 'Laravel\\Sail\\SailServiceProvider',
     'command.tinker' => 'Laravel\\Tinker\\TinkerServiceProvider',
     'MongoDB\\Laravel\\Bus\\MongoBatchRepository' => 'MongoDB\\Laravel\\MongoDBBusServiceProvider',
   ),
@@ -271,12 +262,6 @@
     array (
     ),
     'Gemini\\Laravel\\ServiceProvider' => 
-    array (
-    ),
-    'Laravel\\Breeze\\BreezeServiceProvider' => 
-    array (
-    ),
-    'Laravel\\Sail\\SailServiceProvider' => 
     array (
     ),
     'Laravel\\Tinker\\TinkerServiceProvider' => 

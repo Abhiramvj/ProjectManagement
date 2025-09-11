@@ -16,7 +16,7 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Welcome to WorkSphere" />
+    <Head title="Welcome to Organice" />
 
     <div class="flex min-h-screen bg-gray-50 antialiased dark:bg-gray-900">
         <!-- Left Panel: Branding & Visuals with Auth Links -->
@@ -60,7 +60,7 @@ defineProps({
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                 </svg>
-                <h1 class="text-4xl font-bold tracking-tight">WorkSphere</h1>
+                <h1 class="text-4xl font-bold tracking-tight">Organice</h1>
                 <p class="mb-10 mt-4 max-w-md text-lg opacity-80">
                     The effortless way for your team to track time, manage
                     projects, and boost productivity.
