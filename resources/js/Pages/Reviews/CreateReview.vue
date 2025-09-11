@@ -1,58 +1,3 @@
-<script>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-export default {
-  layout: AuthenticatedLayout,
- props: {
-  employeeId: Number, // Add this line
-  categories: Array,
-  employeeName: { type: String, default: 'Employee User' },
-  reviewMonth: Number,
-  reviewYear: Number,
-},
-
-  data() {
-    return {
-      form: {
-        scores: {},
-        comments: {}, // keep if you want to save comments, otherwise remove
-      },
-    };
-  },
-  computed: {
-    periodText() {
-      if (!this.reviewMonth || !this.reviewYear) return '';
-      return `${this.monthName(this.reviewMonth)} ${this.reviewYear}`;
-    },
-  },
-  methods: {
-    monthName(monthNum) {
-      return new Date(0, monthNum - 1).toLocaleString('default', { month: 'long' });
-    },
-  async onSubmit() {
-  this.submitting = true;
-  try {
-    await this.$inertia.post(
-      route('employee.review.store', {
-        employeeId: this.employeeId,  // pass this prop or data
-        month: this.reviewMonth,
-        year: this.reviewYear,
-      }),
-      this.form
-    );
-    this.showModal = false;
-  } catch (error) {
-    console.error(error);
-  } finally {
-    this.submitting = false;
-  }
-},
-   onCancel() {
-  this.$inertia.visit(route('reviews.team'));
-},
-  },
-};
-</script>
-
 <template>
   <AuthenticatedLayout>
     <div class="review-bg min-h-screen flex items-center justify-center py-8">
@@ -102,6 +47,76 @@ export default {
     </div>
   </AuthenticatedLayout>
 </template>
+
+<script>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+
+export default {
+  components: {
+    AuthenticatedLayout,
+  },
+  props: {
+    // Fix: Accept both String and Number types, then convert internally
+    employeeId: [String, Number],
+    categories: Array,
+    employeeName: { type: String, default: 'Employee User' },
+    reviewMonth: [String, Number],
+    reviewYear: [String, Number],
+  },
+  data() {
+    return {
+      form: {
+        scores: {},
+        comments: {}, // keep if you want to save comments, otherwise remove
+      },
+      submitting: false,
+      showModal: false,
+    };
+  },
+  computed: {
+    // Convert to numbers for internal use
+    employeeIdNumber() {
+      return Number(this.employeeId);
+    },
+    reviewMonthNumber() {
+      return Number(this.reviewMonth);
+    },
+    reviewYearNumber() {
+      return Number(this.reviewYear);
+    },
+    periodText() {
+      if (!this.reviewMonthNumber || !this.reviewYearNumber) return '';
+      return `${this.monthName(this.reviewMonthNumber)} ${this.reviewYearNumber}`;
+    },
+  },
+  methods: {
+    monthName(monthNum) {
+      return new Date(0, monthNum - 1).toLocaleString('default', { month: 'long' });
+    },
+    async onSubmit() {
+      this.submitting = true;
+      try {
+        await this.$inertia.post(
+          route('employee.review.store', {
+            employeeId: this.employeeIdNumber,  // use computed property
+            month: this.reviewMonthNumber,
+            year: this.reviewYearNumber,
+          }),
+          this.form
+        );
+        this.showModal = false;
+      } catch (error) {
+        console.error(error);
+      } finally {
+        this.submitting = false;
+      }
+    },
+    onCancel() {
+      this.$inertia.visit(route('reviews.team'));
+    },
+  },
+};
+</script>
 
 <style scoped>
 .review-bg {

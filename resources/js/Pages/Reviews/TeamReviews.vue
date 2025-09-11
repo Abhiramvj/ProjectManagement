@@ -1,58 +1,3 @@
-<script>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-
-export default {
-  layout: AuthenticatedLayout,
-  props: {
-    members: { type: Array, required: true },
-    stats: { type: Object, required: false },
-  },
-  data() {
-    return {
-      search: '',
-      loadingReview: false,
-    };
-  },
-  computed: {
-    filteredMembers() {
-      if (!this.search.trim()) return this.members;
-      const term = this.search.trim().toLowerCase();
-      return this.members.filter(
-        (m) =>
-          m.name.toLowerCase().includes(term) ||
-          (m.email ? m.email.toLowerCase().includes(term) : false)
-      );
-    },
-  },
-  methods: {
-    initials(name) {
-      if (!name) return '';
-      return name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase();
-    },
-    progressBarClass(status) {
-      return status === 'Completed' ? 'bg-green-500' : 'bg-gray-400';
-    },
-    goToReview(employeeId, month, year) {
-      this.$inertia.visit(route('employee.reviewPage', { employeeId, month, year }));
-    },
-    goToCreateReview(employeeId, month, year) {
-      const now = new Date();
-      const reviewMonth = month || now.getMonth() + 1;
-      const reviewYear = year || now.getFullYear();
-      this.$inertia.visit(route('employee.review.create', { employeeId, month: reviewMonth, year: reviewYear }));
-    },
-    goToHistory(employeeId) {
-      // Define this to go to review history, if you have a route
-      this.$inertia.visit(route('employee.reviewHistory', { employeeId }));
-    }
-  },
-};
-</script>
-
 <template>
   <AuthenticatedLayout>
     <div class="max-w-7xl mx-auto pb-12 px-6">
@@ -95,10 +40,6 @@ export default {
           placeholder="Search team members..."
           class="border px-4 py-2 rounded w-full sm:w-96"
         />
-        <div class="flex gap-2">
-          <button class="px-4 py-2 border rounded bg-white text-gray-700 hover:bg-gray-50">Filter</button>
-          <button class="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800">Export</button>
-        </div>
       </div>
 
       <!-- Member Cards Grid -->
@@ -187,3 +128,60 @@ export default {
     </div>
   </AuthenticatedLayout>
 </template>
+
+<script>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+
+export default {
+  components: {
+    AuthenticatedLayout,
+  },
+  props: {
+    members: { type: Array, required: true },
+    stats: { type: Object, required: false },
+  },
+  data() {
+    return {
+      search: '',
+      loadingReview: false,
+    };
+  },
+  computed: {
+    filteredMembers() {
+      if (!this.search.trim()) return this.members;
+      const term = this.search.trim().toLowerCase();
+      return this.members.filter(
+        (m) =>
+          m.name.toLowerCase().includes(term) ||
+          (m.email ? m.email.toLowerCase().includes(term) : false)
+      );
+    },
+  },
+  methods: {
+    initials(name) {
+      if (!name) return '';
+      return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase();
+    },
+    progressBarClass(status) {
+      return status === 'Completed' ? 'bg-green-500' : 'bg-gray-400';
+    },
+    goToReview(employeeId, month, year) {
+      this.$inertia.visit(route('employee.reviewPage', { employeeId, month, year }));
+    },
+    goToCreateReview(employeeId, month, year) {
+      const now = new Date();
+      const reviewMonth = month || now.getMonth() + 1;
+      const reviewYear = year || now.getFullYear();
+      this.$inertia.visit(route('employee.review.create', { employeeId, month: reviewMonth, year: reviewYear }));
+    },
+    goToHistory(employeeId) {
+      // Define this to go to review history, if you have a route
+      this.$inertia.visit(route('employee.reviewHistory', { employeeId }));
+    }
+  },
+};
+</script>

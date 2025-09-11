@@ -5,26 +5,27 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 
 export default {
-    layout: AuthenticatedLayout,
+    components: {
+        AuthenticatedLayout,
+    },
   name: 'EmployeeHistory',
   props: {
-    member: Object, // id, name, role, email
-    reviewPeriod: String, // e.g. "March 2024"
-    metrics: Array, // current metrics for summary [{ name, value }]
+    member: Object,
+    reviewPeriod: String,
+    metrics: Array,
     overallScore: Number,
     lastReview: String,
-    selfReview: Object,      // { scores: {criteria_id: score}, comments: {criteria_id: string} }
-    managerReview: Object,   // { scores: {criteria_id: score}, comments: {criteria_id: string} }
-    categories: Array        // [{ id, name, criteria: [...], weight }]
+    selfReview: Object,
+    managerReview: Object,
+    categories: Array
   },
   setup(props) {
     const tab = ref('overview');
 
-    // Filter dropdown reactive state
+
     const selectedMonth = ref(new Date().getMonth() + 1);
     const selectedYear = ref(new Date().getFullYear());
 
-    // Month options
     const months = [
       { value: 1, label: 'January' },
       { value: 2, label: 'February' },
@@ -40,7 +41,6 @@ export default {
       { value: 12, label: 'December' }
     ];
 
-    // Year options (adjust as needed)
     const years = [2024, 2025];
 
 
@@ -59,7 +59,6 @@ export default {
       return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 'N/A';
     });
 
-    // Compute manager average score
     const mgrAvg = computed(() => {
       const vals = Object.values(props.managerReview?.scores || {});
       return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 'N/A';

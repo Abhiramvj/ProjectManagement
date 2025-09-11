@@ -5,8 +5,9 @@ import Pagination from '@/Components/Pagination.vue';
 export default {
      components: {
     Pagination,
+    AuthenticatedLayout,
   },
-  layout: AuthenticatedLayout,
+
   props: {
     reviews: Array,
     categories: Array,
