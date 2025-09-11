@@ -1,9 +1,11 @@
 <script>
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 
 export default {
+    layout: AuthenticatedLayout,
   name: 'EmployeeHistory',
   props: {
     member: Object, // id, name, role, email
@@ -72,6 +74,7 @@ export default {
 </script>
 
 <template>
+    <AuthenticatedLayout>
   <div class="min-h-screen bg-gray-50 py-10">
     <div class="max-w-4xl mx-auto">
 
@@ -210,4 +213,5 @@ export default {
       </div>
     </div>
   </div>
+  </AuthenticatedLayout>
 </template>
