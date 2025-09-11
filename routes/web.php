@@ -37,11 +37,8 @@ Route::get('/', function () {
     ]);
 })->middleware('guest')->name('logins');
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified', 'no-cache'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::match(['post', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');

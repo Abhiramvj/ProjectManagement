@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\NoCacheMiddleware::class,
+        ]);
+
+        // Add aliases for route middleware
+        $middleware->alias([
+            'no-cache' => \App\Http\Middleware\NoCacheMiddleware::class,
         ]);
 
     })

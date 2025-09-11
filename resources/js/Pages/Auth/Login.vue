@@ -5,6 +5,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 
 defineProps({
     canResetPassword: {
@@ -16,6 +17,20 @@ defineProps({
     status: {
         type: String,
     },
+});
+
+onMounted(() => {
+    window.history.pushState(null, null, window.location.href);
+
+    window.addEventListener('popstate', () => {
+        window.location.replace(route('logins'));
+    });
+
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            window.location.replace(route('logins'));
+        }
+    });
 });
 
 const form = useForm({

@@ -30,6 +30,21 @@ let notificationInterval = null;
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
+function logout() {
+  router.post(route('logout'), {}, {
+    replace: true,
+    onSuccess: () => {
+      window.location.href = route('logins'); // full page reload to login page on logout
+    },
+  });
+}
+
+router.on('navigate', (event) => {
+  if (event.detail.visit.restorationIdentifier) {
+    window.location.reload();
+  }
+});
+
 const fetchNotifications = async () => {
     if (!user.value || loading.value) return;
     try {
@@ -470,12 +485,10 @@ onUnmounted(() => {
                                     <div
                                         class="my-1 border-t border-gray-100"
                                     ></div>
-                                    <DropdownLink
-                                        :href="route('logout')"
-                                        method="post"
-                                        as="button"
-                                        >Log Out</DropdownLink
-                                    >
+                                    <DropdownLink as="button" @click="logout" class="w-full text-left">
+  Log Out
+</DropdownLink>
+
                                     <slot name="page-actions" />
                                 </template>
                             </Dropdown>
