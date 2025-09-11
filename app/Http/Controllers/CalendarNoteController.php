@@ -2,24 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CalendarNote\DeleteCalendarNoteAction;
+use App\Actions\CalendarNote\StoreCalendarNoteAction;
+use App\Actions\CalendarNote\UpdateCalendarNoteAction;
+use App\Http\Requests\CalendarNote\StoreCalendarNoteRequest;
+use App\Http\Requests\CalendarNote\UpdateCalendarNoteRequest;
 use App\Models\CalendarNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CalendarNoteController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreCalendarNoteRequest $request, StoreCalendarNoteAction $action)
     {
-        $request->validate([
-            'date' => 'required|date',
-            'note' => 'required|string|max:1000',
-        ]);
-
-        CalendarNote::create([
-            'user_id' => Auth::id(),
-            'date' => $request->date,
-            'note' => $request->note,
-        ]);
+        $action->execute($request->validated());
 
         return redirect()->back()->with('success', 'Note added successfully.');
     }
@@ -27,29 +23,18 @@ class CalendarNoteController extends Controller
     /**
      * Update the specified calendar note in storage.
      */
-    public function update(Request $request, CalendarNote $calendarNote)
+     public function update(UpdateCalendarNoteRequest $request, CalendarNote $calendarNote, UpdateCalendarNoteAction $action)
     {
-        // Ensure the user can only update their own notes
-        abort_if($calendarNote->user_id !== Auth::id(), 403);
-
-        $request->validate([
-            'note' => 'required|string|max:1000',
-        ]);
-
-        $calendarNote->update(['note' => $request->note]);
+        $action->execute($calendarNote, $request->validated());
 
         return redirect()->back()->with('success', 'Note updated successfully.');
     }
-
     /**
      * Remove the specified calendar note from storage.
      */
-    public function destroy(CalendarNote $calendarNote)
+   public function destroy(CalendarNote $calendarNote, DeleteCalendarNoteAction $action)
     {
-        // Ensure the user can only delete their own notes
-        abort_if($calendarNote->user_id !== Auth::id(), 403);
-
-        $calendarNote->delete();
+        $action->execute($calendarNote);
 
         return redirect()->back()->with('success', 'Note deleted successfully.');
     }

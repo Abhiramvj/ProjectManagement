@@ -194,7 +194,7 @@ const navigationItems = computed(() => {
             route: 'company.overview',
             active: route().current('company.overview'),
             show: true,
-            icon: 'Company Overview', 
+            icon: 'Company Overview',
         },
         {
             name: 'Team Reviews',
@@ -203,13 +203,14 @@ const navigationItems = computed(() => {
             show: user.value.permissions.includes('manage team reviews'), // Adjust permission check
             icon: 'Manage Teams', // or use a relevant icon
         },
-        {
-            name: 'My Reviews',
-            route: 'myReviews',
-            icon: 'MyReviews', // should be SVG string or icon component
-            active: route().current('myReviews'),
-            show: user.value.permissions.includes('view my reviews'),
-        }
+       {
+  name: 'My Reviews',
+  route: 'myReviews',
+  icon: 'MyReviews',
+  active: route().current('myReviews'),
+  show: user.value.permissions.includes('view my reviews') && !user.value.roles.includes('admin'),
+}
+
     ];
     return items.filter((item) => item.show);
 });
@@ -579,8 +580,8 @@ onUnmounted(() => {
 }
 
 .nav-link:not([aria-current='page']):hover {
-    background-color: #f3f4f6; 
-    color: #111827; 
+    background-color: #f3f4f6;
+    color: #111827;
 }
 
 .nav-link[aria-current='page'] {

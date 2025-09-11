@@ -142,8 +142,8 @@ const cancelRequest = (request) => {
 
     router.delete(route('leave.cancel', request.id), {
         onSuccess: () => {
-            isDetailModalVisible.value = false; 
-            selectedRequest.value = null;       
+            isDetailModalVisible.value = false;
+            selectedRequest.value = null;
         },
         onError: (errors) => {
             console.error(errors);
@@ -187,7 +187,7 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
     </section>
 
     <!-- Leave Cards -->
-    <div class="grid gap-4">
+    <div class="grid gap-4 text-black">
         <div v-for="req in leaveRequests.data" :key="req.id"
              class="bg-white rounded-xl shadow-md p-5 flex items-center justify-between border-l-4 cursor-pointer"
              :class="statusCardBorderClass(req.status)">

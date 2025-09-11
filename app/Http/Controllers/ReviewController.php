@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
+
 
 class ReviewController extends Controller
 {
@@ -64,52 +64,54 @@ class ReviewController extends Controller
     }
 
     // Store the new self review submitted by logged-in user
-    public function storeSelfReview(Request $request, $month, $year)
-    {
-        $request->validate([
-            'scores' => 'required|array',
-            'scores.*' => 'integer|min:1|max:10',
-            'comments' => 'nullable|array',
-            'comments.*' => 'nullable|string',
-        ]);
+  public function storeSelfReview(Request $request, $month, $year)
+{
+    \Log::info('RedirectTo value:', ['redirectTo' => $request->input('redirectTo')]);
 
-        $user = Auth::user();
+    $request->validate([
+        'scores' => 'required|array',
+        'scores.*' => 'integer|min:1|max:10',
+    ]);
 
-        DB::beginTransaction();
+    $user = Auth::user();
 
-        try {
-            $review = Review::updateOrCreate(
+    DB::beginTransaction();
+
+    try {
+        $review = Review::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'reviewer_id' => $user->id,
+                'review_month' => $month,
+                'review_year' => $year,
+            ],
+            []
+        );
+
+        foreach ($request->scores as $criteriaId => $score) {
+            ReviewScore::updateOrCreate(
                 [
-                    'user_id' => $user->id,
-                    'reviewer_id' => $user->id,
-                    'review_month' => $month,
-                    'review_year' => $year,
+                    'review_id' => $review->id,
+                    'criteria_id' => $criteriaId,
                 ],
-                []
+                [
+                    'score' => $score,
+                ]
             );
-
-            foreach ($request->scores as $criteriaId => $score) {
-                ReviewScore::updateOrCreate(
-                    [
-                        'review_id' => $review->id,
-                        'criteria_id' => $criteriaId,
-                    ],
-                    [
-                        'score' => $score,
-                        'comment' => $request->comments[$criteriaId] ?? null,
-                    ]
-                );
-            }
-
-            DB::commit();
-
-            return redirect()->route('myReviews')->with('success', 'Review submitted successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return back()->withErrors('Failed to save the review.');
         }
+
+        DB::commit();
+
+        // Return JSON response instead of redirect
+        return redirect()->back()->with('success', 'Review submitted successfully.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return redirect()->back()->with('error', 'Failed to submit review. Please try again.');
     }
+}
+
 
     protected function getTeamMemberIdsRecursive($userId)
     {
@@ -212,52 +214,8 @@ class ReviewController extends Controller
     }
 
     // Store a new review
-    public function store(Request $request)
-    {
-        $user = Auth::user();
+ 
 
-        $validated = $request->validate([
-            'review_month' => 'required|integer|between:1,12',
-            'review_year' => 'required|integer|min:2000',
-            'scores' => 'required|array',
-            'scores.*' => 'integer|between:1,10',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $review = Review::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'reviewer_id' => $user->id,  // self review
-                    'review_month' => $validated['review_month'],
-                    'review_year' => $validated['review_year'],
-                ],
-                []
-            );
-
-            foreach ($validated['scores'] as $criteriaId => $score) {
-                ReviewScore::updateOrCreate(
-                    [
-                        'review_id' => $review->id,
-                        'criteria_id' => $criteriaId,
-                    ],
-                    [
-                        'score' => $score,
-                    ]
-                );
-            }
-
-            DB::commit();
-
-            return redirect()->route('reviews.my')->with('success', 'Review saved successfully.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return back()->withErrors('Failed to save review.');
-        }
-    }
 
     public function showReviewHistory(Request $request, $employeeId)
     {
@@ -373,22 +331,7 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function createEmployeeReview(Request $request, $employeeId, $month, $year)
-    {
-        $employee = User::select('id', 'name', 'designation as role')
-            ->findOrFail($employeeId);
 
-        $categories = PerformanceCategory::with('criteria')->get();
-
-        return Inertia::render('Reviews/CreateReview', [
-            'employeeId' => $employeeId,
-            'employeeName' => $employee->name,
-            'reviewMonth' => $month,
-            'reviewYear' => $year,
-            'categories' => $categories,
-        ]);
-
-    }
 
     public function storeEmployeeReview(Request $request, $employeeId, $month, $year)
     {
@@ -427,7 +370,7 @@ class ReviewController extends Controller
 
             DB::commit();
 
-            return redirect()->route('employee.reviewPage', [
+            return redirect()->route('reviews.team', [
                 'employeeId' => $employeeId,
                 'month' => $month,
                 'year' => $year,

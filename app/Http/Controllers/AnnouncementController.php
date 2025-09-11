@@ -4,57 +4,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Announcement\StoreAnnouncementAction;
+use App\Actions\Announcement\UpdateAnnouncementAction;
+
 use App\Events\AnnouncementCreated;
-use App\Models\Announcement; // 1. IMPORT THE EVENT CLASS
+use App\Http\Requests\Announcement\AnnouncementStoreRequest;
+use App\Http\Requests\Announcement\UpdateAnnouncementRequest;
+use App\Models\Announcement; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AnnouncementController extends Controller
 {
-    /**
-     * Store a newly created announcement and broadcast it.
-     */
-    public function store(Request $request)
+
+
+     public function store(AnnouncementStoreRequest $request, StoreAnnouncementAction $action)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-        ]);
-
-        // 2. CREATE the announcement and capture the new model in a variable.
-        $announcement = Auth::user()->announcements()->create([
-            'title' => $request->title,
-            'content' => $request->content,
-            'published_at' => now(), // Publish immediately
-        ]);
-
-        broadcast(new AnnouncementCreated($announcement))->toOthers();
+        $action->execute($request->validated());
 
         return redirect()->back()->with('success', 'Announcement created and published successfully.');
     }
 
-    /**
-     * Update an existing announcement.
-     */
-    public function update(Request $request, Announcement $announcement)
+    public function update(UpdateAnnouncementRequest $request, Announcement $announcement, UpdateAnnouncementAction $action)
     {
-        // Add authorization if needed, e.g., Gate::authorize('update', $announcement);
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-        ]);
-
-        $announcement->update($request->only('title', 'content'));
+        $action->execute($announcement, $request->validated());
 
         return redirect()->back()->with('success', 'Announcement updated successfully.');
     }
 
-    /**
-     * Delete an announcement.
-     */
+ 
     public function destroy(Announcement $announcement)
     {
-        // Add authorization if needed, e.g., Gate::authorize('delete', $announcement);
         $announcement->delete();
 
         return redirect()->back()->with('success', 'Announcement deleted successfully.');
