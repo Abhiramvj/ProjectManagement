@@ -177,7 +177,7 @@ const isLocalDev =
                 <h1
                     class="animate-fade-in mb-3 text-4xl font-bold text-amber-800"
                 >
-                    WorkSphere
+                    Organice
                 </h1>
                 <p
                     class="animate-fade-in mx-auto max-w-md text-lg text-stone-600 opacity-90"
@@ -315,7 +315,7 @@ const isLocalDev =
                 </form>
 
                 <p class="mt-8 text-center text-xs text-stone-500">
-                    © {{ new Date().getFullYear() }} WorkSphere. All rights
+                    © {{ new Date().getFullYear() }} Organice. All rights
                     reserved.
                 </p>
             </div>

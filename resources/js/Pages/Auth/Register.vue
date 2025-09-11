@@ -158,7 +158,7 @@ const submit = () => {
                 </div>
 
                 <h1 class="animate-fade-in mb-3 text-4xl font-bold">
-                    WorkSphere
+                    Organice
                 </h1>
                 <p
                     class="animate-fade-in mx-auto max-w-md text-lg opacity-90"
@@ -287,7 +287,7 @@ const submit = () => {
                 <p
                     class="mt-8 text-center text-xs text-gray-400 dark:text-gray-500"
                 >
-                    © {{ new Date().getFullYear() }} WorkSphere. All rights
+                    © {{ new Date().getFullYear() }} Organice. All rights
                     reserved.
                 </p>
             </div>

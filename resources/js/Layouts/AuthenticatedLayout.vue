@@ -144,7 +144,7 @@ const navigationItems = computed(() => {
             name: 'Leave Calendar',
             route: 'leaves.calendar',
             active: route().current('leaves.calendar'),
-            show: user.value.permissions.includes('manage leave applications'),
+            show: user.value.permissions.includes('view calendar'),
             icon: 'Leave Calendar',
         },
         {
@@ -536,7 +536,7 @@ onUnmounted(() => {
                                     />
                                 </Link>
                                 <span class="text-xl font-bold text-gray-800"
-                                    >WorkSphere</span
+                                    >Organice</span
                                 >
                             </div>
                             <nav
