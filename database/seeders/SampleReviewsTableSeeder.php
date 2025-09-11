@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\PerformanceCriterion;
 use App\Models\Review;
 use App\Models\ReviewScore;
-use App\Models\PerformanceCriterion;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class SampleReviewsTableSeeder extends Seeder

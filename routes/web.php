@@ -177,12 +177,9 @@ Route::middleware('auth')->group(function () {
         ->name('selfReview.store');
 });
 
-
-
 Route::middleware(['auth'])->group(function () {
 
     // Show logged-in user's self reviews page
-
 
     // Show team lead's team reviews page
     Route::get('/reviews/team', [ReviewController::class, 'teamReviews'])
@@ -192,19 +189,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store'])
         ->name('reviews.store');
 
-          Route::get('/employee/{employeeId}/{month}/{year}/review/create', [ReviewController::class, 'createEmployeeReview'])
+    Route::get('/employee/{employeeId}/{month}/{year}/review/create', [ReviewController::class, 'createEmployeeReview'])
         ->name('employee.review.create');
 
     Route::post('/employee/{employeeId}/{month}/{year}/review', [ReviewController::class, 'storeEmployeeReview'])
         ->name('employee.review.store');
 
-           Route::get('/employee/{employeeId}/reviews', [ReviewController::class, 'showReviewHistory'])
-    ->name('employee.reviewHistory');
-
+    Route::get('/employee/{employeeId}/reviews', [ReviewController::class, 'showReviewHistory'])
+        ->name('employee.reviewHistory');
 
 });
-
-
 
 // Developer login route
 Route::get('/dev-login/{role}', function ($role) {

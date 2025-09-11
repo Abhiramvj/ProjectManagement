@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\PerformanceCategory;
+use Illuminate\Database\Seeder;
 
 class PerformanceCategoriesTableSeeder extends Seeder
 {

@@ -11,7 +11,7 @@ class ReviewScore extends Model
     /** @use HasFactory<\Database\Factories\ReviewScoreFactory> */
     use HasFactory;
 
-     protected $fillable = ['review_id', 'criteria_id', 'score'];
+    protected $fillable = ['review_id', 'criteria_id', 'score'];
 
     public function review(): BelongsTo
     {

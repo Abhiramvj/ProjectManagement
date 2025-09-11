@@ -11,7 +11,7 @@ class PerformanceCategory extends Model
     /** @use HasFactory<\Database\Factories\PerformanceCategoryFactory> */
     use HasFactory;
 
-     protected $fillable = ['name', 'weight'];
+    protected $fillable = ['name', 'weight'];
 
     public function criteria(): HasMany
     {

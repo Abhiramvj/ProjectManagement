@@ -1,9 +1,10 @@
 <?php
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\PerformanceCategory;
 use App\Models\PerformanceCriterion;
+use Illuminate\Database\Seeder;
 
 class PerformanceCriteriaTableSeeder extends Seeder
 {
@@ -12,7 +13,7 @@ class PerformanceCriteriaTableSeeder extends Seeder
         $categories = PerformanceCategory::all();
 
         foreach ($categories as $category) {
-            switch($category->name) {
+            switch ($category->name) {
                 case 'Technical Skills':
                     $criteria = [
                         'Total Number of Bugs Reported',
