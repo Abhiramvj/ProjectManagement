@@ -97,6 +97,7 @@ const getNotificationIcon = (type) =>
         type
     ] || '📢';
 
+
 const userDesignation = computed(() => user.value?.designation || 'Employee');
 const showingSidebar = ref(false);
 
@@ -200,17 +201,29 @@ const navigationItems = computed(() => {
             name: 'Team Reviews',
             route: 'reviews.team',
             active: route().current('reviews.team'),
-            show: user.value.permissions.includes('manage team reviews'), // Adjust permission check
-            icon: 'Manage Teams', // or use a relevant icon
+            show: user.value.permissions.includes('manage team reviews'), 
+            icon: 'Manage Teams', 
         },
-       {
-  name: 'My Reviews',
-  route: 'myReviews',
-  icon: 'MyReviews',
-  active: route().current('myReviews'),
-  show: user.value.permissions.includes('view my reviews') && !user.value.roles.includes('admin'),
-}
-
+        {
+            name: 'My Reviews',
+            route: 'myReviews',
+            icon: 'MyReviews', 
+            active: route().current('myReviews'),
+            show: user.value.permissions.includes('view my reviews'),
+        },
+        {
+            name: 'Feedback & Ideas',
+            route: user.value.permissions.includes('manage roles')
+                    ? 'admin.feedback.index'
+                    : 'feedback.index',
+            active:
+                route().current('feedback.index') ||
+                route().current('admin.feedback.index') ||
+                route().current('idea.index') ||
+                route().current('admin.idea.index'),
+            show: true,
+            icon: 'Feedback & Ideas',
+        }
     ];
     return items.filter((item) => item.show);
 });
@@ -231,7 +244,8 @@ const icons = {
     'Company Overview': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16M6 21h12M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4" /></svg>`,
     'Company Hierarchy': `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>`,
     'TeamReviews': `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
-    'MyReviews': `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4a4 4 0 110 8 4 4 0 010-8z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20v-1a6 6 0 1112 0v1"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.5 17.5l.87 1.76a.5.5 0 00.91 0l.87-1.76 1.93-.28a.5.5 0 00.28-.85l-1.4-1.37.33-1.92a.5.5 0 00-.72-.53l-1.73.91-1.73-.91a.5.5 0 00-.72.53l.33 1.92-1.4 1.37a.5.5 0 00.28.85l1.93.28z"/></svg>`
+    'MyReviews': `<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4a4 4 0 110 8 4 4 0 010-8z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 20v-1a6 6 0 1112 0v1"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.5 17.5l.87 1.76a.5.5 0 00.91 0l.87-1.76 1.93-.28a.5.5 0 00.28-.85l-1.4-1.37.33-1.92a.5.5 0 00-.72-.53l-1.73.91-1.73-.91a.5.5 0 00-.72.53l.33 1.92-1.4 1.37a.5.5 0 00.28.85l1.93.28z"/></svg>`,
+    'Feedback & Ideas':`<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8a9 9 0 100-18 9 9 0 000 18z" /></svg>`,
 };
 
 onMounted(() => {

@@ -48,12 +48,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Employee Role
         $employeeRole = Role::firstOrCreate(['name' => 'employee']);
-        $employeeRole->syncPermissions(['log working hours', 'apply for leave', 'view my reviews','view calendar']);
+        $employeeRole->syncPermissions(['log working hours', 'apply for leave', 'view my reviews', 'view calendar']);
 
         // Team Lead Role
         $teamLeadRole = Role::firstOrCreate(['name' => 'team-lead']);
         $teamLeadRole->syncPermissions([
-            'assign tasks', 'view team progress', 'log working hours', 'apply for leave', 'view leaves', 'manage leave applications', 'manage team reviews', 'view my reviews','view calendar',
+            'assign tasks', 'view team progress', 'log working hours', 'apply for leave', 'view leaves', 'manage leave applications', 'manage team reviews', 'view my reviews', 'view calendar',
         ]);
 
         // Project Manager Role

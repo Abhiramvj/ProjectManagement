@@ -4,6 +4,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CalendarNoteController;
 use App\Http\Controllers\CompanyOverviewController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FeedbackIdeaController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCalendarController;
 use App\Http\Controllers\LeaveController;
@@ -210,3 +211,58 @@ Route::get('/dev-login/{role}', function ($role) {
 })->name('dev.login');
 
 require __DIR__.'/auth.php';
+
+Route::middleware(['auth'])->group(function () {
+    // Employee routes
+    Route::get('/feedback', [FeedbackIdeaController::class, 'indexEmployee'])
+        ->name('feedback.index')
+        ->defaults('type', 'feedback');
+
+    Route::post('/feedback', [FeedbackIdeaController::class, 'store'])
+        ->name('feedback.store')
+        ->defaults('type', 'feedback');
+
+    Route::get('/feedback/{id}/edit', [FeedbackIdeaController::class, 'edit'])
+        ->name('feedback.edit')
+        ->defaults('type', 'feedback');
+
+    Route::put('/feedback/{id}', [FeedbackIdeaController::class, 'update'])
+        ->name('feedback.update')
+        ->defaults('type', 'feedback');
+
+    Route::delete('/feedback/{id}', [FeedbackIdeaController::class, 'destroy'])
+        ->name('feedback.destroy')
+        ->defaults('type', 'feedback');
+
+    Route::get('/ideas', [FeedbackIdeaController::class, 'indexEmployee'])
+        ->name('idea.index')
+        ->defaults('type', 'idea');
+
+    Route::post('/ideas', [FeedbackIdeaController::class, 'store'])
+        ->name('idea.store')
+        ->defaults('type', 'idea');
+
+    Route::get('/idea/{id}/edit', [FeedbackIdeaController::class, 'edit'])
+        ->name('idea.edit')
+        ->defaults('type', 'idea');
+
+    Route::put('/idea/{id}', [FeedbackIdeaController::class, 'update'])
+        ->name('idea.update')
+        ->defaults('type', 'idea');
+
+    Route::delete('/idea/{id}', [FeedbackIdeaController::class, 'destroy'])
+        ->name('idea.destroy')
+        ->defaults('type', 'idea');
+
+    // Admin/HR routes
+    Route::get('/admin/feedback-submissions', [FeedbackIdeaController::class, 'indexAdmin'])
+        ->name('admin.feedback.index')
+        ->defaults('type', 'feedback');
+
+    Route::get('/admin/idea-submissions', [FeedbackIdeaController::class, 'indexAdmin'])
+        ->name('admin.idea.index')
+        ->defaults('type', 'idea');
+    Route::patch('/admin/feedback/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.feedback.toggle');
+    Route::patch('/admin/idea/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.idea.toggle');
+
+});
