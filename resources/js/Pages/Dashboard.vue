@@ -1074,48 +1074,43 @@ const chartOptions = {
                                 v-if="attendance.absent_list.length > 0"
                                 class="space-y-3"
                             >
-                                <div
-                                    v-for="absentee in attendance.absent_list"
-                                    :key="absentee.id"
-                                    class="flex items-center justify-between"
-                                >
-                                    <div class="flex items-center space-x-3">
-                                        <img
-                                            class="h-9 w-9 rounded-full"
-                                            :src="
-                                                absentee.avatar_url ||
-                                                `https://ui-avatars.com/api/?name=${absentee.name.replace(' ', '+')}&background=random`
-                                            "
-                                            :alt="absentee.name"
-                                        />
-                                        <div>
-                                            <p
-                                                class="text-sm font-medium text-slate-800"
-                                            >
-                                                {{ absentee.name }}
-                                            </p>
-                                            <p class="text-xs text-slate-500">
-                                                {{ absentee.designation }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span
-    class="rounded-full px-2 py-1 text-xs font-medium"
-    :class="{
-        'bg-red-100 text-red-600': absentee.day_type === 'full',
-        'bg-orange-100 text-orange-700': absentee.day_type === 'half',
-    }"
+                               <div
+  v-for="absentee in attendance.absent_list"
+  :key="absentee.id"
+  class="flex items-center justify-between"
 >
-    {{
-        absentee.day_type === 'full' 
-            ? 'Full Day' 
-            : absentee.half_session === 'morning' 
-                ? 'Morning' 
-                : 'Afternoon'
-    }}
+  <div class="flex items-center space-x-3">
+    <img
+      class="h-9 w-9 rounded-full"
+      :src="absentee.avatar_url || `https://ui-avatars.com/api/?name=${absentee.name.replace(' ', '+')}&background=random`"
+      :alt="absentee.name"
+    />
+    <div>
+      <p class="text-sm font-medium text-slate-800">{{ absentee.name }}</p>
+      <p class="text-xs text-slate-500">{{ absentee.designation }}</p>
+    </div>
+  </div>
+
+<span
+  class="rounded-full px-2 py-1 text-xs font-medium"
+  :class="{
+    'bg-red-100 text-red-600': absentee.leave_days == 1,
+    'bg-orange-100 text-orange-700': absentee.leave_days < 1
+  }"
+>
+  {{
+    absentee.leave_days == 1
+      ? 'Full Day'
+      : absentee.start_half_session === 'morning'
+        ? 'Morning'
+        : absentee.start_half_session === 'afternoon'
+          ? 'Afternoon'
+          : 'Half Day'
+  }}
 </span>
 
-                                </div>
+</div>
+
                             </div>
                             <div
                                 v-else

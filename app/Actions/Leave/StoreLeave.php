@@ -138,6 +138,7 @@ class StoreLeave
             'reason' => $data['reason'],
             'leave_type' => $data['leave_type'],
             'leave_days' => $leaveDays,
+            'day_type' => $data['day_type'],
             'salary_deduction_days' => 0,
             'status' => 'pending',
             'supporting_document_path' => $supportingDocumentPath,
