@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-
 class ReviewController extends Controller
 {
     // Show the logged-in user's self reviews
@@ -64,54 +63,53 @@ class ReviewController extends Controller
     }
 
     // Store the new self review submitted by logged-in user
-  public function storeSelfReview(Request $request, $month, $year)
-{
-    \Log::info('RedirectTo value:', ['redirectTo' => $request->input('redirectTo')]);
+    public function storeSelfReview(Request $request, $month, $year)
+    {
+        \Log::info('RedirectTo value:', ['redirectTo' => $request->input('redirectTo')]);
 
-    $request->validate([
-        'scores' => 'required|array',
-        'scores.*' => 'integer|min:1|max:10',
-    ]);
+        $request->validate([
+            'scores' => 'required|array',
+            'scores.*' => 'integer|min:1|max:10',
+        ]);
 
-    $user = Auth::user();
+        $user = Auth::user();
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
-        $review = Review::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'reviewer_id' => $user->id,
-                'review_month' => $month,
-                'review_year' => $year,
-            ],
-            []
-        );
-
-        foreach ($request->scores as $criteriaId => $score) {
-            ReviewScore::updateOrCreate(
+        try {
+            $review = Review::updateOrCreate(
                 [
-                    'review_id' => $review->id,
-                    'criteria_id' => $criteriaId,
+                    'user_id' => $user->id,
+                    'reviewer_id' => $user->id,
+                    'review_month' => $month,
+                    'review_year' => $year,
                 ],
-                [
-                    'score' => $score,
-                ]
+                []
             );
+
+            foreach ($request->scores as $criteriaId => $score) {
+                ReviewScore::updateOrCreate(
+                    [
+                        'review_id' => $review->id,
+                        'criteria_id' => $criteriaId,
+                    ],
+                    [
+                        'score' => $score,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            // Return JSON response instead of redirect
+            return redirect()->back()->with('success', 'Review submitted successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Failed to submit review. Please try again.');
         }
-
-        DB::commit();
-
-        // Return JSON response instead of redirect
-        return redirect()->back()->with('success', 'Review submitted successfully.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return redirect()->back()->with('error', 'Failed to submit review. Please try again.');
     }
-}
-
 
     protected function getTeamMemberIdsRecursive($userId)
     {
@@ -214,8 +212,6 @@ class ReviewController extends Controller
     }
 
     // Store a new review
- 
-
 
     public function showReviewHistory(Request $request, $employeeId)
     {
@@ -330,8 +326,6 @@ class ReviewController extends Controller
             'categories' => $categories,
         ]);
     }
-
-
 
     public function storeEmployeeReview(Request $request, $employeeId, $month, $year)
     {

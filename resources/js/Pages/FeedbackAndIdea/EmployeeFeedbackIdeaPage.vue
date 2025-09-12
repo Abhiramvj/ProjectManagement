@@ -261,7 +261,7 @@
             @click="closeSubmissionModal"
           >
             <div 
-              class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+              class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh]  transform transition-all duration-300"
               @click.stop
             >
               <!-- Modal Header -->

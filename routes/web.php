@@ -190,8 +190,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store'])
         ->name('reviews.store');
 
-
-
     Route::post('/employee/{employeeId}/{month}/{year}/review', [ReviewController::class, 'storeEmployeeReview'])
         ->name('employee.review.store');
 

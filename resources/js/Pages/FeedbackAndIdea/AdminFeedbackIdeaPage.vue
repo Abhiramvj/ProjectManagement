@@ -204,7 +204,7 @@
             @click="closeModal"
           >
             <div 
-              class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+              class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh]  transform transition-all duration-300"
               @click.stop
             >
               <!-- Modal Header -->
@@ -292,6 +292,7 @@ import { Inertia } from '@inertiajs/inertia';
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+
 
 const props = defineProps({
   items: Array,
@@ -417,16 +418,17 @@ function toggleStatus() {
     {},
     {
       onSuccess: () => {
-        // Find the item in the original props.items array and update its status
+        // Update local state
         const itemIndex = props.items.findIndex(item => item.id === modalData.value.id);
         if (itemIndex !== -1) {
           props.items[itemIndex].is_active = !props.items[itemIndex].is_active;
         }
-        modalData.value.is_active = !modalData.value.is_active; // Update modal's internal state
+        modalData.value.is_active = !modalData.value.is_active;
       }
     }
   );
 }
+
 
 </script>
 

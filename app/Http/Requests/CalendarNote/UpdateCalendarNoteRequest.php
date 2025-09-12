@@ -22,7 +22,7 @@ class UpdateCalendarNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-             'note' => 'required|string|max:1000',
+            'note' => 'required|string|max:1000',
         ];
     }
 }

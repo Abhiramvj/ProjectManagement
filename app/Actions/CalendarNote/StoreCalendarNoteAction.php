@@ -11,8 +11,8 @@ class StoreCalendarNoteAction
     {
         return CalendarNote::create([
             'user_id' => Auth::id(),
-            'date'    => $data['date'],
-            'note'    => $data['note'],
+            'date' => $data['date'],
+            'note' => $data['note'],
         ]);
     }
 }
