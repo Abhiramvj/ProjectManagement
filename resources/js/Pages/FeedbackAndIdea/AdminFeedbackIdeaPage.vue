@@ -235,9 +235,12 @@
               <div class="px-8 py-6">
                 <div class="mb-4">
                   <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Content</label>
-                  <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p class="text-gray-800 leading-relaxed whitespace-pre-wrap">{{ modalData.description }}</p>
-                  </div>
+                  <div class="px-8 py-6 max-h-[60vh] overflow-auto">
+  <p class="text-gray-800 leading-relaxed break-words whitespace-pre-wrap">
+    {{ modalData.description }}
+  </p>
+</div>
+
                 </div>
                 
                 <div class="flex items-center gap-4 text-sm text-gray-500">
@@ -255,17 +258,30 @@
                 </div>
               </div>
 
-              <!-- Modal Footer -->
-              <div class="border-t border-gray-100 px-8 py-4 bg-gray-50 rounded-b-2xl">
-                <div class="flex justify-end">
-                  <button 
-                    @click="closeModal" 
-                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
+<!-- Modal Footer -->
+<div class="border-t border-gray-100 px-8 py-4 bg-gray-50 rounded-b-2xl">
+  <div class="flex justify-between items-center">
+
+    <!-- Toggle Status Button -->
+    <button 
+      @click="toggleStatus"
+      class="px-6 py-2 rounded-lg font-medium shadow-sm text-white"
+      :class="modalData.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+    >
+      {{ modalData.is_active ? 'Mark as Inactive' : 'Mark as Active' }}
+    </button>
+
+    <!-- Close Button -->
+    <button 
+      @click="closeModal" 
+      class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+    >
+      Close
+    </button>
+
+  </div>
+</div>
+
             </div>
           </div>
         </Transition>
@@ -275,6 +291,7 @@
 </template>
 
 <script setup>
+import { Inertia } from '@inertiajs/inertia';
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -388,6 +405,20 @@ function formattedDate(dateString) {
 function truncate(text, length = 100) {
   return text.length > length ? text.substring(0, length) + '...' : text;
 }
+
+
+function toggleStatus() {
+  Inertia.patch(
+    route(currentType === 'feedback' ? 'admin.feedback.toggle' : 'admin.idea.toggle', modalData.value.id),
+    {},
+    {
+      onSuccess: () => {
+        modalData.value.is_active = !modalData.value.is_active;
+      }
+    }
+  );
+}
+
 </script>
 
 <style scoped>

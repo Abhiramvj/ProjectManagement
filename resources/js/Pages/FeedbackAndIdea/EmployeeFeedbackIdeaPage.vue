@@ -376,12 +376,37 @@
                 </div>
               </div>
 
-              <!-- Modal Body -->
-              <div class="p-8">
-                <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                  <p class="text-gray-800 leading-relaxed whitespace-pre-wrap">{{ viewModalData.description }}</p>
-                </div>
-              </div>
+<!-- Modal Body -->
+<div class="p-8 space-y-6">
+    <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 max-h-[60vh] overflow-auto">
+  <p class="text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
+    {{ viewModalData.description }}
+  </p>
+</div>
+
+
+    <div v-if="viewModalData.is_active" class="flex gap-4">
+  <button 
+    @click="openEditModal(viewModalData)"
+    class="bg-yellow-500 text-white px-4 py-2 rounded"
+  >
+    Edit
+  </button>
+
+  <form :action="route(currentType === 'feedback' ? 'feedback.destroy' : 'idea.destroy', viewModalData.id)" method="POST" @submit.prevent="deleteItem(viewModalData.id)">
+    <input type="hidden" name="_method" value="DELETE" />
+    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">
+      Delete
+    </button>
+  </form>
+</div>
+
+
+    <div v-else class="text-gray-400 text-sm italic">
+        This submission is inactive
+    </div>
+</div>
+
 
               <!-- Modal Footer -->
               <div class="border-t border-gray-100 px-8 py-6 bg-gray-50 rounded-b-2xl">
@@ -393,10 +418,55 @@
                     Close
                   </button>
                 </div>
-              </div>
+              </div>        
             </div>
           </div>
         </Transition>
+
+        <!-- Edit Modal -->
+        <Transition name="modal">
+  <div 
+    v-if="showEditModal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    @click="closeEditModal"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+         @click.stop
+    >
+      <div class="sticky top-0 bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6 rounded-t-2xl">
+        <h3 class="text-xl font-bold text-white">Edit {{ currentTypeCapitalized }}</h3>
+        <button @click="closeEditModal" class="p-2 hover:bg-white/20 rounded-full transition-colors duration-200">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form @submit.prevent="submitEdit" class="p-8">
+        <label class="block text-sm font-medium text-gray-700 mb-3">
+          Edit your {{ currentType }} description
+        </label>
+        <textarea 
+          v-model="editForm.description"
+          class="w-full p-4 border rounded-xl focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white"
+          rows="6"
+          required
+        ></textarea>
+
+        <div class="flex gap-3 mt-6">
+          <button type="button" @click="closeEditModal"
+            class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-xl">Cancel</button>
+          <button type="submit"
+            class="flex-1 bg-indigo-500 text-white px-6 py-3 rounded-xl"
+            :disabled="editForm.processing || !editForm.description.trim()">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Transition>
+
       </div>
     </div>
   </AuthenticatedLayout>
@@ -517,6 +587,7 @@ function submit() {
   });
 }
 
+
 function applyDateRangeFilter() {
   // Filtering now happens automatically via computed property
   // Just clear the quick filter when custom dates are used
@@ -540,6 +611,56 @@ function resetFilters() {
 function truncate(text, length = 100) {
   return text.length > length ? text.substring(0, length) + '...' : text;
 }
+
+function deleteItem(id) {
+  if (!confirm('Are you sure you want to delete this submission?')) return;
+
+  const routeName = currentType === 'feedback' ? 'feedback.destroy' : 'idea.destroy';
+
+ form.delete(route(routeName, id), {
+  onSuccess: () => {
+    const index = props.items.findIndex(item => item.id === id);
+    if (index !== -1) props.items.splice(index, 1);
+    closeViewModal();
+  },
+  onError: () => {
+    alert('Failed to delete. Please try again.');
+  }
+});
+
+}
+
+const showEditModal = ref(false);
+const editForm = useForm({
+  description: '',
+});
+function openEditModal(item) {
+  editForm.description = item.description;
+  editForm.id = item.id;
+  showEditModal.value = true;
+}
+function closeEditModal() {
+  showEditModal.value = false;
+  editForm.reset();
+}
+function submitEdit() {
+  editForm.put(route(currentType === 'feedback' ? 'feedback.update' : 'idea.update', editForm.id), {
+  onSuccess: () => {
+    const index = props.items.findIndex(item => item.id === editForm.id);
+    if (index !== -1) props.items[index].description = editForm.description;
+
+    if (showViewModal.value && viewModalData.value.id === editForm.id) {
+      viewModalData.value.description = editForm.description;
+    }
+
+    closeEditModal();
+  }
+});
+
+}
+
+
+
 </script>
 
 <style scoped>

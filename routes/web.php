@@ -223,12 +223,36 @@ Route::middleware(['auth'])->group(function () {
         ->name('feedback.store')
         ->defaults('type', 'feedback');
 
+    Route::get('/feedback/{id}/edit', [FeedbackIdeaController::class, 'edit'])
+        ->name('feedback.edit')
+        ->defaults('type', 'feedback');
+
+    Route::put('/feedback/{id}', [FeedbackIdeaController::class, 'update'])
+        ->name('feedback.update')
+        ->defaults('type', 'feedback');
+
+    Route::delete('/feedback/{id}', [FeedbackIdeaController::class, 'destroy'])
+        ->name('feedback.destroy')
+        ->defaults('type', 'feedback');
+
     Route::get('/ideas', [FeedbackIdeaController::class, 'indexEmployee'])
         ->name('idea.index')
         ->defaults('type', 'idea');
 
     Route::post('/ideas', [FeedbackIdeaController::class, 'store'])
         ->name('idea.store')
+        ->defaults('type', 'idea');
+
+    Route::get('/idea/{id}/edit', [FeedbackIdeaController::class, 'edit'])
+        ->name('idea.edit')
+        ->defaults('type', 'idea');
+
+    Route::put('/idea/{id}', [FeedbackIdeaController::class, 'update'])
+        ->name('idea.update')
+        ->defaults('type', 'idea');
+
+    Route::delete('/idea/{id}', [FeedbackIdeaController::class, 'destroy'])
+        ->name('idea.destroy')
         ->defaults('type', 'idea');
 
     // Admin/HR routes
@@ -239,5 +263,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/idea-submissions', [FeedbackIdeaController::class, 'indexAdmin'])
         ->name('admin.idea.index')
         ->defaults('type', 'idea');
+    Route::patch('/admin/feedback/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.feedback.toggle');
+Route::patch('/admin/idea/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.idea.toggle');
 
 });
+

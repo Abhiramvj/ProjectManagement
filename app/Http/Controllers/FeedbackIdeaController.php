@@ -75,4 +75,70 @@ class FeedbackIdeaController extends Controller
 
         return redirect()->back()->with('success', ucfirst($type).' submitted successfully.');
     }
+    public function markInactive($id)
+{
+    $item = FeedbackIdea::findOrFail($id);
+
+    // Only admin or HR can mark inactive
+    if (!auth()->user()->hasRole('admin') && !auth()->user()->hasRole('hr')) {
+        abort(403);
+    }
+
+    $item->update(['is_active' => false]);
+
+    return redirect()->back()->with('success', 'Submission marked as inactive.');
+}
+
+    public function edit($id)
+{
+    $item = FeedbackIdea::findOrFail($id);
+
+    // Optional: Add authorization check
+    if (auth()->id() !== $item->user_id) {
+        abort(403);
+    }
+
+    return inertia('FeedbackAndIdea/EditFeedbackIdeaPage', [
+        'item' => $item
+    ]);
+}
+
+public function update(Request $request, $id)
+{
+    $request->validate([
+        'description' => 'required|string|max:5000',
+    ]);
+
+    $item = FeedbackIdea::findOrFail($id);
+    $item->description = $request->description;
+    $item->save();
+
+    return back()->with('success', 'Updated successfully.');
+}
+
+public function destroy($id)
+{
+    $item = FeedbackIdea::findOrFail($id);
+
+    if (auth()->id() !== $item->user_id) {
+        abort(403);
+    }
+
+    $item->delete();
+
+    $route = $item->type === 'feedback' ? 'feedback.index' : 'idea.index';
+
+    return redirect()->route($route)->with('success', 'Submission deleted.');
+}
+
+public function toggle($id)
+{
+    $item = FeedbackIdea::findOrFail($id);
+    $item->is_active = !$item->is_active;
+    $item->save();
+
+    return back();
+}
+
+
 }
