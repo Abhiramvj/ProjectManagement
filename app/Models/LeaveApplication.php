@@ -9,35 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * == Properties for Database Columns ==
- *
- * @property int $id
- * @property int $user_id
- * @property string $leave_type
- * @property string $day_type
- * @property Carbon $start_date
- * @property ?Carbon $end_date // <-- THE ONLY CHANGE IS THIS QUESTION MARK
- * @property float $leave_days
- * @property string $reason
- * @property string $status
- * @property ?string $start_half_session
- * @property ?string $end_half_session
- * @property ?int $approved_by
- * @property ?Carbon $approved_at
- * @property ?string $rejection_reason
- * @property ?string $supporting_document_path
- * @property ?float $comp_off_balance
- * @property ?Carbon $created_at
- * @property ?Carbon $updated_at
- *
- * == Properties for Eloquent Relationships ==
- * @property-read User $user
- * @property-read ?User $approvedBy
- *
- * == Properties from Accessors ==
- * @property-read ?string $supporting_document_url
- */
+
 class LeaveApplication extends Model
 {
     // ... all the rest of your model code remains the same

@@ -2,203 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Announcement;
-use App\Models\CalendarNote;
-use App\Models\Holiday;
-use App\Models\LeaveApplication;
-use App\Models\Project;
-use App\Models\Task;
-use App\Models\Team;
+use App\Actions\Dashboard\GetAnnouncementAction;
+use App\Actions\Dashboard\GetAttendanceDataAction;
+use App\Actions\Dashboard\GetCalendarEventsAction;
+use App\Actions\Dashboard\GetGreetingAction;
+use App\Actions\Dashboard\GetPerformanceStatsAction;
+use App\Actions\Dashboard\GetProjectsAndTasksAction;
 use App\Models\User;
-use App\Services\LeaveStatsService;
-use App\Services\TaskStatsService;
-use App\Services\TimeStatsService;
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    protected $taskStatsService;
-
-    protected $timeStatsService;
-
-    protected $leaveStatsService;
-
-    public function __construct(
-        TaskStatsService $taskStatsService,
-        TimeStatsService $timeStatsService,
-        LeaveStatsService $leaveStatsService
-    ) {
-        $this->taskStatsService = $taskStatsService;
-        $this->timeStatsService = $timeStatsService;
-        $this->leaveStatsService = $leaveStatsService;
-    }
-
     /**
      * Display the user's dashboard.
      */
-    public function index()
+    public function index(GetAttendanceDataAction $getAttendanceDataAction, GetGreetingAction $getGreetingAction,
+        GetCalendarEventsAction $getCalendarEventsAction, GetProjectsAndTasksAction $getProjectsAndTasksAction,
+        GetAnnouncementAction $getAnnouncementAction, GetPerformanceStatsAction $getPerformanceStatsAction)
     {
         $user = Auth::user()->load('parent');
 
-        // --- ATTENDANCE & GREETING DATA ---
-        $totalEmployees = User::count();
-        $today = now()->toDateString(); // define before closures
-
-        $absentTodayUsers = User::whereHas('leaveApplications', function ($query) use ($today) {
-            $query->where('status', 'approved')
-                ->where('start_date', '<=', $today)
-                ->where('end_date', '>=', $today);
-        })->get();
-
-        $attendanceData = [
-            'total' => $totalEmployees,
-            'present' => $totalEmployees - $absentTodayUsers->count(),
-            'absent' => $absentTodayUsers->count(),
-            'absent_list' => $absentTodayUsers->map(function ($user) use ($today) {
-                $leave = $user->leaveApplications()
-                    ->where('status', 'approved')
-                    ->where('start_date', '<=', $today)
-                    ->where('end_date', '>=', $today)
-                    ->first();
-
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'designation' => $user->designation,
-                    'avatar_url' => $user->avatar_url,
-                    'day_type' => $leave?->day_type ?? 'full',          // full or half
-                    'half_session' => $leave?->half_session ?? null,    // morning/afternoon if half
-                ];
-            }),
-
-        ];
-
-        $hour = now()->hour;
-        $greetingMessage = 'Morning';
-        $greetingIcon = '🌤️';
-        if ($hour >= 12 && $hour < 17) {
-            $greetingMessage = 'Afternoon';
-            $greetingIcon = '☀️';
-        } elseif ($hour >= 17) {
-            $greetingMessage = 'Evening';
-            $greetingIcon = '🌙';
-        }
-
-        // --- CALENDAR DATA ---
-        $leaveEvents = LeaveApplication::where('user_id', $user->id)
-            ->where('status', 'approved')
-            ->get()
-            ->map(function ($leave) {
-                return [
-                    'id' => 'leave_'.$leave->id,
-                    'title' => ucfirst($leave->leave_type).' Leave',
-                    'start' => $leave->start_date,
-                    'end' => Carbon::parse($leave->end_date)->addDay()->toDateString(),
-                    'allDay' => true,
-                    'backgroundColor' => $this->getLeaveColor($leave->leave_type),
-                    'borderColor' => $this->getLeaveColor($leave->leave_type),
-                    'textColor' => '#ffffff',
-                    'extendedProps' => [
-                        'type' => 'leave',
-                        'leave_type' => $leave->leave_type,
-                        'status' => $leave->status,
-                        'day_type' => $leave->day_type ?? 'full_day',
-                    ],
-                ];
-            });
-
-        $noteEvents = CalendarNote::where('user_id', $user->id)
-            ->get()
-            ->map(function ($note) {
-                return [
-                    'id' => 'note_'.$note->id,
-                    'title' => $note->note,
-                    'start' => $note->date,
-                    'allDay' => true,
-                    'backgroundColor' => '#FBBF24',
-                    'borderColor' => '#F59E0B',
-                    'textColor' => '#000000',
-                    'extendedProps' => [
-                        'type' => 'note',
-                        'note_id' => $note->id,
-                    ],
-                ];
-            });
-
-        $holidayEvents = Holiday::all()->map(function ($holiday) {
-            return [
-                'id' => 'holiday_'.$holiday->id,
-                'title' => $holiday->name,
-                'start' => $holiday->date->toDateString(),
-                'allDay' => true,
-                'backgroundColor' => '#10B981',
-                'borderColor' => '#059669',
-                'textColor' => '#ffffff',
-                'extendedProps' => [
-                    'type' => 'holiday',
-                ],
-            ];
-        });
-
-        $allCalendarEvents = (new Collection($leaveEvents))
-            ->merge($noteEvents)
-            ->merge($holidayEvents);
-
-        $teamIdsLedByUser = Team::where('team_lead_id', $user->id)->pluck('id');
-
-        // --- PROJECTS AND TASKS ---
-        $projects = collect();
-
-        if ($user->hasRole('admin')) {
-            $projects = Project::where('status', '!=', 'completed')->latest()->get();
-        } elseif ($user->hasRole('project-manager')) {
-            $projects = Project::where('status', '!=', 'completed')
-                ->where(function ($query) use ($user) {
-                    $query->where('project_manager_id', $user->id)
-                        ->orWhereHas('members', fn ($q) => $q->where('user_id', $user->id));
-                })
-                ->latest()
-                ->get();
-        } elseif ($user->hasRole('team-lead')) {
-            $projects = Project::where('status', '!=', 'completed')
-                ->where(function ($query) use ($user, $teamIdsLedByUser) {
-                    $query->whereHas('members', fn ($q) => $q->where('user_id', $user->id))
-                        ->orWhereIn('team_id', $teamIdsLedByUser);
-                })
-                ->latest()
-                ->get();
-        }
-
-        $myTasks = Task::where('assigned_to_id', $user->id)
-            ->with('project:id,name')
-            ->where('status', '!=', 'completed')
-            ->orderBy('due_date', 'asc')
-            ->get();
-
-        // --- ANNOUNCEMENTS ---
-        $announcements = Announcement::with('user:id,name,avatar_url')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function ($announcement) {
-                return [
-                    'id' => $announcement->id,
-                    'title' => $announcement->title,
-                    'content' => $announcement->content,
-                    'author' => $announcement->user,
-                    'created_at_formatted' => $announcement->created_at->format('M d, Y'),
-                ];
-            });
-
-        // --- PERFORMANCE STATS ---
-        $taskStats = $this->taskStatsService->getStatsForUser($user->id);
-        $timeStats = $this->timeStatsService->getStatsForUser($user->id);
-        $leaveStats = $this->leaveStatsService->getStatsForUser($user->id);
-
-        // --- RENDER VIEW ---
+        $attendanceData = $getAttendanceDataAction->execute();
+        $greeting = $getGreetingAction->execute();
+        $calendarEvents = $getCalendarEventsAction->execute($user->id);
+        $projectsAndTasks = $getProjectsAndTasksAction->execute($user);
+        $announcements = $getAnnouncementAction->execute();
+        $performanceStats = $getPerformanceStatsAction->execute($user->id);
 
         return Inertia::render('Dashboard', [
             'user' => [
@@ -214,38 +44,18 @@ class DashboardController extends Controller
                 ] : null,
             ],
             'attendance' => $attendanceData,
-            'calendarEvents' => $allCalendarEvents,
-            'greeting' => [
-                'message' => $greetingMessage,
-                'icon' => $greetingIcon,
-                'date' => now()->format('jS F Y'),
-            ],
-            'projects' => $projects,
-            'myTasks' => $myTasks,
-            'announcements' => $announcements,
-            'taskStats' => $taskStats,
-            'timeStats' => $timeStats,
-            'leaveStats' => $leaveStats,
+            'calendarEvents' => $calendarEvents,
+            'greeting' => $greeting,
+            'projects' => $projectsAndTasks['projects'],
+            'myTasks' => $projectsAndTasks['myTasks'],
+            'taskStats' => $performanceStats['taskStats'],
+            'timeStats' => $performanceStats['timeStats'],
+            'leaveStats' => $performanceStats['leaveStats'],
             'authUser' => Auth::user()->load('roles'),
-
+             'announcements' => $announcements,
         ]);
-
     }
-
     /**
      * Get color for different leave types.
      */
-    private function getLeaveColor($leaveType)
-    {
-        $colors = [
-            'annual' => '#3B82F6',    // Blue
-            'sick' => '#EF4444',      // Red
-            'personal' => '#F59E0B',  // Amber
-            'emergency' => '#DC2626', // Dark Red
-            'maternity' => '#EC4899', // Pink
-            'paternity' => '#8B5CF6', // Purple
-        ];
-
-        return $colors[$leaveType] ?? '#6B7280'; // Default gray
-    }
 }

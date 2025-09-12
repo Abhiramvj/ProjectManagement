@@ -3,9 +3,9 @@
 namespace App\Actions\Company;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Collection;
 
 class GetHierarchyDataAction
 {
@@ -32,8 +32,12 @@ class GetHierarchyDataAction
 
         return $users->map(function ($user) use ($managerIds, $loggedInUser) {
             $tags = [];
-            if (in_array($user->id, $managerIds)) $tags[] = 'manager';
-            if ($user->id === $loggedInUser->id) $tags[] = 'is-logged-in-user';
+            if (in_array($user->id, $managerIds)) {
+                $tags[] = 'manager';
+            }
+            if ($user->id === $loggedInUser->id) {
+                $tags[] = 'is-logged-in-user';
+            }
 
             $teamName = $user->teams->first()->name ?? $user->designation ?? 'Unassigned';
             $color = $this->generateColorForText($teamName);
@@ -84,7 +88,7 @@ class GetHierarchyDataAction
             $color = $this->generateColorForText($teamName);
             $imageUrl = $user->avatar_url ?? ($user->image ? Storage::url($user->image) : 'https://ui-avatars.com/api/?name='.urlencode($user->name));
 
-            if (is_null($user->parent_id) || !in_array($user->parent_id, $allowedUserIds)) {
+            if (is_null($user->parent_id) || ! in_array($user->parent_id, $allowedUserIds)) {
                 $nodes[] = [
                     'id' => $user->id,
                     'pid' => null,
@@ -96,13 +100,14 @@ class GetHierarchyDataAction
                     'canViewPerformance' => $canViewPerformance,
                     'performance_summary' => $performanceSummary,
                 ];
+
                 continue;
             }
 
             $directParentId = $user->parent_id;
             $designation = $user->designation ?? 'Unassigned';
 
-            if (!isset($createdDesignationGroups[$directParentId][$designation])) {
+            if (! isset($createdDesignationGroups[$directParentId][$designation])) {
                 $groupNodeId = 'group_'.$directParentId.'_'.str_replace(' ', '_', $designation);
                 $nodes[] = [
                     'id' => $groupNodeId,
@@ -133,14 +138,13 @@ class GetHierarchyDataAction
         return $nodes;
     }
 
-   private function generateColorForText(string $text): string
-{
-    $hash = crc32($text);
-    $hue = $hash % 360;
-    $saturation = ($hash % 20) + 65;
-    $lightness = ($hash % 10) + 40;
+    private function generateColorForText(string $text): string
+    {
+        $hash = crc32($text);
+        $hue = $hash % 360;
+        $saturation = ($hash % 20) + 65;
+        $lightness = ($hash % 10) + 40;
 
-    return "hsl({$hue}, {$saturation}%, {$lightness}%)";
-}
-
+        return "hsl({$hue}, {$saturation}%, {$lightness}%)";
+    }
 }

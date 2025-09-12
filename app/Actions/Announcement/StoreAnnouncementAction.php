@@ -10,17 +10,14 @@ class StoreAnnouncementAction
 {
     /**
      * Execute the creation of a new announcement.
-     *
-     * @param array $data
-     * @return Announcement
      */
     public function execute(array $data): Announcement
     {
         $user = Auth::user();
 
         $announcement = $user->announcements()->create([
-            'title'        => $data['title'],
-            'content'      => $data['content'],
+            'title' => $data['title'],
+            'content' => $data['content'],
             'published_at' => now(),
         ]);
 

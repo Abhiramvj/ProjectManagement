@@ -7,7 +7,7 @@ class GetCompanyInfoAction
     public function execute(): array
     {
         return [
-   
+
             'name' => 'IOCOD',
             'tagline' => 'Innovating Together: Building Tomorrow with Integrity, Transparency, and Excellence',
             'description' => 'At IOCOD, we specialize in creating cutting-edge digital experiences and managing world-class events. Our expertise spans across digital media, event management, technology solutions, and creative services.',

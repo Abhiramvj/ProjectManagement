@@ -9,7 +9,7 @@ class UpdateAnnouncementAction
     public function execute(Announcement $announcement, array $data): Announcement
     {
         $announcement->update([
-            'title'   => $data['title'],
+            'title' => $data['title'],
             'content' => $data['content'],
         ]);
 

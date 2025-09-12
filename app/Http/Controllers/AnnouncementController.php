@@ -6,19 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\Announcement\StoreAnnouncementAction;
 use App\Actions\Announcement\UpdateAnnouncementAction;
-
-use App\Events\AnnouncementCreated;
 use App\Http\Requests\Announcement\AnnouncementStoreRequest;
 use App\Http\Requests\Announcement\UpdateAnnouncementRequest;
-use App\Models\Announcement; 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Announcement;
 
 class AnnouncementController extends Controller
 {
-
-
-     public function store(AnnouncementStoreRequest $request, StoreAnnouncementAction $action)
+    public function store(AnnouncementStoreRequest $request, StoreAnnouncementAction $action)
     {
         $action->execute($request->validated());
 
@@ -32,7 +26,6 @@ class AnnouncementController extends Controller
         return redirect()->back()->with('success', 'Announcement updated successfully.');
     }
 
- 
     public function destroy(Announcement $announcement)
     {
         $announcement->delete();
