@@ -62,7 +62,6 @@
                   <label class="text-xs font-medium text-gray-600 uppercase tracking-wide">Employee</label>
                   <select 
                     v-model="filters.employee_id" 
-                    @change="applyFilters" 
                     class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   >
                     <option value="">All Employees</option>
@@ -75,7 +74,6 @@
                   <input 
                     type="date" 
                     v-model="filters.start_date" 
-                    @change="applyFilters" 
                     class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -85,7 +83,6 @@
                   <input 
                     type="date" 
                     v-model="filters.end_date" 
-                    @change="applyFilters" 
                     class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -105,19 +102,34 @@
               <div class="flex flex-wrap gap-2">
                 <button 
                   @click="quickFilter('today')" 
-                  class="bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 px-4 py-2 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  :class="[
+                    'px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5',
+                    filters.date_filter === 'today' 
+                      ? 'bg-blue-500 text-white border-blue-500' 
+                      : 'bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 border-gray-200 hover:border-blue-300'
+                  ]"
                 >
                   Today
                 </button>
                 <button 
                   @click="quickFilter('week')" 
-                  class="bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 px-4 py-2 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  :class="[
+                    'px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5',
+                    filters.date_filter === 'week' 
+                      ? 'bg-blue-500 text-white border-blue-500' 
+                      : 'bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 border-gray-200 hover:border-blue-300'
+                  ]"
                 >
                   This Week
                 </button>
                 <button 
                   @click="quickFilter('month')" 
-                  class="bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 px-4 py-2 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  :class="[
+                    'px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5',
+                    filters.date_filter === 'month' 
+                      ? 'bg-blue-500 text-white border-blue-500' 
+                      : 'bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 border-gray-200 hover:border-blue-300'
+                  ]"
                 >
                   This Month
                 </button>
@@ -128,17 +140,20 @@
 
         <!-- Results Section -->
         <div class="space-y-4">
-          <div v-if="items.length === 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+          <div v-if="filteredItems.length === 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No {{ currentType }} found</h3>
-            <p class="text-gray-600">Try adjusting your filters or check back later.</p>
+            <p class="text-gray-600">
+              <span v-if="hasActiveFilters">Try adjusting your filters or check back later.</span>
+              <span v-else>No {{ currentType }} submissions available.</span>
+            </p>
           </div>
 
-          <div v-for="item in items" :key="item.id" class="group">
+          <div v-for="item in filteredItems" :key="item.id" class="group">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-300 overflow-hidden group-hover:-translate-y-1">
               <div class="p-6">
                 <div class="flex items-start justify-between gap-4">
@@ -154,7 +169,7 @@
                     </div>
                     
                     <p class="text-gray-700 leading-relaxed mb-4">
-                      {{ truncate(item.description, 120) }}
+                      {{ truncate(item.description, 50) }}
                     </p>
                     
                     <div class="flex items-center gap-2">
@@ -260,7 +275,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
@@ -281,18 +296,73 @@ const filters = ref({
   date_filter: '',
 });
 
-function applyFilters() {
-  window.location.href = route(
-    currentType === 'feedback' ? 'admin.feedback.index' : 'admin.idea.index',
-    filters.value
-  );
-}
+const showModal = ref(false);
+const modalData = ref({});
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+  return !!(filters.value.employee_id || filters.value.start_date || filters.value.end_date || filters.value.date_filter);
+});
+
+// Client-side filtered items
+const filteredItems = computed(() => {
+  if (!props.items || !Array.isArray(props.items)) {
+    return [];
+  }
+
+  let filtered = [...props.items];
+  
+  // Filter by employee
+  if (filters.value.employee_id) {
+    filtered = filtered.filter(item => item.user_id == filters.value.employee_id);
+  }
+  
+  // Filter by date range
+  if (filters.value.start_date || filters.value.end_date || filters.value.date_filter) {
+    const now = new Date();
+    let startDate, endDate;
+    
+    if (filters.value.date_filter) {
+      switch (filters.value.date_filter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+          break;
+        case 'week':
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          startDate = startOfWeek;
+          endDate = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          break;
+      }
+    } else {
+      if (filters.value.start_date) startDate = new Date(filters.value.start_date);
+      if (filters.value.end_date) {
+        endDate = new Date(filters.value.end_date);
+        endDate.setHours(23, 59, 59, 999);
+      }
+    }
+    
+    filtered = filtered.filter(item => {
+      const itemDate = new Date(item.created_at);
+      const afterStart = !startDate || itemDate >= startDate;
+      const beforeEnd = !endDate || itemDate <= endDate;
+      return afterStart && beforeEnd;
+    });
+  }
+  
+  return filtered;
+});
 
 function quickFilter(option) {
   filters.value.date_filter = option;
   filters.value.start_date = '';
   filters.value.end_date = '';
-  applyFilters();
 }
 
 function resetFilters() {
@@ -300,22 +370,7 @@ function resetFilters() {
   filters.value.start_date = '';
   filters.value.end_date = '';
   filters.value.date_filter = '';
-  applyFilters();
 }
-
-// Automatically apply when both dates are selected
-watch(
-  () => [filters.value.start_date, filters.value.end_date],
-  ([start, end]) => {
-    if (start && end) {
-      filters.value.date_filter = '';
-      applyFilters();
-    }
-  }
-);
-
-const showModal = ref(false);
-const modalData = ref({});
 
 function openModal(item) {
   modalData.value = item;
