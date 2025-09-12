@@ -409,7 +409,7 @@
 
 
               <!-- Modal Footer -->
-              <div class="border-t border-gray-100 px-8 py-6 bg-gray-50 rounded-b-2xl">
+              <!-- <div class="border-t border-gray-100 px-8 py-6 bg-gray-50 rounded-b-2xl">
                 <div class="flex justify-end">
                   <button 
                     @click="closeViewModal" 
@@ -418,7 +418,7 @@
                     Close
                   </button>
                 </div>
-              </div>        
+              </div>         -->
             </div>
           </div>
         </Transition>

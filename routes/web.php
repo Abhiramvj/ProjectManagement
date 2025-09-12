@@ -264,7 +264,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('admin.idea.index')
         ->defaults('type', 'idea');
     Route::patch('/admin/feedback/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.feedback.toggle');
-Route::patch('/admin/idea/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.idea.toggle');
+    Route::patch('/admin/idea/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.idea.toggle');
 
 });
-

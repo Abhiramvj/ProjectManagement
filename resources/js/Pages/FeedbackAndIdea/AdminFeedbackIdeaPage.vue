@@ -173,8 +173,9 @@
                     </p>
                     
                     <div class="flex items-center gap-2">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {{ currentTypeCapitalized }}
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        :class="item.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'">
+                        {{ currentTypeCapitalized }} - {{ item.is_active ? 'Active' : 'Inactive' }}
                       </span>
                     </div>
                   </div>
@@ -207,7 +208,7 @@
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="sticky top-0 bg-white border-b border-gray-100 px-8 py-6 rounded-t-2xl">
+              <div class="sticky top-0 bg-gray-100 border-b border-gray-200 px-8 py-6 rounded-t-2xl">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -217,14 +218,13 @@
                       <h3 class="text-xl font-bold text-gray-900">
                         {{ modalData.user?.name || 'Unknown User' }}'s {{ currentTypeCapitalized }}
                       </h3>
-                      <p class="text-sm text-gray-500">{{ formattedDate(modalData.created_at) }}</p>
                     </div>
                   </div>
                   <button 
                     @click="closeModal"
-                    class="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                    class="p-2 hover:bg-gray-200 rounded-full transition-colors duration-200"
                   >
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                   </button>
@@ -232,56 +232,53 @@
               </div>
 
               <!-- Modal Body -->
-              <div class="px-8 py-6">
-                <div class="mb-4">
+              <div class="px-8 py-6 bg-white">
+                <div class="mb-6">
                   <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Content</label>
-                  <div class="px-8 py-6 max-h-[60vh] overflow-auto">
-  <p class="text-gray-800 leading-relaxed break-words whitespace-pre-wrap">
-    {{ modalData.description }}
-  </p>
-</div>
-
+                  <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 max-h-[40vh] overflow-y-auto">
+                    <p class="text-gray-800 leading-relaxed break-words whitespace-pre-wrap">
+                      {{ modalData.description }}
+                    </p>
+                  </div>
                 </div>
                 
-                <div class="flex items-center gap-4 text-sm text-gray-500">
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                   <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h.01M12 11h.01M15 11h.01M7 16h.01M10 16h.01M13 16h.01M16 16h.01M9 21h6a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    Submitted {{ formattedDate(modalData.created_at) }}
+                    Submitted on {{ formattedDateHuman(modalData.created_at) }}
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {{ currentTypeCapitalized }}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="modalData.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'">
+                      {{ currentTypeCapitalized }} - {{ modalData.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
                 </div>
               </div>
 
-<!-- Modal Footer -->
-<div class="border-t border-gray-100 px-8 py-4 bg-gray-50 rounded-b-2xl">
-  <div class="flex justify-between items-center">
+              <!-- Modal Footer -->
+              <div class="border-t border-gray-200 px-8 py-4 bg-gray-100 rounded-b-2xl">
+                <div class="flex justify-between items-center">
+                  <!-- Toggle Status Button -->
+                  <button 
+                    @click="toggleStatus"
+                    class="px-6 py-2 rounded-lg font-medium shadow-sm text-white transition-colors duration-200"
+                    :class="modalData.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+                  >
+                    {{ modalData.is_active ? 'Mark as Inactive' : 'Mark as Active' }}
+                  </button>
 
-    <!-- Toggle Status Button -->
-    <button 
-      @click="toggleStatus"
-      class="px-6 py-2 rounded-lg font-medium shadow-sm text-white"
-      :class="modalData.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
-    >
-      {{ modalData.is_active ? 'Mark as Inactive' : 'Mark as Active' }}
-    </button>
-
-    <!-- Close Button -->
-    <button 
-      @click="closeModal" 
-      class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-    >
-      Close
-    </button>
-
-  </div>
-</div>
-
+                  <!-- Close Button -->
+                  <button 
+                    @click="closeModal" 
+                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </Transition>
@@ -303,8 +300,8 @@ const props = defineProps({
 });
 
 const currentType = props.type;
-const currentTypeCapitalized = currentType.charAt(0).toUpperCase() + currentType.slice(1);
-const pageTitle = `${currentTypeCapitalized} Submissions`;
+const currentTypeCapitalized = computed(() => currentType.charAt(0).toUpperCase() + currentType.slice(1));
+const pageTitle = computed(() => `${currentTypeCapitalized.value} Submissions`);
 
 const filters = ref({
   employee_id: '',
@@ -343,25 +340,25 @@ const filteredItems = computed(() => {
       switch (filters.value.date_filter) {
         case 'today':
           startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1); // Up to start of next day
           break;
         case 'week':
           const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday as start of week
           startOfWeek.setHours(0, 0, 0, 0);
           startDate = startOfWeek;
-          endDate = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
+          endDate = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from start of week
           break;
         case 'month':
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1); // Up to start of next month
           break;
       }
     } else {
       if (filters.value.start_date) startDate = new Date(filters.value.start_date);
       if (filters.value.end_date) {
         endDate = new Date(filters.value.end_date);
-        endDate.setHours(23, 59, 59, 999);
+        endDate.setHours(23, 59, 59, 999); // End of the selected day
       }
     }
     
@@ -378,8 +375,8 @@ const filteredItems = computed(() => {
 
 function quickFilter(option) {
   filters.value.date_filter = option;
-  filters.value.start_date = '';
-  filters.value.end_date = '';
+  filters.value.start_date = ''; // Clear manual dates
+  filters.value.end_date = '';   // Clear manual dates
 }
 
 function resetFilters() {
@@ -399,10 +396,17 @@ function closeModal() {
 }
 
 function formattedDate(dateString) {
-  return new Date(dateString).toLocaleString();
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
 }
 
-function truncate(text, length = 100) {
+function formattedDateHuman(dateString) {
+  const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+function truncate(text, length = 150) { // Increased default truncate length for better snippet
+  if (!text) return '';
   return text.length > length ? text.substring(0, length) + '...' : text;
 }
 
@@ -413,7 +417,12 @@ function toggleStatus() {
     {},
     {
       onSuccess: () => {
-        modalData.value.is_active = !modalData.value.is_active;
+        // Find the item in the original props.items array and update its status
+        const itemIndex = props.items.findIndex(item => item.id === modalData.value.id);
+        if (itemIndex !== -1) {
+          props.items[itemIndex].is_active = !props.items[itemIndex].is_active;
+        }
+        modalData.value.is_active = !modalData.value.is_active; // Update modal's internal state
       }
     }
   );
@@ -422,6 +431,44 @@ function toggleStatus() {
 </script>
 
 <style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95) translateY(20px);
+}
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95) translateY(20px);
+}
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.3s ease;
