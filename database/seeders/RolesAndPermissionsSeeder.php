@@ -76,12 +76,11 @@ class RolesAndPermissionsSeeder extends Seeder
 
         ]);
 
-        // Admin Role
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
 
         $permissions = Permission::where('name', '!=', 'view my reviews')->get();
 
-        $adminRole->syncPermissions(Permission::all());
+        $adminRole->syncPermissions($permissions);
 
     }
 }

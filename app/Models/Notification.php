@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\Scopes\QueryByUserRole;
 use Illuminate\Notifications\DatabaseNotification;
 
 class Notification extends DatabaseNotification
 {
-    // You don’t need to redefine fillables/casts since
-    // DatabaseNotification already has them.
-    // But if you want custom relationships or scopes, add here.
+    use QueryByUserRole;
 
     public function user()
     {

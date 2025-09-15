@@ -14,15 +14,24 @@ class CustomMail extends Mailable
 
     public $bodyContent;
 
-    public function __construct($subjectLine, $bodyContent)
+    public $attachmentPath;
+
+    public function __construct($subjectLine, $bodyContent, $attachmentPath = null)
     {
         $this->subjectLine = $subjectLine;
         $this->bodyContent = $bodyContent;
+        $this->attachmentPath = $attachmentPath;
     }
 
     public function build()
     {
-        return $this->subject($this->subjectLine)
+        $mail = $this->subject($this->subjectLine)
             ->html($this->bodyContent);
+        if ($this->attachmentPath) {
+            $mail->attach(storage_path('app/public/'.$this->attachmentPath));
+        }
+
+        return $mail;
+
     }
 }

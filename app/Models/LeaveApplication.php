@@ -95,8 +95,11 @@ class LeaveApplication extends Model
     public function scopeOverlapsWith(Builder $query, Carbon $startDate, Carbon $endDate): Builder
     {
         return $query->where(function ($q) use ($startDate, $endDate) {
-            $q->where('start_date', '<=', $endDate->toDateString())
-                ->where('end_date', '>=', $startDate->toDateString());
+            $q->where('leave_days', '>', 0) // Only consider actual leave
+                ->where(function ($q2) use ($startDate, $endDate) {
+                    $q2->where('start_date', '<=', $endDate->toDateString())
+                        ->where('end_date', '>=', $startDate->toDateString());
+                });
         });
     }
 }
