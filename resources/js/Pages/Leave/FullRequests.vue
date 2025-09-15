@@ -4,7 +4,7 @@ import Pagination from '@/Components/Pagination.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, reactive, watch } from 'vue';
-import { usePage, router } from '@inertiajs/vue3'; // <-- correct place for usePage
+import { usePage, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     leaveRequests: Object,
@@ -43,10 +43,26 @@ function applyFilters() {
 }
 
 const statusInfo = status => ({
-    pending: { text: 'Pending', color: 'yellow' },
-    approved: { text: 'Approved', color: 'green' },
-    rejected: { text: 'Rejected', color: 'red' },
-}[status] || { text: 'Unknown', color: 'gray' });
+    pending: { 
+        text: 'Pending', 
+        color: 'yellow',
+        badge: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'
+    },
+    approved: { 
+        text: 'Approved', 
+        color: 'green',
+        badge: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'
+    },
+    rejected: { 
+        text: 'Rejected', 
+        color: 'red',
+        badge: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'
+    },
+}[status] || { 
+    text: 'Unknown', 
+    color: 'gray',
+    badge: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'
+});
 
 const statusCardBorderClass = status => ({
     pending: 'border-yellow-500',
@@ -86,18 +102,15 @@ function submitUpload(req) {
         preserveScroll: true,
         forceFormData: true,
         onSuccess: (page) => {
-            // Update the selectedRequest with the fresh data from server
             const updatedRequest = page.props.leaveRequests.data.find(l => l.id === req.id);
             if (updatedRequest) {
                 Object.assign(selectedRequest.value, updatedRequest);
             }
 
-            // Reset file input
             delete selectedFiles.value[req.id];
             if (fileInputRefs[req.id]) fileInputRefs[req.id].value = '';
             uploadingRequest.value = null;
 
-            // Show flash
             page.props.flash = { success: 'Document uploaded successfully ✅' };
         },
         onError: (errors) => { uploadError.value = errors.supporting_document || 'Upload failed'; },
@@ -105,16 +118,25 @@ function submitUpload(req) {
     });
 }
 
-
-function clearFileSelection(reqId) { delete selectedFiles.value[reqId]; if(fileInputRefs[reqId]) fileInputRefs[reqId].value=''; uploadError.value=''; }
+function clearFileSelection(reqId) { 
+    delete selectedFiles.value[reqId]; 
+    if(fileInputRefs[reqId]) fileInputRefs[reqId].value=''; 
+    uploadError.value=''; 
+}
 
 const isEditModalVisible = ref(false);
 const editingRequest = ref(null);
 const editingReason = ref('');
 const editProcessing = ref(false);
 
-function openEditModal(req) { editingRequest.value=req; editingReason.value=req.reason; isEditModalVisible.value=true; }
-function closeEditModal() { isEditModalVisible.value=false; }
+function openEditModal(req) { 
+    editingRequest.value=req; 
+    editingReason.value=req.reason; 
+    isEditModalVisible.value=true; 
+}
+function closeEditModal() { 
+    isEditModalVisible.value=false; 
+}
 
 function submitEditReason() {
     if(!editingRequest.value) return;
@@ -136,7 +158,6 @@ function submitEditReason() {
     );
 }
 
-
 const cancelRequest = (request) => {
     if (!confirm("Are you sure you want to cancel this leave request?")) return;
 
@@ -151,17 +172,35 @@ const cancelRequest = (request) => {
     });
 };
 
-
 const isDetailModalVisible = ref(false);
 const selectedRequest = ref(null);
-function openDetailModal(req) { selectedRequest.value=req; isDetailModalVisible.value=true; }
-function closeDetailModal() { isDetailModalVisible.value=false; }
+function openDetailModal(req) { 
+    selectedRequest.value=req; 
+    isDetailModalVisible.value=true; 
+}
+function closeDetailModal() { 
+    isDetailModalVisible.value=false; 
+}
 
-const formatDate=dateString=>new Date(dateString).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
-function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
+const formatDate = dateString => new Date(dateString).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+const formatDateRange = (startDate, endDate, startHalf, endHalf) => {
+    let result = formatDate(startDate);
+    if (startHalf) {
+        result += ` (${startHalf === 'morning' ? 'Morning' : 'Afternoon'})`;
+    }
+    if (endDate !== startDate) {
+        result += ` - ${formatDate(endDate)}`;
+        if (endHalf) {
+            result += ` (${endHalf === 'morning' ? 'Morning' : 'Afternoon'})`;
+        }
+    }
+    return result;
+};
 
-
-
+function getFileName(url){ 
+    if(!url) return ''; 
+    return url.split('/').pop(); 
+}
 </script>
 
 <template>
@@ -193,18 +232,8 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
              :class="statusCardBorderClass(req.status)">
             <div>
                 <p class="font-semibold">
-  {{ formatDate(req.start_date) }}
-  <template v-if="req.start_half_session">
-    ({{ req.start_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
-  </template>
-  <span v-if="req.end_date !== req.start_date">
-    - {{ formatDate(req.end_date) }}
-    <template v-if="req.end_half_session">
-      ({{ req.end_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
-    </template>
-  </span>
-</p>
-
+                    {{ formatDateRange(req.start_date, req.end_date, req.start_half_session, req.end_half_session) }}
+                </p>
                 <p class="text-gray-500 text-sm capitalize">{{ req.leave_type }}</p>
             </div>
             <div class="flex items-center gap-3">
@@ -224,77 +253,171 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
 
 <!-- Detail Modal -->
 <teleport to="body">
-    <div v-if="isDetailModalVisible" @click.self="closeDetailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <div class="w-full max-w-3xl bg-white rounded-2xl p-6 shadow-xl space-y-6 overflow-auto max-h-[80vh]">
-
-            <header class="flex justify-between items-center border-b pb-2">
-                <h2 class="text-xl font-bold text-gray-800">{{ selectedRequest.reason }}</h2>
-                <button @click="closeDetailModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+    <div v-if="isDetailModalVisible" @click.self="closeDetailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans">
+        <div class="flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden animate-fadeIn">
+            <!-- Header -->
+            <header class="flex justify-between items-center border-b border-slate-200 px-6 py-4 bg-slate-50">
+                <h2 class="text-lg font-bold text-slate-800">Leave Request Details</h2>
+                <button @click="closeDetailModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </header>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <p>
-  <span class="font-semibold">Dates:</span>
-  {{ formatDate(selectedRequest.start_date) }}
-  <template v-if="selectedRequest.start_half_session">
-    ({{ selectedRequest.start_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
-  </template>
-  <span v-if="selectedRequest.end_date !== selectedRequest.start_date">
-    - {{ formatDate(selectedRequest.end_date) }}
-    <template v-if="selectedRequest.end_half_session">
-      ({{ selectedRequest.end_half_session === 'morning' ? 'Morning' : 'Afternoon' }})
-    </template>
-  </span>
-</p>
-
-                    <p><span class="font-semibold">Leave Type:</span> {{ selectedRequest.leave_type }}</p>
-                    <p><span class="font-semibold">Requested At:</span> {{ new Date(selectedRequest.created_at).toLocaleString() }}</p>
-                    <p><span class="font-semibold">Status:</span> {{ statusInfo(selectedRequest.status).text }}</p>
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-3 text-sm">
+                        <p>
+                            <span class="font-semibold text-slate-600">Date:</span>
+                            <span class="text-slate-700">{{ formatDateRange(selectedRequest.start_date, selectedRequest.end_date, selectedRequest.start_half_session, selectedRequest.end_half_session) }}</span>
+                        </p>
+                        <p>
+                            <span class="font-semibold text-slate-600">Type:</span> 
+                            <span class="capitalize text-slate-700">{{ selectedRequest.leave_type }}</span>
+                        </p>
+                        <p>
+                            <span class="font-semibold text-slate-600">Status:</span>
+                            <span :class="statusInfo(selectedRequest.status).badge">
+                                {{ statusInfo(selectedRequest.status).text }}
+                            </span>
+                        </p>
+                        <p>
+                            <span class="font-semibold text-slate-600">Requested At:</span> 
+                            <span class="text-slate-700">{{ new Date(selectedRequest.created_at).toLocaleString() }}</span>
+                        </p>
+                    </div>
+                    
+                    <div v-if="selectedRequest.status==='rejected' && selectedRequest.rejection_reason" class="space-y-2">
+                        <p class="font-semibold text-red-600">Rejection Reason:</p>
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-red-700 text-sm">{{ selectedRequest.rejection_reason }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div v-if="selectedRequest.status==='rejected' && selectedRequest.rejection_reason">
-                    <p class="font-semibold text-red-600">Rejection Reason:</p>
-                    <p class="text-gray-600">{{ selectedRequest.rejection_reason }}</p>
+
+                <div class="space-y-2">
+                    <p class="font-semibold text-slate-600">Reason:</p>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <p class="text-slate-700 text-sm">{{ selectedRequest.reason }}</p>
+                    </div>
+                </div>
+
+                <!-- Supporting Document -->
+                <div v-if="selectedRequest.leave_type==='sick'" class="space-y-3">
+                    <p class="font-semibold text-slate-600">Supporting Document</p>
+                    
+                    <div v-if="selectedRequest.supporting_document" class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <a :href="selectedRequest.supporting_document" target="_blank" class="font-medium text-green-700 hover:text-green-800 hover:underline transition-colors">
+                            View Document
+                        </a>
+                    </div>
+                    
+                    <div v-if="selectedRequest.status==='pending'" class="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <input 
+                                :ref="el => { if(el) fileInputRefs[selectedRequest.id]=el }" 
+                                type="file" 
+                                @change="e=>handleFileChange(selectedRequest.id,e)" 
+                                accept=".pdf,.jpg,.jpeg,.png" 
+                                class="file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-slate-300 rounded-md text-sm w-full sm:w-auto"
+                            />
+                            <div class="flex gap-2">
+                                <button v-if="selectedFiles[selectedRequest.id]" @click="clearFileSelection(selectedRequest.id)" class="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors">
+                                    Clear
+                                </button>
+                                <button 
+                                    @click="submitUpload(selectedRequest)" 
+                                    :disabled="uploadProcessing && uploadingRequest===selectedRequest.id" 
+                                    class="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors min-w-[80px]"
+                                >
+                                    {{ uploadProcessing && uploadingRequest===selectedRequest.id ? 'Uploading...' : (selectedRequest.supporting_document?'Replace':'Upload') }}
+                                </button>
+                            </div>
+                        </div>
+                        <p v-if="uploadError" class="text-red-600 text-xs">{{ uploadError }}</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Supporting Document -->
-            <div v-if="selectedRequest.leave_type==='sick'" class="mt-4">
-                <p class="font-semibold mb-2">Supporting Document</p>
-                <div v-if="selectedRequest.supporting_document" class="flex items-center gap-3 p-3 bg-green-50 border border-green-300 rounded-md">
-                    <a :href="selectedRequest.supporting_document" target="_blank" class="font-medium text-green-700 hover:underline"> View Document</a>
-                </div>
-                <div v-if="selectedRequest.status==='pending'" class="flex flex-col sm:flex-row sm:items-center gap-3 mt-2">
-                    <input :ref="el => { if(el) fileInputRefs[selectedRequest.id]=el }" type="file" @change="e=>handleFileChange(selectedRequest.id,e)" accept=".pdf,.jpg,.jpeg,.png" class="border rounded px-2 py-1 w-full sm:w-auto"/>
-                    <button v-if="selectedFiles[selectedRequest.id]" @click="clearFileSelection(selectedRequest.id)" class="bg-gray-100 px-3 py-1 rounded text-sm hover:bg-gray-200">Clear</button>
-                    <button @click="submitUpload(selectedRequest)" :disabled="uploadProcessing && uploadingRequest===selectedRequest.id" class="bg-indigo-600 text-white px-4 py-1 rounded text-sm hover:bg-indigo-700 min-w-[80px]">
-                        {{ uploadProcessing && uploadingRequest===selectedRequest.id ? 'Uploading...' : (selectedRequest.supporting_document?'Replace':'Upload') }}
-                    </button>
-                </div>
-                <p v-if="uploadError" class="text-red-600 text-sm mt-1">{{ uploadError }}</p>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex flex-wrap gap-3 mt-4">
-                <button v-if="selectedRequest.status==='pending'" @click="openEditModal(selectedRequest)" class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded text-sm hover:bg-indigo-100 min-w-[80px]">Edit</button>
-                <button v-if="selectedRequest.status==='pending'" @click="cancelRequest(selectedRequest)" class="bg-red-50 text-red-700 px-4 py-2 rounded text-sm hover:bg-red-100 min-w-[80px]">Cancel</button>
-            </div>
-
+            <!-- Footer -->
+            <footer class="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+                <button 
+                    v-if="selectedRequest.status==='pending'" 
+                    @click="openEditModal(selectedRequest)" 
+                    class="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors"
+                >
+                    Edit
+                </button>
+                <button 
+                    v-if="selectedRequest.status==='pending'" 
+                    @click="cancelRequest(selectedRequest)" 
+                    class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button 
+                    @click="closeDetailModal" 
+                    class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors"
+                >
+                    Close
+                </button>
+            </footer>
         </div>
     </div>
 </teleport>
 
 <!-- Edit Modal -->
 <teleport to="body">
-    <div v-if="isEditModalVisible" @click.self="closeEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <form @submit.prevent="submitEditReason" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <header class="flex items-center gap-3 border-b pb-2">
-                <h2 class="text-xl font-bold text-gray-800">Edit Leave Reason</h2>
+    <div v-if="isEditModalVisible" @click.self="closeEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans">
+        <form @submit.prevent="submitEditReason" class="flex w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl overflow-hidden animate-fadeIn">
+            <!-- Header -->
+            <header class="flex justify-between items-center border-b border-slate-200 px-6 py-4 bg-slate-50">
+                <h2 class="text-lg font-bold text-slate-800">Edit Leave Reason</h2>
+                <button type="button" @click="closeEditModal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </header>
-            <textarea v-model="editingReason" rows="4" maxlength="500" required :disabled="editProcessing" class="w-full rounded border border-gray-300 px-3 py-2" placeholder="Update your leave reason..."></textarea>
-            <footer class="flex justify-end gap-3">
-                <button type="button" @click="closeEditModal" class="rounded border border-gray-300 px-4 py-1 text-gray-700 hover:bg-gray-50">Cancel</button>
-                <PrimaryButton :disabled="editProcessing" type="submit">{{ editProcessing ? 'Saving...' : 'Save Changes' }}</PrimaryButton>
+            
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Leave Reason</label>
+                    <textarea 
+                        v-model="editingReason" 
+                        rows="4" 
+                        maxlength="500" 
+                        required 
+                        :disabled="editProcessing" 
+                        class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:bg-slate-100" 
+                        placeholder="Update your leave reason..."
+                    ></textarea>
+                    <p class="text-xs text-slate-500 mt-1">{{ editingReason.length }}/500 characters</p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+                <button 
+                    type="button" 
+                    @click="closeEditModal" 
+                    class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button 
+                    type="submit"
+                    :disabled="editProcessing" 
+                    class="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors min-w-[100px]"
+                >
+                    {{ editProcessing ? 'Saving...' : 'Save Changes' }}
+                </button>
             </footer>
         </form>
     </div>
@@ -302,3 +425,14 @@ function getFileName(url){ if(!url)return ''; return url.split('/').pop(); }
 
 </AuthenticatedLayout>
 </template>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.15s ease-out;
+}
+</style>
