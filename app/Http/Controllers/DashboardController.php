@@ -52,7 +52,7 @@ class DashboardController extends Controller
             'timeStats' => $performanceStats['timeStats'],
             'leaveStats' => $performanceStats['leaveStats'],
             'authUser' => Auth::user()->load('roles'),
-             'announcements' => $announcements,
+            'announcements' => $announcements,
         ]);
     }
     /**

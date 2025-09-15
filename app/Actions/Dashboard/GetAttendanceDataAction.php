@@ -33,7 +33,7 @@ class GetAttendanceDataAction
                     'name' => $user->name,
                     'designation' => $user->designation,
                     'avatar_url' => $user->avatar_url,
-                    'day_type' => $leave?->day_type, 
+                    'day_type' => $leave?->day_type,
                     'start_half_session' => $leave?->start_half_session,
                     'end_half_session' => $leave?->end_half_session,
                     'leave_days' => $leave?->leave_days,

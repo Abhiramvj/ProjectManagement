@@ -89,9 +89,11 @@ class FeedbackIdeaController extends Controller
     // Toggle active/inactive
     public function toggle($id, ToggleFeedbackIdeaAction $action)
     {
-        $action->execute($id);
+        $item = $action->execute($id);
 
-        return back()->with('success', 'status updated.');
+        return response()->json([
+            'item' => $item,
+        ]);
     }
 
     // Mark inactive (admin/HR only)
