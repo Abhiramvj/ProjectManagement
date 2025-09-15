@@ -204,7 +204,7 @@
             @click="closeModal"
           >
             <div 
-              class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+              class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh]  transform transition-all duration-300"
               @click.stop
             >
               <!-- Modal Header -->
@@ -289,9 +289,11 @@
 
 <script setup>
 import { Inertia } from '@inertiajs/inertia';
+import axios from 'axios';
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+
 
 const props = defineProps({
   items: Array,
@@ -409,23 +411,28 @@ function truncate(text, length = 150) { // Increased default truncate length for
   if (!text) return '';
   return text.length > length ? text.substring(0, length) + '...' : text;
 }
-
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 function toggleStatus() {
-  Inertia.patch(
-    route(currentType === 'feedback' ? 'admin.feedback.toggle' : 'admin.idea.toggle', modalData.value.id),
-    {},
-    {
-      onSuccess: () => {
-        // Find the item in the original props.items array and update its status
-        const itemIndex = props.items.findIndex(item => item.id === modalData.value.id);
-        if (itemIndex !== -1) {
-          props.items[itemIndex].is_active = !props.items[itemIndex].is_active;
-        }
-        modalData.value.is_active = !modalData.value.is_active; // Update modal's internal state
-      }
+  axios.patch(
+    route(currentType === 'feedback' ? 'admin.feedback.toggle' : 'admin.idea.toggle', modalData.value.id)
+  )
+  .then(response => {
+    const updatedItem = response.data.item;
+    const index = props.items.findIndex(item => item.id === updatedItem.id);
+
+    if (index !== -1) {
+      props.items[index].is_active = updatedItem.is_active;
     }
-  );
+    
+    modalData.value.is_active = updatedItem.is_active;
+
+    closeModal();
+  })
+  .catch(error => {
+    console.error(error);
+    alert('Failed to update status.');
+  });
 }
 
 </script>
