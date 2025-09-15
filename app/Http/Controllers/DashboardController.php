@@ -8,7 +8,6 @@ use App\Actions\Dashboard\GetCalendarEventsAction;
 use App\Actions\Dashboard\GetGreetingAction;
 use App\Actions\Dashboard\GetPerformanceStatsAction;
 use App\Actions\Dashboard\GetProjectsAndTasksAction;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -52,7 +51,7 @@ class DashboardController extends Controller
             'timeStats' => $performanceStats['timeStats'],
             'leaveStats' => $performanceStats['leaveStats'],
             'authUser' => Auth::user()->load('roles'),
-             'announcements' => $announcements,
+            'announcements' => $announcements,
         ]);
     }
     /**

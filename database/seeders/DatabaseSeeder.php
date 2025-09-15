@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             UserSeeder::class,
-            // LeaveApplicationSeeder::class,
+            LeaveApplicationSeeder::class,
             TaskSeeder::class,
             CalendarNoteSeeder::class,
             HolidaySeeder::class,

@@ -2,34 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
-use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Notifications\DatabaseNotification;
+use App\Actions\Notification\GetNotificationsAction;
+use App\Actions\Notification\GetRecentNotificationsAction;
+use App\Actions\Notification\GetUnreadCountAction;
+use App\Actions\Notification\MarkAllNotificationsAsReadAction;
+use App\Actions\Notification\MarkNotificationAsReadAction;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
-    /**
-     * The main notifications page, scoped by user role.
-     */
+    protected GetNotificationsAction $getNotificationsAction;
+
+    protected GetRecentNotificationsAction $getRecentNotificationsAction;
+
+    protected GetUnreadCountAction $getUnreadCountAction;
+
+    protected MarkNotificationAsReadAction $markNotificationAsReadAction;
+
+    protected MarkAllNotificationsAsReadAction $markAllNotificationsAsReadAction;
+
+    public function __construct(GetNotificationsAction $getNotificationsAction, GetRecentNotificationsAction $getRecentNotificationsAction,
+        GetUnreadCountAction $getUnreadCountAction, MarkNotificationAsReadAction $markNotificationAsReadAction, MarkAllNotificationsAsReadAction $markAllNotificationsAsReadAction)
+    {
+        $this->getNotificationsAction = $getNotificationsAction;
+        $this->getRecentNotificationsAction = $getRecentNotificationsAction;
+        $this->getUnreadCountAction = $getUnreadCountAction;
+        $this->markNotificationAsReadAction = $markNotificationAsReadAction;
+        $this->markAllNotificationsAsReadAction = $markAllNotificationsAsReadAction;
+
+    }
+
     public function index()
     {
-        $user = Auth::user();
-
-        // Start building the query using our new Notification model
-        $query = Notification::query();
-
-        $this->scopeQueryByUserRole($query);
-
-        // Exclude self-generated notifications
-        if ($user->hasRole('team-lead')) {
-            $query->where('notifiable_id', '!=', $user->id);
-        }
-
-        $notifications = $query->with('user:id,name') // Eager load the user's name
-            ->orderBy('created_at', 'desc')
+        $notifications = $this->getNotificationsAction
+            ->execute()
             ->paginate(20);
 
         return Inertia::render('Notifications/Index', [
@@ -37,79 +44,30 @@ class NotificationController extends Controller
         ]);
     }
 
-    /**
-     * Get recent notifications for the dropdown, scoped by user role.
-     */
     public function getRecent()
     {
-        $query = Notification::query();
-
-        $this->scopeQueryByUserRole($query);
-
-        $notifications = $query->with('user:id,name')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        $notifications = $this->getRecentNotificationsAction->execute(Auth::user());
 
         return response()->json(['data' => $notifications]);
     }
 
-    /**
-     * Get the count of unread notifications, scoped by user role.
-     */
     public function getUnreadCount()
     {
-        $query = Notification::query()->whereNull('read_at');
+        $count = $this->getUnreadCountAction->execute(Auth::user());
 
-        $this->scopeQueryByUserRole($query);
-
-        return response()->json(['count' => $query->count()]);
-    }
-
-    /**
-     * This is a reusable method to apply the correct security scope to our queries.
-     */
-    private function scopeQueryByUserRole(Builder $query): void
-    {
-        $user = Auth::user();
-
-        if ($user->hasAnyRole(['admin', 'hr'])) {
-            // Admin/HR can see all notifications.
-            $query->whereHas('user.roles', function ($q) {
-                $q->whereIn('name', ['employee', 'team-lead', 'project-manager']);
-            });
-        } elseif ($user->hasRole('team-lead')) {
-            $ledTeams = $user->ledTeams()->with('members:id')->get();
-            $memberIds = $ledTeams->flatMap(fn ($team) => $team->members->pluck('id'))->unique();
-
-            $query->where(function ($q) use ($user, $memberIds) {
-                $q->whereIn('notifiable_id', $memberIds) // Notifications of team members (approval requests)
-                    ->orWhere(function ($q2) use ($user) {
-                        // Own approved/rejected notifications
-                        $q2->where('notifiable_id', $user->id)
-                            ->whereIn('data->type', ['leave_approved', 'leave_rejected']);
-                    });
-            });
-        } else {
-            // Regular employee: only own notifications
-            $query->where('notifiable_id', $user->id)
-                ->where('notifiable_type', User::class);
-        }
+        return response()->json(['count' => $count]);
     }
 
     public function markAsRead($id)
     {
-        $notification = DatabaseNotification::findOrFail($id);
-        $notification->update(['read_at' => now()]);
+        $this->markNotificationAsReadAction->execute($id);
 
         return back()->with('success', 'Notification marked as read.');
     }
 
     public function markAllAsRead()
     {
-        foreach (auth()->user()->unreadNotifications as $notification) {
-            $notification->markAsRead();
-        }
+        $this->markAllNotificationsAsReadAction->execute(Auth::user());
 
         return back()->with('success', 'All notifications marked as read.');
     }

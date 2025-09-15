@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Performance\ShowPerformance;
+use App\Actions\GenerateMySummaryAction;
+use App\Actions\Performance\GeneratePerformanceSummaryAction;
+use App\Actions\Performance\ShowPerformanceAction;
+use App\Http\Requests\Performance\GenerateMySummaryRequest;
+use App\Http\Requests\Performance\GeneratePerformanceSummaryRequest;
 use App\Models\User;
-use App\Services\OllamaAIService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PerformanceReportController extends Controller
 {
-    public function show(User $user, ShowPerformance $action): \Inertia\Response
+    public function show(User $user, ShowPerformanceAction $action): \Inertia\Response
     {
         return Inertia::render('Performance/Show', $action->handle($user));
     }
@@ -20,87 +21,38 @@ class PerformanceReportController extends Controller
     /**
      * Generate an AI performance summary for a given user.
      */
-    public function generateSummary(Request $request, User $user, OllamaAIService $ollamaAiService)
+    public function generateSummary(GeneratePerformanceSummaryRequest $request, User $user, GeneratePerformanceSummaryAction $summaryAction)
     {
-        $stats = $request->validate([
-            'taskStats' => 'required|array',
-            'taskStats.completion_rate' => 'required|numeric',
-            'taskStats.completed' => 'required|integer',
-            'taskStats.total' => 'required|integer',
-            'timeStats' => 'required|array',
-            'timeStats.current_month' => 'required|numeric',
-            'leaveStats' => 'required|array',
-            'leaveStats.current_year' => 'required|numeric',
-            'leaveStats.balance' => 'required|numeric',
-            'performanceScore' => 'required|numeric',
-        ]);
+        $stats = $request->validated();
 
-        $prompt = "
-            As an HR manager, write a concise, professional, and encouraging performance review summary for an employee named {$user->name}.
-            The tone should be supportive, highlighting strengths and gently suggesting areas for growth.
-            Do not use markdown formatting. Write in plain text paragraphs.
-
-            Use the following data to inform your summary:
-            - Overall Performance Score: {$stats['performanceScore']}%
-            - Task Completion Rate: {$stats['taskStats']['completion_rate']}% ({$stats['taskStats']['completed']} of {$stats['taskStats']['total']} tasks completed).
-            - Total Hours Logged this Month: {$stats['timeStats']['current_month']} hours.
-            - Leave Days Taken This Year: {$stats['leaveStats']['current_year']} out of a total allowance of {$stats['leaveStats']['balance']} days.
-
-            Based on these metrics, provide a 1-2 paragraph summary of their performance.
-        ";
-
-        // 3. --- CALL THE OLLAMA SERVICE ---
-        $summary = $ollamaAiService->generateText($prompt, 'llama3');
+        $summary = $summaryAction->handle($stats, $user);
 
         if (! $summary) {
-            Log::error("Failed to generate performance summary for employee: {$user->id}");
-
-            return response()->json(['error' => 'The AI summary could not be generated at this time.'], 500);
+            return response()->json([
+                'error' => 'The AI summary could not be generated at this time.',
+            ], 500);
         }
 
-        return response()->json(['summary' => $summary]);
+        return response()->json([
+            'summary' => $summary,
+        ]);
     }
 
-    /**
-     * Generate an AI performance summary for the currently authenticated user.
-     */
-    public function generateMySummary(Request $request, OllamaAIService $ollamaAiService)
+    public function generateMySummary(GenerateMySummaryRequest $request, GenerateMySummaryAction $summaryAction)
     {
-        $stats = $request->validate([
-            'taskStats' => 'required|array',
-            'taskStats.completion_rate' => 'required|numeric',
-            'timeStats' => 'required|array',
-            'timeStats.current_month' => 'required|numeric',
-            'leaveStats' => 'required|array',
-            'leaveStats.current_year' => 'required|numeric',
-            'leaveStats.balance' => 'required|numeric',
-            'performanceScore' => 'required|numeric',
-        ]);
-
+        $stats = $request->validated();
         $user = Auth::user();
 
-        $prompt = "
-            As an HR manager, write a concise, professional, and encouraging performance review summary for an employee named {$user->name}.
-            The tone should be supportive, highlighting strengths and gently suggesting areas for growth.
-            Do not use markdown formatting. Write in plain text paragraphs.
-
-            Use the following data to inform your summary:
-            - Overall Performance Score: {$stats['performanceScore']}%
-            - Task Completion Rate: {$stats['taskStats']['completion_rate']}%
-            - Total Hours Logged this Month: {$stats['timeStats']['current_month']} hours.
-            - Leave Days Taken This Year: {$stats['leaveStats']['current_year']} out of a total allowance of {$stats['leaveStats']['balance']} days.
-
-            Based on these metrics, provide a 1-2 paragraph summary of their performance.
-        ";
-
-        $summary = $ollamaAiService->generateText($prompt, 'llama3');
+        $summary = $summaryAction->handle($stats, $user);
 
         if (! $summary) {
-            Log::error("Failed to generate 'my summary' for user: {$user->id}");
-
-            return response()->json(['error' => 'The AI summary could not be generated at this time.'], 500);
+            return response()->json([
+                'error' => 'The AI summary could not be generated at this time.',
+            ], 500);
         }
 
-        return response()->json(['summary' => $summary]);
+        return response()->json([
+            'summary' => $summary,
+        ]);
     }
 }

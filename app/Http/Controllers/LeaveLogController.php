@@ -2,24 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LeaveLog;
+use App\Actions\LeaveLog\GetLeaveLogsAction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class LeaveLogController extends Controller
 {
+    protected GetLeaveLogsAction $getLeaveLogsAction;
+
+    public function __construct(GetLeaveLogsAction $getLeaveLogsAction)
+    {
+        $this->getLeaveLogsAction = $getLeaveLogsAction;
+    }
+
     public function index(Request $request)
     {
-        $query = LeaveLog::with(['user:id,name', 'actor:id,name'])
-            ->latest();
-
-        // Add filtering by employee
-        if ($request->filled('employee_id')) {
-            $query->where('user_id', $request->employee_id);
-        }
-
-        $logs = $query->paginate(20)->withQueryString();
+        $logs = $this->getLeaveLogsAction->execute($request);
 
         return Inertia::render('Leave/Logs', [
             'logs' => $logs,
