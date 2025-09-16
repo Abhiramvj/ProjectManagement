@@ -12,8 +12,7 @@ import axios from 'axios';
 import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 const showColors = ref(true);
-
-
+const showLeaveText = ref(true);
 const selectedMailTemplateId = ref('');
 
 const props = defineProps({
@@ -178,6 +177,7 @@ function toISODateOnly(date) {
     return `${year}-${month}-${day}`;
 }
 
+
 const calendarEvents = computed(() => {
     const selectedUserId =
         isAdminOrHR && form.user_id ? Number(form.user_id) : currentUserId;
@@ -198,7 +198,7 @@ const calendarEvents = computed(() => {
                 ? leaveColors[ev.color_category] || '#9ca3af'
                 : 'transparent',
             borderColor: 'transparent',
-            title: ev.title,
+            title: showLeaveText.value ? ev.title : '', 
         }));
 });
 
@@ -698,30 +698,25 @@ function statusInfo(status) {
                                         >
                                             Color Coding
                                         </label>
-                                        <button
-                                            id="color-code-toggle"
-                                            type="button"
-                                            role="switch"
-                                            :aria-checked="
-                                                showColors.toString()
-                                            "
-                                            @click="showColors = !showColors"
-                                            :class="[
-                                                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                                                showColors
-                                                    ? 'bg-indigo-600'
-                                                    : 'bg-slate-300',
-                                            ]"
-                                        >
-                                            <span
-                                                :class="[
-                                                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                                                    showColors
-                                                        ? 'translate-x-6'
-                                                        : 'translate-x-1',
-                                                ]"
-                                            ></span>
-                                        </button>
+<button
+    id="color-code-toggle"
+    type="button"
+    role="switch"
+    :aria-checked="showColors.toString()"
+    @click="showColors = !showColors; showLeaveText = showColors"
+    :class="[
+        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+        showColors ? 'bg-indigo-600' : 'bg-slate-300',
+    ]"
+>
+    <span
+        :class="[
+            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+            showColors ? 'translate-x-6' : 'translate-x-1',
+        ]"
+    ></span>
+</button>
+
                                     </div>
                                     <div
                                         class="rounded-full px-3 py-1.5 text-xs font-semibold"

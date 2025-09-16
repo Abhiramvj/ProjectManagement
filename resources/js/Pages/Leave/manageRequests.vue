@@ -136,12 +136,14 @@ function submitRejection() {
         { status: 'rejected', rejection_reason: rejectReason.value },
         {
             preserveScroll: true,
-            onSuccess: () => {
-                rejectProcessing.value = false;
-                closeRejectModal();
-                closeDetailsModal();
-                router.reload();
-            },
+onSuccess: () => {
+    rejectProcessing.value = false;
+    selectedLeave.value.status = 'rejected';
+    selectedLeave.value.rejection_reason = rejectReason.value;
+    closeRejectModal();
+    closeDetailsModal();
+},
+
             onError: () => {
                 rejectProcessing.value = false;
             },
