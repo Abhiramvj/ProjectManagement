@@ -33,7 +33,7 @@ export default defineConfig({
                     'chart-vendor': ['chart.js', 'vue-chartjs'],
                     'calendar-vendor': ['@fullcalendar/vue3', '@fullcalendar/core', '@fullcalendar/daygrid', '@fullcalendar/interaction', '@fullcalendar/timegrid'],
                     'orgchart-vendor': ['@balkangraph/orgchart.js'],
-                    'ui-vendor': ['@heroicons/vue', 'daisyui'],
+                    'ui-vendor': ['@heroicons/vue'],
                     'utils-vendor': ['lodash', 'lodash-es', 'date-fns', 'axios'],
                 },
                 // Optimize chunk naming

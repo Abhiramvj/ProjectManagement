@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Actions\Review;
 
 use App\Models\User;

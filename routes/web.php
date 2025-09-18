@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\CalendarNoteController;
 use App\Http\Controllers\CompanyOverviewController;
 use App\Http\Controllers\DashboardController;
@@ -15,12 +16,14 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectSessionController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TimeLogController;
 use App\Http\Controllers\UserController;
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -264,3 +267,27 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/admin/idea/{id}/toggle', [FeedbackIdeaController::class, 'toggle'])->name('admin.idea.toggle');
 
 });
+
+
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::middleware(['can:create session request'])->group(function () {
+        Route::get('/sessions/create', [ProjectSessionController::class, 'create'])->name('sessions.create');
+        Route::post('/sessions', [ProjectSessionController::class, 'store'])->name('sessions.store');
+        Route::get('/sessions', [ProjectSessionController::class, 'index'])->name('sessions.index');
+    });
+
+
+    // HR/Admin routes - can approve session requests
+    Route::middleware(['can:approve session request'])->group(function () {
+Route::get('/hr/dashboard', [ProjectSessionController::class, 'hrAdminDashboard'])->name('hr.dashboard');
+Route::post('/hr/sessions/{id}/approve', [ProjectSessionController::class, 'approve'])->name('hr.sessions.approve');
+Route::post('/hr/sessions/{id}/reject', [ProjectSessionController::class, 'reject'])->name('hr.sessions.reject');
+Route::put('/hr/sessions/{id}/update-date', [ProjectSessionController::class, 'updateDate'])->name('hr.sessions.update-date');
+Route::post('/hr/sessions/{id}/complete', [ProjectSessionController::class, 'complete'])->name('hr.sessions.complete');
+Route::get('/hr/badges', [BadgeController::class, 'index'])->middleware('auth')->name('hr.badges');
+});
+
+});
+

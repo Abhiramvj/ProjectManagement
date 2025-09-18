@@ -16,8 +16,7 @@ class BuildReviewSummariesAction
             $totalWeight = 0;
 
             if ($latestReview && $latestReview->scores->count()) {
-                $scoresByCategory = $latestReview->scores->groupBy(fn($score) =>
-                    optional($score->criterion->category)->id
+                $scoresByCategory = $latestReview->scores->groupBy(fn ($score) => optional($score->criterion->category)->id
                 );
 
                 foreach ($scoresByCategory as $scores) {

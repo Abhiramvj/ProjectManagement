@@ -1,7 +1,7 @@
-<?php 
+<?php
+
 namespace App\Actions\Review;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class GetEmployeeReviewHistoryAction

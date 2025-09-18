@@ -21,7 +21,7 @@ class StoreSelfReviewAction
                     'review_month' => $month,
                     'review_year' => $year,
                 ],
-                [] 
+                []
             );
 
             foreach ($scores as $criteriaId => $score) {

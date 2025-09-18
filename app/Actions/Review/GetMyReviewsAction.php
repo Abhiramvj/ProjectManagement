@@ -2,9 +2,8 @@
 
 namespace App\Actions\Review;
 
-use App\Models\Review;
 use App\Models\PerformanceCategory;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Models\Review;
 use Illuminate\Support\Facades\Auth;
 
 class GetMyReviewsAction

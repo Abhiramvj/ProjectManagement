@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Milestone;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -21,6 +22,8 @@ class DatabaseSeeder extends Seeder
             PerformanceCategoriesTableSeeder::class,
             PerformanceCriteriaTableSeeder::class,
             SampleReviewsTableSeeder::class,
+            BadgeSeeder::class,
+            MilestoneSeeder::class
         ]);
     }
 }

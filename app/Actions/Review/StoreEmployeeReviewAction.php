@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Actions\Review;
 
 use App\Models\Review;
@@ -8,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class StoreEmployeeReviewAction
 {
-    
     public function execute(int $employeeId, int $month, int $year, array $scores, ?array $comments = []): Review
     {
         return DB::transaction(function () use ($employeeId, $month, $year, $scores, $comments) {

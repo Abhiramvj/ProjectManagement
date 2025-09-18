@@ -132,7 +132,7 @@
                 <section class="bg-white p-8 rounded-2xl shadow-lg">
                     <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Our Core Values</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        <div v-for="(description, value) in companyInfo.core_values" :key="value" 
+                        <div v-for="(description, value) in companyInfo.core_values" :key="value"
                              class="text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-lg transition-shadow">
                             <div class="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
                                 <span class="text-2xl">{{ getValueIcon(value) }}</span>
@@ -186,7 +186,7 @@
                                     </svg>
                                 </div>
                             </div>
-                            
+
                             <div class="flex items-center text-sm text-gray-600 mb-4">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -229,14 +229,14 @@
                                 </div>
                                 <h3 class="font-bold text-xl text-gray-800">{{ team.name }}</h3>
                             </div>
-                            
+
                             <div class="space-y-2">
                                 <p class="text-gray-600">
-                                    <span class="font-medium">Team Lead:</span> 
+                                    <span class="font-medium">Team Lead:</span>
                                     {{ team.team_lead?.name ?? 'Not Assigned' }}
                                 </p>
                                 <p class="text-gray-600">
-                                    <span class="font-medium">Members:</span> 
+                                    <span class="font-medium">Members:</span>
                                     {{ team.members?.length ?? 0 }} people
                                 </p>
                             </div>
@@ -340,7 +340,7 @@
                 </section>
 
                 <!-- Contact Information -->
-                <!-- <section class="bg-white p-8 rounded-2xl shadow-lg">
+                <section class="bg-white p-8 rounded-2xl shadow-lg">
                     <h2 class="text-3xl font-bold text-gray-800 mb-8">Contact Information</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
@@ -356,7 +356,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div>
                             <h3 class="text-xl font-semibold text-gray-800 mb-4">Office Locations</h3>
                             <div class="space-y-3">
@@ -368,7 +368,7 @@
                             </div>
                         </div>
                     </div>
-                </section> -->
+                </section>
             </div>
 
             <!-- Company Hierarchy Section -->
@@ -389,7 +389,7 @@
                                 Enter Fullscreen
                             </button>
                         </div>
-                        
+
                         <!-- Hierarchy Tabs -->
                         <nav class="flex space-x-8" aria-label="Hierarchy Tabs">
                             <button
@@ -553,7 +553,7 @@
             <div v-if="isModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
                     <h2 class="text-2xl font-bold mb-6 text-gray-800">Edit Project Description</h2>
-                    <textarea v-model="modalEditingDescription" rows="6" 
+                    <textarea v-model="modalEditingDescription" rows="6"
                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"></textarea>
 
                     <div class="flex justify-end space-x-4 mt-6">
@@ -582,13 +582,13 @@
                         <h3 class="text-2xl font-bold text-gray-800">Work Hours Schedule</h3>
                     </div>
                     <div class="space-y-3">
-                        <div v-for="(shift, index) in workHoursArray" :key="index" 
+                        <div v-for="(shift, index) in workHoursArray" :key="index"
                              class="p-3 bg-blue-50 rounded-lg border border-blue-200">
                             <p class="text-gray-700 font-medium">{{ shift }}</p>
                         </div>
                     </div>
                     <div class="mt-8 text-right">
-                        <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" 
+                        <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 @click="closeWorkHoursModal">Close</button>
                     </div>
                 </div>
@@ -610,7 +610,7 @@
                         <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">{{ companyInfo.code_of_conduct }}</p>
                     </div>
                     <div class="mt-8 text-right">
-                        <button class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" 
+                        <button class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                                 @click="closeCodeOfConductModal">Close</button>
                     </div>
                 </div>
@@ -630,7 +630,7 @@
                             </div>
                             <h3 class="text-2xl font-bold text-gray-800">Leave Policy Guide</h3>
                         </div>
-                        <button @click="closeLeavePolicyModal" 
+                        <button @click="closeLeavePolicyModal"
                                 class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -638,7 +638,7 @@
                         </button>
                     </header>
                     <div class="flex-grow space-y-6 overflow-y-auto p-6">
-                        <div v-for="(policy, type) in leaveTypeDescriptions" :key="type" 
+                        <div v-for="(policy, type) in leaveTypeDescriptions" :key="type"
                              class="flex gap-4 rounded-xl border border-gray-200 bg-gray-50 p-6 shadow-sm hover:shadow-md transition-shadow">
                             <div class="text-4xl flex-shrink-0">{{ leaveTypeIcons[type] || leaveTypeIcons.default }}</div>
                             <div class="flex-grow">
@@ -651,7 +651,7 @@
                         </div>
                     </div>
                     <footer class="flex flex-shrink-0 justify-end border-t border-gray-200 bg-gray-50 p-6">
-                        <button @click="closeLeavePolicyModal" 
+                        <button @click="closeLeavePolicyModal"
                                 class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                             Close
                         </button>
@@ -722,9 +722,9 @@ const workHoursArray = computed(() => {
 });
 
 const leaveTypeDescriptions = {
-    annual: { 
-        title: 'Annual Leave', 
-        summary: 'Planned time off with advance notice', 
+    annual: {
+        title: 'Annual Leave',
+        summary: 'Planned time off with advance notice',
         details: [
             'For vacations, personal time, or other planned absences',
             'Should be requested at least 7 days in advance',
@@ -732,9 +732,9 @@ const leaveTypeDescriptions = {
             'Balance accrued based on tenure (typically 15-25 days/year)'
         ]
     },
-    personal: { 
-        title: 'Personal Leave', 
-        summary: 'Leave for personal matters that require time off', 
+    personal: {
+        title: 'Personal Leave',
+        summary: 'Leave for personal matters that require time off',
         details: [
             'Used for personal errands, family commitments, or important events',
             'Typically requires 3 days advance notice',
@@ -742,9 +742,9 @@ const leaveTypeDescriptions = {
             'May be limited in total number of days per year'
         ]
     },
-    sick: { 
-        title: 'Sick Leave', 
-        summary: 'Leave granted for health-related issues', 
+    sick: {
+        title: 'Sick Leave',
+        summary: 'Leave granted for health-related issues',
         details: [
             'For medical appointments, illness, or recovery',
             'Usually requires a medical certificate for extended absences',
@@ -752,9 +752,9 @@ const leaveTypeDescriptions = {
             'May be paid or unpaid as per policy'
         ]
     },
-    emergency: { 
-        title: 'Emergency Leave', 
-        summary: 'Leave for urgent, unforeseen personal emergencies', 
+    emergency: {
+        title: 'Emergency Leave',
+        summary: 'Leave for urgent, unforeseen personal emergencies',
         details: [
             'For unexpected situations like medical emergencies, accidents, or urgent family matters',
             'Typically granted on short notice with flexible approval process',
@@ -762,9 +762,9 @@ const leaveTypeDescriptions = {
             'Helps employees manage critical situations without penalty'
         ]
     },
-    maternity: { 
-        title: 'Maternity Leave', 
-        summary: 'Leave for childbirth and related recovery', 
+    maternity: {
+        title: 'Maternity Leave',
+        summary: 'Leave for childbirth and related recovery',
         details: [
             'Granted to employees during pregnancy and after birth',
             'Duration varies by jurisdiction (typically 12-26 weeks)',
@@ -772,9 +772,9 @@ const leaveTypeDescriptions = {
             'Protected under employment law'
         ]
     },
-    paternity: { 
-        title: 'Paternity Leave', 
-        summary: 'Leave for fathers around the time of childbirth', 
+    paternity: {
+        title: 'Paternity Leave',
+        summary: 'Leave for fathers around the time of childbirth',
         details: [
             'Allows bonding with the newborn and support for the family',
             'Usually shorter duration than maternity leave (e.g., 1-2 weeks)',
@@ -782,9 +782,9 @@ const leaveTypeDescriptions = {
             'Protected under employment law'
         ]
     },
-    wfh: { 
-        title: 'Work From Home', 
-        summary: 'Remote work arrangements without reducing leave balance', 
+    wfh: {
+        title: 'Work From Home',
+        summary: 'Remote work arrangements without reducing leave balance',
         details: [
             'Allows employees to work remotely for full or partial days',
             'Usually does not deduct from leave balance',
@@ -792,9 +792,9 @@ const leaveTypeDescriptions = {
             'Supports flexible work-life balance'
         ]
     },
-    compensatory: { 
-        title: 'Compensatory Leave', 
-        summary: 'Leave earned by working extra hours or on holidays', 
+    compensatory: {
+        title: 'Compensatory Leave',
+        summary: 'Leave earned by working extra hours or on holidays',
         details: [
             'Credited when working during official holidays',
             'Used as paid time off in lieu of extra hours worked',
@@ -888,28 +888,28 @@ function saveDescription(projectId) {
 }
 
 // Modal Functions for Policy Viewing
-function openWorkHoursModal() { 
-    isWorkHoursModalVisible.value = true; 
+function openWorkHoursModal() {
+    isWorkHoursModalVisible.value = true;
 }
 
-function closeWorkHoursModal() { 
-    isWorkHoursModalVisible.value = false; 
+function closeWorkHoursModal() {
+    isWorkHoursModalVisible.value = false;
 }
 
-function openCodeOfConductModal() { 
-    isCodeOfConductModalVisible.value = true; 
+function openCodeOfConductModal() {
+    isCodeOfConductModalVisible.value = true;
 }
 
-function closeCodeOfConductModal() { 
-    isCodeOfConductModalVisible.value = false; 
+function closeCodeOfConductModal() {
+    isCodeOfConductModalVisible.value = false;
 }
 
-function openLeavePolicyModal() { 
-    isLeavePolicyModalVisible.value = true; 
+function openLeavePolicyModal() {
+    isLeavePolicyModalVisible.value = true;
 }
 
-function closeLeavePolicyModal() { 
-    isLeavePolicyModalVisible.value = false; 
+function closeLeavePolicyModal() {
+    isLeavePolicyModalVisible.value = false;
 }
 </script>
 

@@ -1,69 +1,85 @@
-import './bootstrap';
-import '../css/app.css';
+// resources/js/app.js
+import './bootstrap'
+import '../css/app.css'
 
-import { createApp, h } from 'vue';
-import { createInertiaApp, router, usePage } from '@inertiajs/vue3';
-import { ZiggyVue } from 'ziggy-js';
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
+import { createApp, h } from 'vue'
+import { createInertiaApp, router } from '@inertiajs/vue3'
+import { ZiggyVue } from 'ziggy-js'
+import Echo from 'laravel-echo'
+import Pusher from 'pusher-js'
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 
-// Import and use the Syncfusion Spreadsheet Plugin for global registration
-import { SpreadsheetPlugin } from '@syncfusion/ej2-vue-spreadsheet';
-import { registerLicense } from '@syncfusion/ej2-base';
+// Axios defaults
+if (typeof window.axios !== 'undefined') {
+  window.axios.defaults.withCredentials = true
+}
 
-axios.defaults.withCredentials = true;
-
-
-registerLicense('Ngo9BigBOggjHTQxAR8/V1JFaF5cXGRCd0x3Q3xbf1x1ZFZMYV5bRndPIiBoS35Rc0VqWXZfdXVXRGFfU0J3VEFc');
-window.Pusher = Pusher;
-
+// Pusher + Echo setup
+window.Pusher = Pusher
 window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: import.meta.env.VITE_PUSHER_APP_KEY,
-    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-    forceTLS: true,
-    encrypted: true,
-});
+  broadcaster: 'pusher',
+  key: import.meta.env.VITE_PUSHER_APP_KEY,
+  cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+  forceTLS: true,
+  encrypted: true,
+})
 
 window.Echo.private('user-import').listen('UserImportCompleted', (e) => {
-    alert(`Import completed for file: ${e.filePath}`);
-});
+  alert(`Import completed for file: ${e.filePath}`)
+})
 
-// Global Inertia event listener: clear flash messages after each Inertia navigation
+// Clear flash messages after each Inertia navigation
 router.on('finish', () => {
-    const page = usePage();
-    if (page.props.flash) {
-        page.props.flash.success = null;
-        page.props.flash.error = null;
-    }
-});
+  if (router.page?.props?.flash) {
+    router.page.props.flash.success = null
+    router.page.props.flash.error = null
+  }
+})
 
 const appName =
-    window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
+  window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel'
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) => {
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
-        const page = pages[`./Pages/${name}.vue`];
-        if (!page) {
-            throw new Error(
-                `Vue page not found: The page component for '${name}' was not found at './Pages/${name}.vue'.`,
-            );
-        }
-        return page;
-    },
-    setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
-            .use(SpreadsheetPlugin) // Register Syncfusion Spreadsheet plugin globally here
-            .mount(el);
-    },
-    progress: {
-        color: '#4B5563',
-        delay: 250,
-        includeCSS: true,
-        showSpinner: false,
-    },
-});
+  title: (title) => `${title} - ${appName}`,
+  resolve: (name) => {
+    const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
+    let page = pages[`./Pages/${name}.vue`]
+
+    if (!page) {
+      // Fallback to dynamic import if eager loading fails
+      return resolvePageComponent(
+        `./Pages/${name}.vue`,
+        import.meta.glob('./Pages/**/*.vue')
+      )
+    }
+
+    return page
+  },
+  setup({ el, App, props, plugin }) {
+    const app = createApp({
+      render: () => h(App, props),
+      // Add error handler
+      errorCaptured(err, instance, info) {
+        console.error('Vue error captured:', err, info)
+        return false
+      }
+    })
+
+    // Install plugins
+    app.use(plugin)
+    app.use(ZiggyVue)
+
+    // Global error handler
+    app.config.errorHandler = (err, instance, info) => {
+      console.error('Global Vue error:', err, info)
+    }
+
+    return app.mount(el)
+  },
+  progress: {
+    color: '#4B5563',
+    delay: 250,
+    includeCSS: true,
+    showSpinner: false,
+  },
+})

@@ -69,20 +69,12 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    // === LEAVE APPLICATIONS ===
 
-    /**
-     * Get the leave applications for the user.
-     */
     public function leaveApplications()
     {
         return $this->hasMany(LeaveApplication::class);
     }
 
-    /**
-     * Get remaining leave balance for current year
-     * Optimized to use scopes and caching
-     */
     public function getRemainingLeaveBalance(): float
     {
         $currentYear = now()->year;
@@ -102,31 +94,24 @@ class User extends Authenticatable
     {
         $currentYear = now()->year;
 
-        // Sum leave days of approved leave applications for current year
         $approvedLeaves = $this->leaveApplications()
             ->approved()
             ->currentYear()
             ->sum('leave_days');
 
-        // Sum leave days of pending leave applications for current year
         $pendingLeaves = $this->leaveApplications()
             ->pending()
             ->currentYear()
             ->sum('leave_days');
 
-        // Total entitled leave balance from DB or default
         $totalLeave = $this->leave_balance ?? 20;
 
-        // Calculate available leave considering approved and pending leaves
         $availableLeave = max(0, $totalLeave - $approvedLeaves - $pendingLeaves);
 
         return $availableLeave;
     }
 
-    /**
-     * Get used leave days for current year
-     * Optimized version using scopes
-     */
+
     public function getUsedLeaveDays(): float
     {
         static $cachedUsedDays = null;
@@ -135,7 +120,6 @@ class User extends Authenticatable
 
         $currentYear = now()->year;
 
-        // Use cached result if for same user and year
         if ($cachedUsedDays !== null && $cachedUserId === $this->id && $cachedYear === $currentYear) {
             return $cachedUsedDays;
         }
@@ -153,10 +137,6 @@ class User extends Authenticatable
         return $usedDays;
     }
 
-    /**
-     * Get pending leave applications
-     * Optimized version using scopes
-     */
     public function getPendingLeaveApplications()
     {
         return $this->leaveApplications()
@@ -166,10 +146,7 @@ class User extends Authenticatable
             ->get();
     }
 
-    /**
-     * Get leave statistics for current year
-     * Single query to get all leave statistics at once
-     */
+
     public function getLeaveStatistics(): array
     {
         $stats = $this->leaveApplications()
@@ -200,16 +177,12 @@ class User extends Authenticatable
         ];
     }
 
-    // === TIME LOGS ===
 
     public function timeLogs()
     {
         return $this->hasMany(TimeLog::class);
     }
 
-    /**
-     * Get total hours logged for current month
-     */
     public function getCurrentMonthHours(): float
     {
         return $this->timeLogs()
@@ -218,24 +191,19 @@ class User extends Authenticatable
             ->sum('hours_worked') ?? 0;
     }
 
-    /**
-     * Get total hours logged
-     */
+
     public function getTotalHours(): float
     {
         return $this->timeLogs()->sum('hours_worked') ?? 0;
     }
 
-    // === TEAMS ===
 
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_user', 'user_id', 'team_id');
     }
 
-    /**
-     * The teams that this user LEADS.
-     */
+
     public function ledTeams(): HasMany
     {
         return $this->hasMany(Team::class, 'team_lead_id');
@@ -246,7 +214,6 @@ class User extends Authenticatable
         return $this->teams()->with('teamLead')->get()->pluck('teamLead')->filter()->unique('id');
     }
 
-    // === NOTIFICATIONS ===
 
     public function unreadNotifications()
     {
@@ -263,27 +230,18 @@ class User extends Authenticatable
         return $this->unreadNotifications()->update(['read_at' => now()]);
     }
 
-    // === ORGANIZATIONAL HIERARCHY ===
 
-    /**
-     * Get the parent user (manager/supervisor)
-     */
     public function parent()
     {
         return $this->belongsTo(User::class, 'parent_id');
     }
 
-    /**
-     * Get direct subordinates
-     */
+
     public function children()
     {
         return $this->hasMany(User::class, 'parent_id');
     }
 
-    /**
-     * Get all subordinates recursively
-     */
     public function childrenRecursive()
     {
         return $this->children()->with('childrenRecursive');
@@ -294,9 +252,6 @@ class User extends Authenticatable
         return $this->children()->with('descendants');
     }
 
-    /**
-     * Get all subordinates (flattened)
-     */
     public function getAllSubordinates()
     {
         $subordinates = collect();
@@ -309,9 +264,6 @@ class User extends Authenticatable
         return $subordinates;
     }
 
-    /**
-     * Check if user is manager of another user
-     */
     public function isManagerOf(User $user): bool
     {
         return $this->getAllSubordinates()->contains('id', $user->id);
@@ -319,14 +271,10 @@ class User extends Authenticatable
 
     public function tasks(): HasMany
     {
-        // This defines that a User can have many Tasks.
-        // It correctly points to the 'assigned_to_id' foreign key on the 'tasks' table.
+
         return $this->hasMany(Task::class, 'assigned_to_id');
     }
 
-    /**
-     * Get the hierarchy path (from top to current user)
-     */
     public function getHierarchyPath()
     {
         $path = collect([$this]);
@@ -340,34 +288,24 @@ class User extends Authenticatable
         return $path;
     }
 
-    // === LEAVE APPROVAL ===
-
-    /**
-     * Get the designated leave approver
-     */
     public function leaveApprover()
     {
         return $this->belongsTo(User::class, 'leave_approver_id');
     }
 
-    /**
-     * Get users who can approve this user's leave
-     */
+
     public function getLeaveApprovers()
     {
         $approvers = collect();
 
-        // Primary approver
         if ($this->leaveApprover) {
             $approvers->push($this->leaveApprover);
         }
 
-        // Fallback to parent if no specific approver
         if ($approvers->isEmpty() && $this->parent) {
             $approvers->push($this->parent);
         }
 
-        // Add users with leave management permissions (admin, hr, team-lead)
         $leaveManagers = User::whereHas('roles.permissions', function ($query) {
             $query->where('name', 'manage leave applications');
         })->get();
@@ -377,22 +315,16 @@ class User extends Authenticatable
         return $approvers;
     }
 
-    /**
-     * Check if user can approve leave for another user
-     */
     public function canApproveLeaveFor(User $user): bool
     {
-        // Check if this user is the designated approver
         if ($user->leave_approver_id === $this->id) {
             return true;
         }
 
-        // Check if this user is the parent
         if ($user->parent_id === $this->id) {
             return true;
         }
 
-        // Check if user has leave management permissions
         if ($this->hasAnyRole(['admin', 'hr', 'project-manager'])) {
             return true;
         }
@@ -400,22 +332,13 @@ class User extends Authenticatable
         return false;
     }
 
-    // === TASKS ===
-
-    /**
-     * Get tasks assigned to this user
-     */
     public function assignedTasks()
     {
         return $this->hasMany(Task::class, 'assigned_to_id');
     }
 
-    /**
-     * Get task completion rate
-     */
     public function getTaskCompletionRate(): float
     {
-        // Use a single, raw query to get both counts efficiently from the database.
         $stats = $this->assignedTasks()
             ->selectRaw("
                 count(*) as total_tasks,
@@ -423,24 +346,15 @@ class User extends Authenticatable
             ")
             ->first();
 
-        // If there are no tasks, the completion rate is 0.
-
         if (! $stats || $stats->total_tasks == 0) {
 
             return 0;
         }
-
-        // Perform the calculation in PHP.
         $completionRate = ($stats->completed_tasks / $stats->total_tasks) * 100;
 
         return round($completionRate, 1);
     }
 
-    // === PROJECTS ===
-
-    /**
-     * Get projects where user is project manager
-     */
     public function managedProjects()
     {
         return $this->hasMany(Project::class, 'project_manager_id');
@@ -448,7 +362,7 @@ class User extends Authenticatable
 
     public function teamMembers()
     {
-        return $this->hasMany(User::class, 'parent_id'); // Assuming team_lead_id FK in users table
+        return $this->hasMany(User::class, 'parent_id');
     }
 
     public function getPerformanceScore(): int
@@ -465,9 +379,6 @@ class User extends Authenticatable
         return round(($taskScore + $timeScore + $leaveScore) / 3);
     }
 
-    /**
-     * Check if user is active (has logged time recently)
-     */
     public function isActive(): bool
     {
         return $this->timeLogs()
@@ -477,7 +388,6 @@ class User extends Authenticatable
 
     public function manager()
     {
-        // We use your existing 'parent_id' column for this relationship
         return $this->belongsTo(User::class, 'parent_id');
     }
 
@@ -486,29 +396,21 @@ class User extends Authenticatable
         return $this->hasMany(CalendarNote::class);
     }
 
-    // public function parent()
-    // {
-    //     // A user BELONGS TO another user (their parent/manager).
-    //     return $this->belongsTo(User::class, 'parent_id');
-    // }
 
     protected function avatarUrl(): Attribute
     {
         return Attribute::make(
             get: function () {
-                // If the user has an 'image' path stored in the database...
                 if ($this->image) {
-                    // ...return the full public URL to that image from the storage disk.
                     return Storage::url($this->image);
                 }
 
-                // Otherwise, return a URL to a fallback avatar service (ui-avatars.com)
                 return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&background=random';
             }
         );
     }
 
-    public function announcements(): HasMany // <-- THIS IS THE NEW METHOD
+    public function announcements(): HasMany
     {
         return $this->hasMany(Announcement::class);
     }
@@ -551,4 +453,32 @@ class User extends Authenticatable
 
         return $this->hasPermissionTo($permission);
     }
+
+     public function projectSessions()
+    {
+        return $this->hasMany(ProjectSession::class, 'requester_id');
+    }
+
+    // Many-to-many: User and Badge, including unlock timestamp
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class)->withTimestamps()->withPivot('unlocked_at');
+    }
+
+    public function completedSessionsCount()
+{
+    return $this->projectSessions()->where('status', 'completed')->count();
+}
+
+    // Many-to-many: User and Milestone, with progress and unlock timestamp
+   public function milestones()
+{
+    return $this->belongsToMany(Milestone::class, 'milestone_user')
+        ->withPivot('unlocked_at', 'session_id')
+        ->withTimestamps();
+}
+
+
+
+
 }

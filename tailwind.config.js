@@ -27,11 +27,5 @@ export default {
     },
   },
 
-  plugins: [require('daisyui')],
 
-  // ✅ Force DaisyUI to use light theme
-  daisyui: {
-    themes: ['light'],
-    darkTheme: false,
-  },
 };

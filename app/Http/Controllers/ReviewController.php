@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-   public function myReviews(GetMyReviewsAction $getMyReviewsAction)
+    public function myReviews(GetMyReviewsAction $getMyReviewsAction)
     {
         $data = $getMyReviewsAction->execute();
 
@@ -48,7 +48,7 @@ class ReviewController extends Controller
         }
     }
 
- public function teamReviews(
+    public function teamReviews(
         GetTeamMemberIdsRecursiveAction $getTeamMemberIdsRecursiveAction,
         GetTeamMembersAction $getTeamMembersAction,
         GetTeamReviewsAction $getTeamReviewsAction,
@@ -71,14 +71,15 @@ class ReviewController extends Controller
         ]);
     }
 
- public function showReviewHistory(Request $request, int $employeeId, GetEmployeeReviewHistoryAction $getEmployeeReviewHistoryAction)
+    public function showReviewHistory(Request $request, int $employeeId, GetEmployeeReviewHistoryAction $getEmployeeReviewHistoryAction)
     {
         $data = $getEmployeeReviewHistoryAction->execute($request, $employeeId);
 
         return inertia('Reviews/EmployeeHistory', $data);
     }
 
-   public function storeEmployeeReview(StoreEmployeeReviewRequest $request,int $employeeId,int $month,int $year,StoreEmployeeReviewAction $storeEmployeeReviewAction) {
+    public function storeEmployeeReview(StoreEmployeeReviewRequest $request, int $employeeId, int $month, int $year, StoreEmployeeReviewAction $storeEmployeeReviewAction)
+    {
         try {
             $storeEmployeeReviewAction->execute(
                 $employeeId,

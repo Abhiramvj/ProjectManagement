@@ -38,6 +38,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage team reviews',
             'view my reviews',
             'view calendar',
+            'create session request',
+            'approve session request',
         ];
 
         foreach ($permissions as $permission) {
@@ -48,17 +50,18 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Employee Role
         $employeeRole = Role::firstOrCreate(['name' => 'employee']);
-        $employeeRole->syncPermissions(['log working hours', 'apply for leave', 'view my reviews', 'view calendar']);
+        $employeeRole->syncPermissions(['log working hours', 'apply for leave', 'view my reviews', 'view calendar','create session request']);
 
         // Team Lead Role
         $teamLeadRole = Role::firstOrCreate(['name' => 'team-lead']);
         $teamLeadRole->syncPermissions([
             'assign tasks', 'view team progress', 'log working hours', 'apply for leave', 'view leaves', 'manage leave applications', 'manage team reviews', 'view my reviews', 'view calendar',
+            'create session request'
         ]);
 
         // Project Manager Role
         $pmRole = Role::firstOrCreate(['name' => 'project-manager']);
-        $pmRole->syncPermissions(['assign projects', 'view all projects progress', 'view my reviews']);
+        $pmRole->syncPermissions(['assign projects', 'view all projects progress', 'view my reviews','create session request']);
 
         // HR Role
         $hrRole = Role::firstOrCreate(['name' => 'hr']);
@@ -73,12 +76,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'view mail logs',
             'view my reviews',
             'view calendar',
+            'create session request',
+            'approve session request',
 
         ]);
 
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
 
-        $permissions = Permission::where('name', '!=', 'view my reviews')->get();
+        $permissions = Permission::whereNotIn('name', ['view my reviews'])->get();
+
 
         $adminRole->syncPermissions($permissions);
 
